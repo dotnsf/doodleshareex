@@ -114,10 +114,11 @@ function subscribeMessage( channel ){
     broadcast( JSON.parse( message ) );
   });
 }
-subscribeMessage( 'newMessage' );
+subscribeMessage( 'newMessage' );  //. 'newMessage' というチャネル（＝ルーム？）にサブスクライブ
 
 function broadcast( message ){
   wss.clients.forEach( function( client ){
+    console.log( JSON.stringify( client ), message );   //. 個別の client を識別する id は？？
     client.send( JSON.stringify( { message: message } ) );
   });
 }
