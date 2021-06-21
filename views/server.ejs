@@ -95,6 +95,7 @@ $(function(){
       var color = generateColor( msg.uuid /* msg.name */ );
       var row = addCardGroups( socket_ids.length );
       if( row > 0 ){
+        //$.colorbox.remove();
         var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
           + '<div class="card-body text-' + color + '">'
           + '<h4 class="card-title">' + msg.name + '</h4>'
@@ -104,6 +105,9 @@ $(function(){
           + '</a>'
           + '</div>';
         $('#cards-' + row).append( card );
+
+        //. クラスでまとめて ColorBox の指定
+        $('.card').colorbox({ href: '#box_content', inline: true, transition: 'none', width: '90%', onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 5 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html( '' ); } });
       }
     }
 
@@ -111,10 +115,17 @@ $(function(){
     var ts = $('#image_'+socket_id).attr( 'ts' );
     ts = parseInt( ts );
 
+    //. 古いデータが遅れてきた場合は更新しない
     if( msg.timestamp >= ts ){
       $('#image_'+socket_id).prop( 'src', msg.image_src );
       $('#image_'+socket_id).prop( 'title', msg.comment );
       $('#image_'+socket_id).prop( 'ts', msg.timestamp );
+
+      //. 拡大中のデータだった場合は、拡大画面内容にも反映する
+      var zoom_socket_id = $('#zoom_image').attr( 'socket_id' );
+      if( zoom_socket_id && zoom_socket_id == socket_id ){
+        $('#zoom_image').prop( 'src', msg.image_src );
+      }
     }
   };
   ws.onclose = function( event ){
@@ -229,7 +240,6 @@ function removeCard( card_id ){
 
 function zoomImage( socket_id ){
   if( socket_id ){
-    //console.log( 'zoomImage: socket_id = ' + socket_id );
     $('#box_content').html( '<img id="zoom_image" socket_id="' + socket_id + '" src="' + $('#image_'+socket_id).prop( 'src' ) + '"/>' );
   }
 }
