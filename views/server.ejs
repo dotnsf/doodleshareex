@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<title>お絵描き一覧(<%= room %>)</title>
+<script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<script src="/qrcode.min.js"></script>
+
+<link href="/colorbox.css" rel="stylesheet"/>
+<script src="/jquery.colorbox-min.js"></script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+<link rel="shortcut icon" href="/icon.png" type="image/png"/>
+<link rel="icon" href="/icon.png" type="image/png"/>
+<link rel="apple-touch-icon" href="/icon.png"/>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Doodle Share"/>
+
+<style type="text/css">
+html, body{
+  text-align: center;
+  background-color: #fafafa;
+  font-size: 20px;
+  color: #333;
+}
+.mycanvas{
+  border: 1px solid #333;
+}
+.card-columns{
+  column-count: 1;
+}
+.card-group .card{
+  max-width: calc(100%);
+}
+#subject{
+  color: #008;
+  font-size: 20px;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<canvas id="qrcode"></canvas>
+
+<div id="card-groups">
+  <!--
+  <div class="card-group" id="cards-1">
+  </div>
+  -->
+</div>
+
+<div style="display:none;">
+  <div id="box_content">
+  </div>
+</div>
+
+<script>
+var socket_ids = [];
+var ws = null;
+
+var base_url = location.origin + '/';
+
+var cards = [];    //. カード
+var imgs = {};     //. 画像データ
+
+$(function(){
+  init();
+
+  QRCode.toCanvas( document.getElementById( 'qrcode' ), base_url + '?room=<%= room %>', function( err ){
+    if( err ){ console.log( err ); }
+  });
+
+  //. Redis 対応
+  ws = new WebSocket( `ws://${location.host}` );
+  ws.onopen = function(){
+    //. 接続できた時
+  };
+  ws.onmessage = function( message ){
+    var data = JSON.parse( message.data )
+    //console.log( data );  //. { message: '{\"uuid\":\"xx\",\"comment\":\"\",\"timestamp\":16xx,\"image_src\":\"data:image/png;base64,iVBORw..\" }' }
+    var msg = data.message; //JSON.parse( data.message );
+
+    var socket_id = msg.uuid;
+    if( socket_ids.indexOf( socket_id ) == -1 ){
+      //. 一覧に追加
+      socket_ids.push( socket_id );
+
+      var color = generateColor( msg.uuid /* msg.name */ );
+      var row = addCardGroups( socket_ids.length );
+      if( row > 0 ){
+        var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
+          + '<div class="card-body text-' + color + '">'
+          + '<h4 class="card-title">' + msg.name + '</h4>'
+          + '</div>'
+          + '<a href="#box_content" id="box_content_' + socket_id + '" title="' + msg.name + '">'
+          + '<img class="card-img-bottom" id="image_' + socket_id + '" alt="(image of ' + msg.name + ')" ts="' + msg.timestamp + '"/>'
+          + '</a>'
+          + '</div>';
+        $('#cards-' + row).append( card );
+      }
+    }
+
+    //. 描画
+    var ts = $('#image_'+socket_id).attr( 'ts' );
+    ts = parseInt( ts );
+
+    if( msg.timestamp >= ts ){
+      $('#image_'+socket_id).prop( 'src', msg.image_src );
+      $('#image_'+socket_id).prop( 'title', msg.comment );
+      $('#image_'+socket_id).prop( 'ts', msg.timestamp );
+    }
+  };
+  ws.onclose = function( event ){
+    ws = null;
+  };
+  ws.onerror = function( event ){
+  };
+
+  /*
+  socketio.on( 'init_client_view', function( msg ){
+    var socket_id = msg.uuid; //msg.socket_id;
+    if( socket_ids.indexOf( socket_id ) > -1 ){
+    }else{
+      socket_ids.push( socket_id );
+      console.log( socket_ids );
+
+      var color = generateColor( msg.name );
+
+      $('#card-groups').html( '' );
+      $.colorbox.remove();
+
+      //. カード追加
+      var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
+        + '<div class="card-body text-' + color + '">'
+        + '<h4 class="card-title"><a href="#" class="btn btn-xs btn-' + color + '" onClick="removeCard(\'card_' + socket_id + '\');">&times;</a>' + msg.name + '</h4>'
+        + '</div>'
+        + '<a href="#box_content" id="box_content_' + socket_id + '" title="' + msg.name + '">'
+        + '<img class="card-img-bottom" id="image_' + socket_id + '" alt="(image of ' + msg.name + ')" ts="' + msg.timestamp + '"/>'
+        + '</a>'
+        + '</div>';
+      cards.push( card );
+
+      //. カードグループを必要数だけ追加
+      appendCardGroups( '#card-groups', cards.length );
+    }
+  });
+
+  socketio.on( 'image_client_view', function( msg ){
+    var socket_id = msg.uuid; //msg.socket_id;
+    if( socket_ids.indexOf( socket_id ) > -1 ){
+      var ts = $('#image_'+socket_id).attr( 'ts' );
+      ts = parseInt( ts );
+
+      if( msg.timestamp > ts ){
+        $('#image_'+socket_id).prop( 'src', msg.image_src );
+        $('#image_'+socket_id).prop( 'title', msg.comment );
+        $('#image_'+socket_id).prop( 'ts', msg.timestamp );
+
+        //. 再描画用に記録
+        var img = {
+          src: msg.image_src,
+          title: msg.comment,
+          ts: msg.timestamp
+        };
+        imgs[socket_id] = img;
+
+        var zoom_socket_id = $('#zoom_image').attr( 'socket_id' );
+        if( zoom_socket_id && zoom_socket_id == socket_id ){
+          $('#zoom_image').prop( 'src', msg.image_src );
+        }
+      }
+    }
+  });
+  */
+});
+
+function init(){
+  //. リサイズ時
+  //$(window).on( 'load resize', function(){
+    resized();
+  //});
+}
+
+function resized(){
+  var browserWidth = window.innerWidth;
+  var browserHeight = window.innerHeight;
+
+  //socketio.emit( 'init_view', { width: browserWidth, height: browserHeight } );
+}
+
+
+function generateColor( name ){
+  var arr = [ 'primary', 'secondary', 'success', 'danger', 'warning', 'info', /*'light',*/ 'dark' ];
+  var r = 0;
+  for( var i = 0; i < name.length; i ++ ){
+    var c = name.charCodeAt( i );
+    r += c;
+  }
+  r = r % arr.length;
+
+  return arr[r];
+}
+
+function removeCard( card_id ){
+  $('#'+card_id).css( 'display', 'none' );
+
+  //. card_id = 'card_XXXXXX';
+  var socket_id = card_id.substr( 6 );
+  if( imgs[socket_id] ){
+    delete imgs[socket_id];
+  }
+
+  var b = true;
+  for( var i = 0; i < cards.length && b; i ++ ){
+    var card = cards[i];
+    if( card.indexOf( 'card_' + socket_id ) > -1 && card.indexOf( 'image_' + socket_id ) > -1 ){
+      cards.splice( i, 1 );
+      b = false;
+    }
+  }
+}
+
+function zoomImage( socket_id ){
+  if( socket_id ){
+    //console.log( 'zoomImage: socket_id = ' + socket_id );
+    $('#box_content').html( '<img id="zoom_image" socket_id="' + socket_id + '" src="' + $('#image_'+socket_id).prop( 'src' ) + '"/>' );
+  }
+}
+
+
+function addCardGroups( num ){
+  var newRows = [ 0, 1, 3, 7, 13, 21, 31, 43, 57, 73 ];
+  var setRows = [ 0, 1, 1, 2, 2, 1, 2, 3, 3, 3, 1, 2, 3, 4, 4, 4, 4, 1, 2, 3, 4, 5, 5, 5, 5, 5, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 8, 8, 8, 8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9 ];
+  var setRow = -1;
+  if( num > 91 ){
+    setRow = Math.ceil( num / 10 );
+    var m = num % 10;
+    if( m == 1 ){
+      $('#card-groups').append( '<div class="card-group" id="cards-' + setRow + '"></div>' );
+    }
+  }else{
+    setRow = setRows[num];
+    if( newRows.indexOf( num ) > -1 ){
+      $('#card-groups').append( '<div class="card-group" id="cards-' + setRow + '"></div>' );
+    }
+  }
+
+  return setRow;
+}
+
+//. num 個の要素をなるべく正方形に近い表形式の card-group 化する
+function appendCardGroups( cardgroups_selector, num ){
+  //. 近づける正方形の一辺の長さ
+  var m = Math.ceil( Math.sqrt( num ) );
+  //. m 個の card-group が必要
+  for( var i = 0; i < m; i ++ ){
+    $(cardgroups_selector).append( '<div class="card-group" id="cards-' + i + '">' );
+  }
+  //. ( m * m ) の正方形の中に表示する
+  for( var i = 0; i < num; i ++ ){
+    var card = cards[i];
+    var row = Math.floor( i / m );
+    $('#cards-'+row).append( card );
+  }
+
+  //. クラスでまとめて ColorBox の指定
+  $('.card').colorbox({ href: '#box_content', inline: true, transition: 'none', width: "90%", innerHeight: "90%", onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 5 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html(''); } });
+
+  if( num % m ){
+    var row = Math.floor( num / m );
+    for( var i = num; i % m > 0; i ++ ){
+      var dummycard = '<div class="card"></div>';
+      $('#cards-'+row).append( dummycard );
+    }
+  }
+
+  //. 画像再描画
+  Object.keys( imgs ).forEach( function( socket_id ){
+    var img = imgs[socket_id];
+    //console.log( 'appendCardGroups: socket_id = ' + socket_id, img );
+
+    $('#image_'+socket_id).prop( 'src', img.src );
+    $('#image_'+socket_id).prop( 'title', img.title );
+    $('#image_'+socket_id).prop( 'ts', img.ts );
+  });
+}
+</script>
+</body>
+</html>

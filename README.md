@@ -19,7 +19,13 @@ Trial application which tries to use WebSocket with Redis so that application ca
 
   - `$ PORT=8082 node app`
 
-- Access to application(s) with different browsers or different tabs:
+- Now, Administrator can open server view:
+
+  - http://localhost:8080/view
+
+    - Any running server can be OK.
+
+- User can access to application(s) with different browsers or different tabs:
 
   - http://localhost:8080/
 
@@ -27,7 +33,7 @@ Trial application which tries to use WebSocket with Redis so that application ca
 
   - http://localhost:8082/
 
-- Click `Open WebSocket connection` and `Send` text message in each browsers/tabs. 
+- Input your name, and Click `Start` button. Then you can draw and share your hand-drawing doodle. 
 
   - Confirm each message would be sent to all client
 

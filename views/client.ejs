@@ -1,18 +1,653 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>demo</title>
-  </head>
-  <body>
-    <button id="wsButton" type="button">
-      Open WebSocket connection
-    </button>
-    <form>
-      <input id="msgInput" type="text" name="msgBox" placeholder="Message text...">
-      <button id="wsSendButton" type="button" disabled>Send</button>
-    </form>
-    <pre id="messages" style="height: 400px; overflow: scroll"></pre>
-    <script src="./client.js"></script>
-  </body>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<title>お絵描き共有</title>
+<script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+<link rel="shortcut icon" href="/icon.png" type="image/png"/>
+<link rel="icon" href="/icon.png" type="image/png"/>
+<link rel="apple-touch-icon" href="/icon.png"/>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Doodle Share"/>
+
+<style type="text/css">
+html, body{
+  text-align: center;
+  background-color: #fafafa;
+  font-size: 20px;
+  color: #333;
+}
+#mycanvas{
+  border: 1px solid #333;
+}
+#comment{
+  width: 100%;
+}
+</style>
+</head>
+<body>
+<h3 id="name"><%= name %></h3>
+
+<select id="select_color" name="select_color">
+  <option style="color:black;" value="transparent">透明</option>
+  <option style="color:black;" value="black" selected="selected">黒</option>
+  <option style="color:lightgray;" value="white">白</option>
+  <option style="color:red;" value="red">赤</option>
+  <option style="color:blue;" value="blue">青</option>
+  <option style="color:green;" value="green">緑</option>
+  <option style="color:yellow;" value="yellow">黃色</option>
+  <option style="color:#FFA500;" value="#FFA500">橙</option>
+  <option style="color:cyan;" value="cyan">水色</option>
+  <option style="color:magenta;" value="magenta">紫</option>
+  <option style="color:gray;" value="gray">グレー</option>
+  <option style="color:#ef8f9c;" value="#ef8f9c">ピンク</option>
+  <option style="color:#ead2ad;" value="#ead2ad">肌</option>
+  <option style="color:#7c6035;" value="#7c6035">茶</option>
+</select>
+
+<select id="select_linewidth" name="select_linewidth">
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+  <option value="5" selected="selected">5</option>
+  <option value="6">6</option>
+  <option value="7">7</option>
+  <option value="8">8</option>
+  <option value="9">9</option>
+  <option value="10">10</option>
+  <option value="11">11</option>
+  <option value="12">12</option>
+  <option value="13">13</option>
+  <option value="14">14</option>
+  <option value="15">15</option>
+</select>
+
+<input type="button" class="btn btn-xs btn-secondary p-0" id="setbg_btn" value="背景色" onClick="setBG();"/>
+<a href="#" class="btn btn-xs btn-secondary p-0" data-toggle="modal" data-target="#commentModal" id="comment_btn"><i class="fas fa-comment-dots"></i></a>
+
+<div id="canvas_div">
+  <div id="cdiv"></div>
+
+  <br/>
+  <input type="button" class="btn btn-xs" id="undo_btn" value="<" onClick="undo();" disabled="disabled"/>
+  <input type="button" class="btn btn-xs btn-warning" value="リセット" onClick="resetCanvas();"/>
+  <!-- <input type="button" class="btn btn-xs btn-primary" value="送信" onClick="sendCanvas();"/>  -->
+  <input type="button" class="btn btn-xs" id="redo_btn" value=">" onClick="redo();" disabled="disabled"/>
+</div>
+
+<div class="modal bd-example-modal-lg fade" id="commentModal" tabindex="-1" role="dialog" aria-labbelledby="commentModal" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="commentModalLabel">コメント</h4>
+      </div>
+      <div class="modal-body" id="commentmodal-body">
+        <textarea id="comment"></textarea>
+      </div>
+      <div class="modal-footer btn-center">
+        <button type="button" class="btn btn-primary modal_button" data-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var uuid = generateUUID();
+
+var base_url = location.origin + '/';
+var undos = [];
+var redos = [];
+var stroke = null; //. { color: color, width: width, xys: [] }
+var backgroundcolor = null;
+
+var ws = null;
+
+//. 参考: https://gist.github.com/Cartman0/436459b9b85cfdd1ca9c
+$(function(){
+  //. ヒストリバック無効化
+  if( window.history && window.history.pushState ){
+    history.pushState( "nohb", null, null );
+    $(window).on( "popState", function( evt ){
+      if( !event.originalEvent.state ){
+        history.pushState( "nohb", null, null );
+        return;
+      }
+    });
+  }
+
+  //. モーダル終了時
+  $('#commentModal').on( 'hidden.bs.modal', function(){
+    sendImage();
+  });
+
+  init();
+});
+
+function init(){
+  $('#comment').html( '' );
+  $('#cdiv').html( '<canvas width="80%" height="50%" id="mycanvas"></canvas>' );
+
+  var canvas = document.getElementById( 'mycanvas' );
+  if( !canvas || !canvas.getContext ){
+    return false;
+  }
+  var ctx = canvas.getContext( '2d' );
+  //. マウスの座標を取得
+  var mouse = {
+    startX: 0,
+    startY: 0,
+    x: 0,
+    y: 0,
+    color: "black",
+    isDrawing: false
+  };
+  var borderWidth = 1;
+  canvas.addEventListener( "mousemove", function( e ){
+    //. マウスが動いたら座標値を取得
+    var rect = e.target.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left - borderWidth;
+    mouse.y = e.clientY - rect.top - borderWidth;
+
+    //. isDrawがtrueのとき描画
+    if( mouse.isDrawing ){
+      var color = $('#select_color').val();
+      if( color == 'transparent' ){
+        ctx.globalCompositeOperation = 'destination-out';
+      }else{
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      ctx.beginPath();
+      ctx.lineWidth = parseInt( $('#select_linewidth').val() );
+      ctx.lineCap = 'round';
+      ctx.moveTo( mouse.startX, mouse.startY );
+      ctx.lineTo( mouse.x, mouse.y );
+      if( color != 'transparent' ){
+        ctx.strokeStyle = color;
+      }
+      ctx.stroke();
+      mouse.startX = mouse.x;
+      mouse.startY = mouse.y;
+
+      if( stroke ){
+        stroke.xys.push( [ mouse.x, mouse.y ] );
+      }
+    }
+  });
+  //. マウスを押したら、描画OK(myDrawをtrue)
+  canvas.addEventListener( "mousedown", function( e ){
+    mouse.isDrawing = true;
+    mouse.startX = mouse.x;
+    mouse.startY = mouse.y;
+
+    stroke = {};
+    stroke.color = $('#select_color').val();
+    stroke.width = parseInt( $('#select_linewidth').val() );
+    stroke.xys = [ [ mouse.x, mouse.y ] ];
+  });
+  //. マウスを上げたら、描画禁止(myDrawをfalse)
+  canvas.addEventListener( "mouseup", function( e ){
+    mouse.isDrawing = false;
+    sendImage();
+
+    if( stroke ){
+      undos.push( stroke );
+      $('#undo_btn').prop( 'disabled', false );
+      stroke = null;
+      redos = [];
+      $('#redo_btn').prop( 'disabled', true );
+    }
+  });
+  canvas.addEventListener( 'mouseleave', function( e ){
+    mouse.isDrawing = false;
+
+    if( stroke ){
+      undos.push( stroke );
+      $('#undo_btn').prop( 'disabled', false );
+      stroke = null;
+      redos = [];
+      $('#redo_btn').prop( 'disabled', true );
+    }
+  });
+
+  canvas.addEventListener( "touchmove", function( e ){
+    //. タッチが動いたら座標値を取得
+    var t = e.changedTouches[0];
+    var rect = e.target.getBoundingClientRect();
+    //mouse.x = e.pageX - rect.left - borderWidth;
+    //mouse.y = e.pageY - rect.top - borderWidth;
+    mouse.x = ( isAndroid() ? t.pageX : e.pageX ) - rect.left - borderWidth;
+    mouse.y = ( isAndroid() ? t.pageY : e.pageY ) - rect.top - borderWidth;
+
+    //. isDrawがtrueのとき描画
+    if( mouse.isDrawing ){
+      var color = $('#select_color').val();
+      if( color == 'transparent' ){
+        ctx.globalCompositeOperation = 'destination-out';
+      }else{
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      ctx.beginPath();
+      ctx.lineWidth = parseInt( $('#select_linewidth').val() );
+      ctx.lineCap = 'round';
+      ctx.moveTo( mouse.startX, mouse.startY );
+      ctx.lineTo( mouse.x, mouse.y );
+      if( color != 'transparent' ){
+        ctx.strokeStyle = color;
+      }
+      ctx.stroke();
+      mouse.startX = mouse.x;
+      mouse.startY = mouse.y;
+
+      if( stroke ){
+        stroke.xys.push( [ mouse.x, mouse.y ] );
+      }
+    }
+  });
+  //. タッチしたら、描画OK(myDrawをtrue)
+  canvas.addEventListener( "touchstart", function( e ){
+    var t = e.changedTouches[0];
+    var rect = t.target.getBoundingClientRect();
+    mouse.isDrawing = true;
+    mouse.startX = t.pageX - rect.left - borderWidth;
+    mouse.startY = t.pageY - rect.top - borderWidth;
+
+    stroke = {};
+    stroke.color = $('#select_color').val();
+    stroke.width = parseInt( $('#select_linewidth').val() );
+    stroke.xys = [ [ mouse.startX, mouse.startY ] ];
+  });
+  //. タッチを上げたら、描画禁止(myDrawをfalse)
+  canvas.addEventListener( "touchend", function( e ){
+    mouse.isDrawing = false;
+    sendImage();
+
+    if( stroke ){
+      undos.push( stroke );
+      $('#undo_btn').prop( 'disabled', false );
+      stroke = null;
+      redos = [];
+      $('#redo_btn').prop( 'disabled', true );
+    }
+  });
+  canvas.addEventListener( 'touchcancel', function( e ){
+    mouse.isDrawing = false;
+    sendImage();
+
+    if( stroke ){
+      undos.push( stroke );
+      $('#undo_btn').prop( 'disabled', false );
+      stroke = null;
+      redos = [];
+      $('#redo_btn').prop( 'display', true );
+    }
+  });
+
+  //. Pointer Events
+  canvas.addEventListener( "pointermove", function( e ){
+    //. ポインターが動いたら座標値を取得
+    var t = e; //e.changedTouches[0];
+    var rect = e.target.getBoundingClientRect();
+    //mouse.x = e.pageX - rect.left - borderWidth;
+    //mouse.y = e.pageY - rect.top - borderWidth;
+    mouse.x = ( isAndroid() ? t.pageX : e.pageX ) - rect.left - borderWidth;
+    mouse.y = ( isAndroid() ? t.pageY : e.pageY ) - rect.top - borderWidth;
+
+    //. isDrawがtrueのとき描画
+    if( mouse.isDrawing ){
+      var color = $('#select_color').val();
+      if( color == 'transparent' ){
+        ctx.globalCompositeOperation = 'destination-out';
+      }else{
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      ctx.beginPath();
+      ctx.lineWidth = parseInt( $('#select_linewidth').val() );
+      ctx.lineCap = 'round';
+      ctx.moveTo( mouse.startX, mouse.startY );
+      ctx.lineTo( mouse.x, mouse.y );
+      if( color != 'transparent' ){
+        ctx.strokeStyle = color;
+      }
+      ctx.stroke();
+      mouse.startX = mouse.x;
+      mouse.startY = mouse.y;
+
+      if( stroke ){
+        stroke.xys.push( [ mouse.x, mouse.y ] );
+      }
+    }
+  });
+  //. ポインターにタッチしたら、描画OK(myDrawをtrue)
+  canvas.addEventListener( "pointerdown", function( e ){
+    var t = e; //e.changedTouches[0];
+    var rect = t.target.getBoundingClientRect();
+    mouse.isDrawing = true;
+    mouse.startX = t.pageX - rect.left - borderWidth;
+    mouse.startY = t.pageY - rect.top - borderWidth;
+
+    stroke = {};
+    stroke.color = $('#select_color').val();
+    stroke.width = parseInt( $('#select_linewidth').val() );
+    stroke.xys = [ [ mouse.startX, mouse.startY ] ];
+  });
+  //. ポインターを上げたら、描画禁止(myDrawをfalse)
+  canvas.addEventListener( "pointerup", function( e ){
+    mouse.isDrawing = false;
+    sendImage();
+
+    if( stroke ){
+      undos.push( stroke );
+      $('#undo_btn').prop( 'disabled', false );
+      stroke = null;
+      redos = [];
+      $('#redo_btn').prop( 'disabled', true );
+    }
+  });
+
+  $('#select_color').change( function(){
+    var color = $(this).val();
+    if( color == 'white' ){
+      color = 'lightgray';
+    }else if( color == 'transparent' ){
+      color = 'black';
+    }
+    $(this).css( { 'color': color } );
+    $('#select_linewidth').css( { 'color': color } );
+    $('#setbg_btn').css( { 'background': color } );
+  });
+
+  //. リサイズ時に Canvas サイズを変更する
+  $(window).on( 'load resize', function(){
+    resized();
+  });
+
+  //. スクロール禁止
+  /*
+  $(window).on('touchmove.noScroll', function( e ){
+    e.preventDefault();
+  });
+  */
+  var movefun = function( event ){
+    event.preventDefault();
+  }
+  window.addEventListener( 'touchmove', movefun, { passive: false } );
+
+  //. Redis 対応
+  ws = new WebSocket( `ws://${location.host}` );
+  ws.onopen = function(){
+    //. 接続できた時
+    console.log( 'WebSocket connection established' );
+  };
+  ws.onmessage = function (message) {
+    var data = JSON.parse( message.data )
+    //showMessage(JSON.stringify(data.message));
+  };
+  ws.onclose = function( event ){
+    ws = null;
+  };
+  ws.onerror = function( event ){
+  };
+}
+
+function resized(){
+  var browserWidth = window.innerWidth;
+  var browserHeight = window.innerHeight;
+  var canvas = document.getElementById( 'mycanvas' );
+  if( canvas && canvas.getContext ){
+    canvas.width = browserWidth * 0.8;
+    canvas.height = browserHeight * 0.6;
+
+    //. 初期化を通知
+    var name = $('#name').text();
+    var msg = {
+      uuid: uuid,
+      room: '<%= room %>',
+      name: name,
+      timestamp: ( new Date() ).getTime(),
+      width: canvas.width,
+      height: canvas.height
+    };
+    //socketio.json.emit( 'init_client', msg );
+  }
+}
+
+function resetCanvas( no_reset_unredo ){
+  init();
+  resized();
+
+  if( !no_reset_unredo ){
+    undos = [];
+    redos = [];
+    backgroundcolor = null;
+
+    //. リセットを通知
+    sendImage();
+  }
+}
+
+function isAndroid(){
+  return ( navigator.userAgent.indexOf( 'Android' ) > 0 );
+}
+
+function save(){
+  var canvas = document.getElementById( 'mycanvas' );
+  if( !canvas || !canvas.getContext ){
+    return false;
+  }
+  var ctx = canvas.getContext( '2d' );
+
+  //. 画像データ
+  var png = canvas.toDataURL( 'image/png' );
+  png = png.replace( /^.*,/, '' );
+
+  //. バイナリ変換
+  var bin = atob( png );
+  var buffer = new Uint8Array( bin.length );
+  for( var i = 0; i < bin.length; i ++ ){
+    buffer[i] = bin.charCodeAt( i );
+  }
+  var blob = new Blob( [buffer.buffer], {
+    type: 'image/png'
+  });
+
+  //. フォームにして送信
+  console.log( 'Sending data... : ' + blob.size );
+  var formData = new FormData();
+  formData.append( 'image', blob );    //. <form enctype='multipart/formdata'><input name='image' type='file'/> ...
+  formData.append( 'timestamp', ( new Date() ).getTime() );
+  formData.append( 'name', $('#name').text() );
+  formData.append( 'comment', $('#comment').val() );
+  formData.append( 'room', '<%= room %>' );
+  formData.append( 'uuid', uuid );
+  $.ajax({
+    type: 'POST',
+    url: '/image',
+    data: formData,
+    contentType: false,
+    processData: false,
+    success: function( data, dataType ){
+      //$('#comment').val( '' );
+      console.log( data );
+    },
+    error: function( jqXHR, textStatus, errorThrown ){
+      console.log( textStatus + ': ' + errorThrown );
+    }
+  });
+}
+
+function undo(){
+  if( undos && undos.length > 0 ){
+    var last_stroke = undos.pop();
+    if( undos.length == 0 ){
+      $('#undo_btn').prop( 'disabled', true );
+    }
+    redos.push( last_stroke );
+    $('#redo_btn').prop( 'disabled', false );
+
+    redrawCanvas();
+  }
+}
+
+function redo(){
+  if( redos && redos.length > 0 ){
+    var last_stroke = redos.pop();
+    if( redos.length == 0 ){
+      $('#redo_btn').prop( 'disabled', true );
+    }
+    undos.push( last_stroke );
+    $('#undo_btn').prop( 'disabled', false );
+
+    redrawCanvas();
+  }
+}
+
+function setBG(){
+  var color = $('#select_color').val();
+  if( color ){
+    if( color != 'transparent' ){
+      backgroundcolor = color;
+    }else{
+      backgroundcolor = null;
+    }
+    redrawCanvas();
+  }
+}
+
+function redrawCanvas(){
+  if( undos && undos.length >= 0 ){
+    resetCanvas( true );
+
+    if( backgroundcolor ){
+      var canvas = document.getElementById( 'mycanvas' );
+      if( !canvas || !canvas.getContext ){
+        return false;
+      }
+      var ctx = canvas.getContext( '2d' );
+
+      //. 全体をベタ塗り
+      ctx.beginPath();
+      ctx.fillStyle = backgroundcolor; //"rgb( 255, 255, 255 )";
+      ctx.fillRect( 0, 0, canvas.width, canvas.height );
+      ctx.stroke();
+    }
+
+    for( var i = 0; i < undos.length; i ++ ){
+      var stroke = undos[i];
+
+      for( var j = 1; j < stroke.xys.length; j ++ ){
+        var canvas = document.getElementById( 'mycanvas' );
+        if( !canvas || !canvas.getContext ){
+          return false;
+        }
+        var ctx = canvas.getContext( '2d' );
+
+        var color = stroke.color;
+        if( color == 'transparent' ){
+          ctx.globalCompositeOperation = 'destination-out';
+        }else{
+          ctx.globalCompositeOperation = 'source-over';
+        }
+
+        ctx.beginPath();
+        ctx.lineWidth = stroke.width;
+        ctx.lineCap = 'round';
+        ctx.moveTo( stroke.xys[j-1][0], stroke.xys[j-1][1] );
+        ctx.lineTo( stroke.xys[j][0], stroke.xys[j][1] );
+        if( color != 'transparent' ){
+          ctx.strokeStyle = color;
+        }
+        ctx.stroke();
+      }
+    }
+  }
+
+  sendImage();
+}
+
+function generateUUID(){
+  //. Cookie の値を調べて、有効ならその値で、空だった場合は生成する
+  var did = null;
+  cookies = document.cookie.split(";");
+  for( var i = 0; i < cookies.length; i ++ ){
+    var str = cookies[i].split("=");
+    var une = unescape( str[0] );
+    if( une == " deviceid" || une == "deviceid" ){
+      did = unescape( unescape( str[1] ) );
+    }
+  }
+
+  if( did == null ){
+    var s = 1000;
+    did = ( new Date().getTime().toString(16) ) + Math.floor( s * Math.random() ).toString(16);
+  }
+
+  var dt = ( new Date() );
+  var ts = dt.getTime();
+  ts += 1000 * 60 * 60 * 24 * 365 * 100; //. 100 years
+  dt.setTime( ts );
+  var value = ( "deviceid=" + did + '; expires=' + dt.toUTCString() + '; path=/' );
+  if( isMobileSafari() ){
+    $.ajax({
+      url: '/setcookie',
+      type: 'POST',
+      data: { value: value },
+      success: function( r ){
+        //console.log( 'success: ', r );
+      },
+      error: function( e0, e1, e2 ){
+        //console.log( 'error: ', e1, e2 );
+      }
+    });
+  }else{
+    document.cookie = ( value );
+    //console.log( 'value: ', value );
+  }
+
+  return did;
+}
+
+function isMobileSafari(){
+  return ( navigator.userAgent.indexOf( 'Safari' ) > 0 && navigator.userAgent.indexOf( 'Mobile' ) > 0 );
+}
+
+function sendImage(){
+  //. キャンバスを取得
+  var canvas = document.getElementById( 'mycanvas' );
+  if( !canvas || !canvas.getContext ){
+    return false;
+  }
+
+  //. 画像データ
+  var png = canvas.toDataURL( 'image/png' );
+
+  //. コメント
+  var comment = $('#comment').val();
+  if( !comment ){ comment = ''; }
+
+  //. 画像を通知
+  var msg = {
+    uuid: uuid,
+    room: '<%= room %>',
+    name: '<%= name %>',
+    comment: comment,
+    timestamp: ( new Date() ).getTime(),
+    image_src: png
+  };
+  //socketio.json.emit( 'image_client', msg );
+  ws.send( JSON.stringify( msg ) );
+}
+</script>
+</body>
 </html>
