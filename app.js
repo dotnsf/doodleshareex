@@ -25,11 +25,15 @@ var server = http.createServer( app );
 //. WebSocket server
 var wss = new WebSocket.Server( { noServer: true } );
 
+//. env values
+var settings_redis_server = 'REDIS_SERVER' in process.env ? process.env.REDIS_SERVER : settings.redis_server;
+var settings_redis_port = 'REDIS_PORT' in process.env ? process.env.REDIS_PORT : settings.redis_port;
+
 //. Redis
-var redis = new Redis( settings.redis_port, settings.redis_server );   //. Redis container
+var redis = new Redis( settings_redis_port, settings_redis_server );   //. Redis container
 
 //.  HTTP(WebSocket) client
-var client = new Redis( settings.redis_port, settings.redis_server );
+var client = new Redis( settings_redis_port, settings_redis_server );
 
 
 //. Page for guest
