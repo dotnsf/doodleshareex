@@ -34,7 +34,7 @@ var settings_redis_port = 'REDIS_PORT' in process.env ? process.env.REDIS_PORT :
 var redis = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
 
 //.  HTTP(WebSocket) client（クライアントと接続する）
-var client = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
+//var client = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
 
 
 //. Page for guest
@@ -74,7 +74,7 @@ var clients = {};
 function subscribeMessage( room ){
   if( rooms.indexOf( room ) == -1 ){
     rooms.push( room );
-    clients[room] = new Redis( settings_redis_port, settings_redis_server );
+    clients[room] = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );
     clients[room].subscribe( room );
   }
   clients[room].on( 'message', function( room, message ){
