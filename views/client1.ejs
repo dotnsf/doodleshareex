@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<title>Client1</title>
+<script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+<link rel="shortcut icon" href="/icon.png" type="image/png"/>
+<link rel="icon" href="/icon.png" type="image/png"/>
+<link rel="apple-touch-icon" href="/icon.png"/>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Doodle Share"/>
+
+<style type="text/css">
+html, body{
+  text-align: center;
+  background-color: #fafafa;
+  font-size: 20px;
+  color: #333;
+}
+</style>
+</head>
+<body>
+<h3 id="name"><%= name %></h3>
+
+<div id="canvas_div">
+  <input type="text" id="text" name="text" class="form-control" value=""/>
+  <br/>
+  <input type="button" class="btn btn-xs btn-primary" value="送信" onClick="sendText();"/>
+</div>
+
+<script>
+var uuid = generateUUID();
+
+var base_url = location.origin + '/';
+
+var ws = null;
+
+//. 参考: https://gist.github.com/Cartman0/436459b9b85cfdd1ca9c
+$(function(){
+  //. ヒストリバック無効化
+  if( window.history && window.history.pushState ){
+    history.pushState( "nohb", null, null );
+    $(window).on( "popState", function( evt ){
+      if( !event.originalEvent.state ){
+        history.pushState( "nohb", null, null );
+        return;
+      }
+    });
+  }
+
+  init();
+});
+
+function init(){
+  //. リサイズ時に Canvas サイズを変更する
+  $(window).on( 'load resize', function(){
+    resized();
+  });
+
+  //. スクロール禁止
+  /*
+  $(window).on('touchmove.noScroll', function( e ){
+    e.preventDefault();
+  });
+  */
+  var movefun = function( event ){
+    event.preventDefault();
+  }
+  window.addEventListener( 'touchmove', movefun, { passive: false } );
+
+  //. Redis 対応
+  ws = location.protocol.indexOf( 'https' ) > -1 ? ( new WebSocket( `wss://${location.host}` ) ) : ( new WebSocket( `ws://${location.host}` ) );
+  ws.onopen = function(){
+    //. 接続できた時
+    console.log( 'WebSocket connection established' );
+  };
+  ws.onmessage = function (message) {
+    var data = JSON.parse( message.data )
+    console.log( 'onmessage', data );
+    //showMessage(JSON.stringify(data.message));
+  };
+  ws.onclose = function( event ){
+    ws = null;
+  };
+  ws.onerror = function( event ){
+  };
+}
+
+function resized(){
+  var browserWidth = window.innerWidth;
+  var browserHeight = window.innerHeight;
+
+  //. 初期化を通知
+  var name = $('#name').text();
+  var msg = {
+    uuid: uuid,
+    room: '<%= room %>',
+    name: name,
+    timestamp: ( new Date() ).getTime()
+  };
+}
+
+function isAndroid(){
+  return ( navigator.userAgent.indexOf( 'Android' ) > 0 );
+}
+
+function generateUUID(){
+  //. Cookie の値を調べて、有効ならその値で、空だった場合は生成する
+  var did = null;
+  cookies = document.cookie.split(";");
+  for( var i = 0; i < cookies.length; i ++ ){
+    var str = cookies[i].split("=");
+    var une = unescape( str[0] );
+    if( une == " deviceid" || une == "deviceid" ){
+      did = unescape( unescape( str[1] ) );
+    }
+  }
+
+  if( did == null ){
+    var s = 1000;
+    did = ( new Date().getTime().toString(16) ) + Math.floor( s * Math.random() ).toString(16);
+  }
+
+  var dt = ( new Date() );
+  var ts = dt.getTime();
+  ts += 1000 * 60 * 60 * 24 * 365 * 100; //. 100 years
+  dt.setTime( ts );
+  var value = ( "deviceid=" + did + '; expires=' + dt.toUTCString() + '; path=/' );
+  if( isMobileSafari() ){
+    $.ajax({
+      url: '/setcookie',
+      type: 'POST',
+      data: { value: value },
+      success: function( r ){
+        //console.log( 'success: ', r );
+      },
+      error: function( e0, e1, e2 ){
+        //console.log( 'error: ', e1, e2 );
+      }
+    });
+  }else{
+    document.cookie = ( value );
+    //console.log( 'value: ', value );
+  }
+
+  return did;
+}
+
+function isMobileSafari(){
+  return ( navigator.userAgent.indexOf( 'Safari' ) > 0 && navigator.userAgent.indexOf( 'Mobile' ) > 0 );
+}
+
+function sendText(){
+  //. テキストを取得
+  var text = $('#text').val();
+
+  //. 画像を通知
+  var msg = {
+    uuid: uuid,
+    room: '<%= room %>',
+    name: '<%= name %>',
+    text: text,
+    timestamp: ( new Date() ).getTime()
+  };
+  //socketio.json.emit( 'image_client', msg );
+  ws.send( '<%= room %>:' + JSON.stringify( msg ) );
+}
+</script>
+</body>
+</html>
