@@ -26,14 +26,15 @@ var server = http.createServer( app );
 var wss = new WebSocket.Server( { noServer: true } );
 
 //. env values
+var settings_redis_url = 'REDIS_URL' in process.env ? process.env.REDIS_URL : settings.redis_url;
 var settings_redis_server = 'REDIS_SERVER' in process.env ? process.env.REDIS_SERVER : settings.redis_server;
 var settings_redis_port = 'REDIS_PORT' in process.env ? process.env.REDIS_PORT : settings.redis_port;
 
 //. Redis（サーバーと接続する）
-var redis = new Redis( settings_redis_port, settings_redis_server );   //. Redis container
+var redis = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
 
 //.  HTTP(WebSocket) client（クライアントと接続する）
-var client = new Redis( settings_redis_port, settings_redis_server );
+var client = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
 
 
 //. Page for guest
