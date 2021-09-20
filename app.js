@@ -29,10 +29,10 @@ var wss = new WebSocket.Server( { noServer: true } );
 var settings_redis_server = 'REDIS_SERVER' in process.env ? process.env.REDIS_SERVER : settings.redis_server;
 var settings_redis_port = 'REDIS_PORT' in process.env ? process.env.REDIS_PORT : settings.redis_port;
 
-//. Redis
+//. Redis（サーバーと接続する）
 var redis = new Redis( settings_redis_port, settings_redis_server );   //. Redis container
 
-//.  HTTP(WebSocket) client
+//.  HTTP(WebSocket) client（クライアントと接続する）
 var client = new Redis( settings_redis_port, settings_redis_server );
 
 
@@ -43,6 +43,8 @@ app.get( '/client', function( req, res ){
   var room = req.query.room;
   if( !room ){ room = 'default'; }
 
+  subscribeMessage( room );
+
   res.render( 'client', { name: name, room: room } );
 });
 
@@ -50,60 +52,11 @@ app.get( '/client', function( req, res ){
 app.get( '/view', function( req, res ){
   var room = req.query.room;
   if( !room ){ room = 'default'; }
+
+  subscribeMessage( room );
+
   res.render( 'server', { room: room } );
 });
-
-/*
-//. Redis
-client.get( 'view_sockets', function( err, view_sockets ){
-  if( err || !view_sockets ){
-    ///client.set( 'view_sockets', '{}' );
-  }
-});
-
-//. socket.io
-var view_sockets = {};
-io.sockets.on( 'connection', function( socket ){
-  //. admin 画面の初期化時
-  socket.on( 'init_admin', function( msg ){
-    var room = msg.room ? msg.room : 'default';
-    var ts = ( new Date() ).getTime();
-    ///var view_sockets = JSON.parse( client.get( 'view_sockets' ) );
-    if( !view_sockets[room] ){
-      view_sockets[room] = { socket: socket, timestamp: ts };
-      ///client.set( 'view_sockets', JSON.stringify( view_sockets ) );
-    }else{
-      //. expired の判断はしないことにする
-      //if( view_sockets[room].timestamp + ( 10 * 60 * 60 * 1000 ) < ts ){ //. 10 hours
-        view_sockets[room] = { socket: socket, timestamp: ts };
-        ///client.set( 'view_sockets', JSON.stringify( view_sockets ) );
-      //}else{
-      //  console.log( 'Room: "' + room + '" is not expired yet.' );
-      //}
-    }
-  });
-
-  //. guest 画面の初期化時（ロード後の最初の resized 時）
-  socket.on( 'init_guest', function( msg ){
-    msg.socket_id = socket.id;
-    var room = msg.room ? msg.room : 'default';
-    ///var view_sockets = JSON.parse( client.get( 'view_sockets' ) );
-    if( view_sockets[room] ){
-      view_sockets[room].socket.json.emit( 'init_guest_view', msg );
-    }
-  });
-
-  //. guest 画面のボタンクリック
-  socket.on( 'click_guest', function( msg ){
-    msg.socket_id = socket.id;
-    var room = msg.room ? msg.room : 'default';
-    ///var view_sockets = JSON.parse( client.get( 'view_sockets' ) );
-    if( view_sockets[room] ){
-      view_sockets[room].socket.json.emit( 'click_guest_view', msg );
-    }
-  });
-});
-*/
 
 
 server.on( 'upgrade', function( request, socket, head ){
@@ -114,19 +67,25 @@ server.on( 'upgrade', function( request, socket, head ){
   });
 });
 
-var my_channel = 'my_channel';
-function subscribeMessage( channel ){
-  client.subscribe( channel );
-  client.on( 'message', function( channel, message ){
+//var my_channel = 'my_channel';
+var rooms = [];
+var clients = {};
+function subscribeMessage( room ){
+  if( rooms.indexOf( room ) == -1 ){
+    rooms.push( room );
+    clients[room] = new Redis( settings_redis_port, settings_redis_server );
+    clients[room].subscribe( room );
+  }
+  clients[room].on( 'message', function( room, message ){
     //. client.ejs の wsSendButton を押してメッセージが送信された時（channel は実質固定？）
     //. まず ws.message が呼ばれて、続いてこっちが呼ばれる
     //console.log( 'client.message: broadcast', channel, message );  //. このサーバーに接続している全ウェブソケットクライアントにブロードキャスト
-    broadcast( JSON.parse( message ) );
+    broadcast( room, JSON.parse( message ) );
   });
 }
-subscribeMessage( my_channel );  //. 'my_channel' というチャネル（＝ルーム？）にサブスクライブ
+//subscribeMessage( my_channel );  //. 'my_channel' というチャネル（＝ルーム？）にサブスクライブ
 
-function broadcast( message ){
+function broadcast( room, message ){
   wss.clients.forEach( function( client ){
     //console.log( JSON.stringify( client ), message );     //. 個別の client を識別する id は？？
     client.send( JSON.stringify( { message: message } ) );  //. room 機能を使おうとすると、受け取る側で識別する必要がある？？
@@ -139,7 +98,20 @@ wss.on( 'connection', function( ws, request ){
     //. まずこっちが呼ばれて、続いて client.message が呼ばれる
     //console.log( 'ws.message: redis.publish', message );   //. <- ２回呼ばれる？？
     //console.log( message );
-    redis.publish( my_channel, message );  //. Redis をサブスクライブしている全ウェブソケットにパブリッシュする
+
+    //. message = room:text
+    if( message.indexOf( ":" ) > -1 ){
+      var n = message.indexOf( ":" );
+      var room = message.substring( 0, n );
+      var text = message.substring( n + 1 );
+
+      if( rooms.indexOf( room ) == -1 ){
+        subscribeMessage( room );
+      }
+
+      redis.publish( room, text );  //. Redis をサブスクライブしている全ウェブソケットにパブリッシュする
+    }
+
   });
 
   ws.on( 'close', function( code, reason ){

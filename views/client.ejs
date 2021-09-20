@@ -646,7 +646,7 @@ function sendImage(){
     image_src: png
   };
   //socketio.json.emit( 'image_client', msg );
-  ws.send( JSON.stringify( msg ) );
+  ws.send( '<%= room %>:' + JSON.stringify( msg ) );
 }
 </script>
 </body>
