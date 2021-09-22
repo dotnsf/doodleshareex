@@ -58,6 +58,8 @@ var base_url = location.origin + '/';
 var cards = [];    //. カード
 var imgs = {};     //. 画像データ
 
+var room = '<%= room %>';
+
 $(function(){
   init();
 
@@ -74,28 +76,30 @@ $(function(){
     var data = JSON.parse( message.data )
     //console.log( data );  //. { message: '{\"uuid\":\"xx\",\"comment\":\"\",\"timestamp\":16xx,\"image_src\":\"data:image/png;base64,iVBORw..\" }' }
     var msg = data.message; //JSON.parse( data.message );
-    console.log( 'socket_ids', socket_ids );
-    console.log( 'msg', msg );
 
-    var socket_id = msg.uuid;
-    if( socket_ids.indexOf( socket_id ) == -1 ){
-      //. 一覧に追加
-      socket_ids.push( socket_id );
+    //console.log( 'socket_ids', socket_ids );
+    //console.log( 'msg', msg );  
+    //. msg.room が異なっていてもメッセージ自体は受け取るので、ここでフィルタリングする
+    if( msg.room == room ){
+      var socket_id = msg.uuid;
+      if( socket_ids.indexOf( socket_id ) == -1 ){
+        //. 一覧に追加
+        socket_ids.push( socket_id );
 
-      var color = generateColor( msg.uuid /* msg.name */ );
-      var row = addCardGroups( socket_ids.length );
-      if( row > 0 ){
-        //$.colorbox.remove();
-        var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
-          + '<div class="card-body text-' + color + '">'
-          + '<h4 class="card-title">' + msg.name + '</h4>'
-          + '</div>'
-          + '<div id="text_' + socket_id + '">' + ( msg.text ? msg.text : '' ) + '</div>'
-          + '</div>';
-        $('#cards-' + row).append( card );
+        var color = generateColor( msg.uuid /* msg.name */ );
+        var row = addCardGroups( socket_ids.length );
+        if( row > 0 ){
+          var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
+            + '<div class="card-body text-' + color + '">'
+            + '<h4 class="card-title">' + msg.name + '</h4>'
+            + '</div>'
+            + '<div id="text_' + socket_id + '">' + ( msg.text ? msg.text : '' ) + '</div>'
+            + '</div>';
+          $('#cards-' + row).append( card );
+        }
+      }else{
+        $('#text_' + socket_id).html( ( msg.text ? msg.text : '' ) );
       }
-    }else{
-      $('#text_' + socket_id).html( ( msg.text ? msg.text : '' ) );
     }
   };
   ws.onclose = function( event ){
