@@ -74,6 +74,8 @@ $(function(){
     var data = JSON.parse( message.data )
     //console.log( data );  //. { message: '{\"uuid\":\"xx\",\"comment\":\"\",\"timestamp\":16xx,\"image_src\":\"data:image/png;base64,iVBORw..\" }' }
     var msg = data.message; //JSON.parse( data.message );
+    console.log( 'socket_ids', socket_ids );
+    console.log( 'msg', msg );
 
     var socket_id = msg.uuid;
     if( socket_ids.indexOf( socket_id ) == -1 ){
