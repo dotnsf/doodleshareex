@@ -90,10 +90,12 @@ $(function(){
           + '<div class="card-body text-' + color + '">'
           + '<h4 class="card-title">' + msg.name + '</h4>'
           + '</div>'
-          + ( msg.text ? msg.text : '' )
+          + '<div id="text_' + socket_id + '">' + ( msg.text ? msg.text : '' ) + '</div>'
           + '</div>';
         $('#cards-' + row).append( card );
       }
+    }else{
+      $('#text_' + socket_id).html( ( msg.text ? msg.text : '' ) );
     }
   };
   ws.onclose = function( event ){
