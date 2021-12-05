@@ -70,10 +70,12 @@ var base_url = location.origin + '/';
 var cards = [];    //. カード
 var imgs = {};     //. 画像データ
 
+var room = '<%= room %>';
+
 $(function(){
   init();
 
-  QRCode.toCanvas( document.getElementById( 'qrcode' ), base_url + '?room=<%= room %>', function( err ){
+  QRCode.toCanvas( document.getElementById( 'qrcode' ), base_url + '?room=' + room, function( err ){
     if( err ){ console.log( err ); }
   });
 
@@ -87,44 +89,46 @@ $(function(){
     //console.log( data );  //. { message: '{\"uuid\":\"xx\",\"comment\":\"\",\"timestamp\":16xx,\"image_src\":\"data:image/png;base64,iVBORw..\" }' }
     var msg = data.message; //JSON.parse( data.message );
 
-    var socket_id = msg.uuid;
-    if( socket_ids.indexOf( socket_id ) == -1 ){
-      //. 一覧に追加
-      socket_ids.push( socket_id );
+    if( !room || room == msg.room ){
+      var socket_id = msg.uuid;
+      if( socket_ids.indexOf( socket_id ) == -1 ){
+        //. 一覧に追加
+        socket_ids.push( socket_id );
 
-      var color = generateColor( msg.uuid /* msg.name */ );
-      var row = addCardGroups( socket_ids.length );
-      if( row > 0 ){
-        //$.colorbox.remove();
-        var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
-          + '<div class="card-body text-' + color + '">'
-          + '<h4 class="card-title">' + msg.name + '</h4>'
-          + '</div>'
-          + '<a href="#box_content" id="box_content_' + socket_id + '" title="' + msg.name + '">'
-          + '<img class="card-img-bottom" id="image_' + socket_id + '" alt="(image of ' + msg.name + ')" ts="' + msg.timestamp + '"/>'
-          + '</a>'
-          + '</div>';
-        $('#cards-' + row).append( card );
+        var color = generateColor( msg.uuid /* msg.name */ );
+        var row = addCardGroups( socket_ids.length );
+        if( row > 0 ){
+          //$.colorbox.remove();
+          var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
+            + '<div class="card-body text-' + color + '">'
+            + '<h4 class="card-title">' + msg.name + '</h4>'
+            + '</div>'
+            + '<a href="#box_content" id="box_content_' + socket_id + '" title="' + msg.name + '">'
+            + '<img class="card-img-bottom" id="image_' + socket_id + '" alt="(image of ' + msg.name + ')" ts="' + msg.timestamp + '"/>'
+            + '</a>'
+            + '</div>';
+          $('#cards-' + row).append( card );
 
-        //. クラスでまとめて ColorBox の指定
-        $('.card').colorbox({ href: '#box_content', inline: true, transition: 'none', width: '90%', onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 5 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html( '' ); } });
+          //. クラスでまとめて ColorBox の指定
+          $('.card').colorbox({ href: '#box_content', inline: true, transition: 'none', width: '90%', onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 5 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html( '' ); } });
+        }
       }
-    }
 
-    //. 描画
-    var ts = $('#image_'+socket_id).attr( 'ts' );
-    ts = parseInt( ts );
+      //. 描画
+      var ts = $('#image_'+socket_id).attr( 'ts' );
+      ts = parseInt( ts );
 
-    //. 古いデータが遅れてきた場合は更新しない
-    if( msg.timestamp >= ts ){
-      $('#image_'+socket_id).prop( 'src', msg.image_src );
-      $('#image_'+socket_id).prop( 'title', msg.comment );
-      $('#image_'+socket_id).prop( 'ts', msg.timestamp );
+      //. 古いデータが遅れてきた場合は更新しない
+      if( msg.timestamp >= ts ){
+        $('#image_'+socket_id).prop( 'src', msg.image_src );
+        $('#image_'+socket_id).prop( 'title', msg.comment );
+        $('#image_'+socket_id).prop( 'ts', msg.timestamp );
 
-      //. 拡大中のデータだった場合は、拡大画面内容にも反映する
-      var zoom_socket_id = $('#zoom_image').attr( 'socket_id' );
-      if( zoom_socket_id && zoom_socket_id == socket_id ){
-        $('#zoom_image').prop( 'src', msg.image_src );
+        //. 拡大中のデータだった場合は、拡大画面内容にも反映する
+        var zoom_socket_id = $('#zoom_image').attr( 'socket_id' );
+        if( zoom_socket_id && zoom_socket_id == socket_id ){
+          $('#zoom_image').prop( 'src', msg.image_src );
+        }
       }
     }
   };
