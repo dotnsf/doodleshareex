@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<title><%= room %></title>
+<script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css"/> 
+<script src="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+
+<link href="/colorbox.css" rel="stylesheet"/>
+<script src="/jquery.colorbox-min.js"></script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+
+<script>
+$(function(){
+  $.extend( $.fn.dataTable.defaults, {
+    language: {
+      url: '//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json'
+    }
+  });
+ $('#images_table_tbody').html( '' );
+ $.ajax({
+   type: 'GET',
+   url: '/db/images?room=<%= room %>',
+   success: function( result ){
+     if( result && result.status ){
+       result.images.forEach( function( image ){
+         console.log( image );
+         var tr = '<tr>'
+           + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + image._id + '" comment="' + image.comment + '"/></td>'
+           + '<td><img src="/db/image?id=' + image._id + '" width="200"/></td>'
+           + '<td>' + image.name + '</td>'
+           + '<td>' + image.comment + '</td>'
+           + '<td>' + timestamp2datetime( image.timestamp ) + '</td>'
+           + '</tr>';
+         $('#images_table_tbody').append( tr );
+       });
+     }
+   },
+   error: function( e0, e1, e2 ){
+     console.log( e0, e1, e2 );
+   }
+ })
+});
+
+function timestamp2datetime( ts ){
+  if( ts ){
+    var dt = new Date( ts );
+    var yyyy = dt.getFullYear();
+    var mm = dt.getMonth() + 1;
+    var dd = dt.getDate();
+    var hh = dt.getHours();
+    var nn = dt.getMinutes();
+    var ss = dt.getSeconds();
+    var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
+      + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
+    return datetime;
+  }else{
+    return "";
+  }
+}
+
+function selected_images(){
+  var ids = [];
+  var comments = [];
+  $('.chk_images:checked').each( function( idx, chk_image ){
+    console.log( idx, chk_image );
+    var id = $(chk_image).prop( 'id' ).substr( 10 );
+    ids.push( id );
+    var comment = $(chk_image).attr( 'comment' );
+    comments.push( comment );
+  });
+
+  $('#card-groups').html( '' );
+  $.colorbox.remove();
+  var cards = [];
+  for( var i = 0; i < ids.length; i ++ ){
+    var id = ids[i];
+    var card = '<div id="card_' + id + '" class="card">'
+      + '<img class="card-img-top" id="image_' + id + '" src="/db/image?id=' + id + '"/>'
+      + '<div class="card-body"><p class="card-text">' + comments[i] + '</p></div>'
+      + '</div>';
+    cards.push( card );
+  }
+
+  appendCardGroups( '#card-groups', cards );
+  $('#imagesModal').modal();
+}
+
+//. num 個の要素をなるべく正方形に近い表形式の card-group 化する
+function appendCardGroups( cardgroups_selector, cards ){
+  var num = cards.length;
+
+  //. 近づける正方形の一辺の長さ
+  var m = Math.ceil( Math.sqrt( num ) );
+  //. m 個の card-group が必要
+  for( var i = 0; i < m; i ++ ){
+    $(cardgroups_selector).append( '<div class="card-group" id="cards-' + i + '">' );
+  }
+  //. ( m * m ) の正方形の中に表示する
+  for( var i = 0; i < num; i ++ ){
+    var card = cards[i];
+    var row = Math.floor( i / m );
+    $('#cards-'+row).append( card );
+  }
+
+  if( num % m ){
+    var row = Math.floor( num / m );
+    for( var i = num; i % m > 0; i ++ ){
+      var dummycard = '<div class="card"></div>';
+      $('#cards-'+row).append( dummycard );
+    }
+  }
+}
+</script>
+
+<style type="text/css">
+html, body{
+  text-align: center;
+  background-color: #fafafa;
+  font-size: 20px;
+  color: #333;
+}
+</style>
+</head>
+<body>
+
+<h1><%= room %></h1>
+
+<div class="container">
+  <table id="image_table" class="table table-bordered table-striped">
+    <thead>
+      <tr><th>#</th><th>画像</th><th>名前</th><th>コメント</th><th>日付時刻</th></tr>
+    </thead>
+    <tbody id="images_table_tbody">
+    </tbody>
+  </table>
+
+  <button id="selected_images_btn" class="btn btn-primary" onClick="selected_images();">選択画像を表示</button>
+</div>
+
+<div class="modal bd-example-modal-lg fade" id="imagesModal" tabindex="-1" role="dialog" aria-labbelledby="imagesModal" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="imagesModalLabel"></h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="imagesmodal-body">
+        <div id="card-groups">
+        </div>
+      </div>
+      <div class="modal-footer btn-center">
+        <!--
+        <button type="button" class="btn btn-info btn-xs py-0" onClick="migrateFrom();"><i class="fas fa-file-export"></i></button>
+        -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

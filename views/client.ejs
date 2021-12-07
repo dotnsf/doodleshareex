@@ -80,7 +80,7 @@ html, body{
   <br/>
   <input type="button" class="btn btn-xs" id="undo_btn" value="<" onClick="undo();" disabled="disabled"/>
   <input type="button" class="btn btn-xs btn-warning" value="リセット" onClick="resetCanvas();"/>
-  <!-- <input type="button" class="btn btn-xs btn-primary" value="送信" onClick="sendCanvas();"/>  -->
+  <input type="button" class="btn btn-xs btn-primary" value="保存" onClick="saveImage();"/>
   <input type="button" class="btn btn-xs" id="redo_btn" value=">" onClick="redo();" disabled="disabled"/>
 </div>
 
@@ -97,6 +97,13 @@ html, body{
         <button type="button" class="btn btn-primary modal_button" data-dismiss="modal">OK</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="qrcode_toast" role="alert" aria-live="assertive" aria-atomic="true">
+  <div id="toast-body" class="toast-body" style="font-size: 14px;">
+    保存できました。
   </div>
 </div>
 
@@ -441,7 +448,7 @@ function isAndroid(){
   return ( navigator.userAgent.indexOf( 'Android' ) > 0 );
 }
 
-function save(){
+function saveImage(){
   var canvas = document.getElementById( 'mycanvas' );
   if( !canvas || !canvas.getContext ){
     return false;
@@ -473,12 +480,14 @@ function save(){
   formData.append( 'uuid', uuid );
   $.ajax({
     type: 'POST',
-    url: '/image',
+    url: '/db/image',
     data: formData,
     contentType: false,
     processData: false,
     success: function( data, dataType ){
       //$('#comment').val( '' );
+      $('#qrcode_toast').toast( { delay: 1000 } );
+      $('#qrcode_toast').toast( 'show' );
       console.log( data );
     },
     error: function( jqXHR, textStatus, errorThrown ){

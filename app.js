@@ -11,6 +11,11 @@ var express = require( 'express' ),
 
 var settings = require( './settings' );
 
+//. DB
+var dbapi = require('./api/db_cloudant');
+//var dbapi = require('./api/db_postgresql');
+app.use('/db', dbapi);
+
 app.use( bodyParser.urlencoded( { extended: true } ) );
 app.use( bodyParser.json() );
 app.use( express.Router() );
@@ -59,6 +64,18 @@ app.get( '/view', function( req, res ){
   res.render( 'server', { room: room } );
 });
 
+//. 
+app.get( '/savedimages', function( req, res ){
+  var room = req.query.room;
+  if( !room ){ room = 'default'; }
+  var columns = req.query.columns;
+  if( columns ){
+    columns = parseInt( columns );
+  }else{
+    columns = settings.defaultcolumns;
+  }
+  res.render( 'savedimages', { room: room, columns: columns } );
+});
 
 server.on( 'upgrade', function( request, socket, head ){
   wss.handleUpgrade( request, socket, head, function( ws ){
