@@ -12,3 +12,6 @@ exports.db_username = '';
 exports.db_password = '';
 exports.db_url = '';
 exports.db_name = 'doodleshareex';
+
+//. PostgreSQL
+exports.database_url = '';
