@@ -35,9 +35,40 @@ var wss = new WebSocket.Server( { noServer: true } );
 var settings_redis_url = 'REDIS_URL' in process.env ? process.env.REDIS_URL : settings.redis_url;
 var settings_redis_server = 'REDIS_SERVER' in process.env ? process.env.REDIS_SERVER : settings.redis_server;
 var settings_redis_port = 'REDIS_PORT' in process.env ? process.env.REDIS_PORT : settings.redis_port;
+var settings_redis_ca = 'REDIS_CA' in process.env ? process.env.REDIS_CA : settings.redis_ca;
+var settings_redis_db = 'REDIS_DB' in process.env ? process.env.REDIS_DB : settings.redis_db;
+var settings_redis_username = 'REDIS_USERNAME' in process.env ? process.env.REDIS_USERNAME : settings.redis_username;
+var settings_redis_password = 'REDIS_PASSWORD' in process.env ? process.env.REDIS_PASSWORD : settings.redis_password;
 
 //. Redis（サーバーと接続する）
-var redis = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
+//var redis = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
+var params = {};
+if( settings_redis_url ){
+  params = settings_redis_url;
+}else{
+  if( settings_redis_port ){
+    params.port = settings_redis_port;
+  }
+  if( settings_redis_server ){
+    params.host = settings_redis_server;
+  }
+  if( settings_redis_db ){
+      params.db = settings_redis_db;
+  }
+  if( settings_redis_username ){
+      params.username = settings_redis_username;
+  }
+  if( settings_redis_password ){
+      params.password = settings_redis_password;
+  }
+}
+if( settings_redis_ca ){
+  params.tls = {
+    ca: fs.readFileSync( settings_redis_ca )
+  };
+}
+console.log( params );
+var redis = new Redis( params );
 
 //.  HTTP(WebSocket) client（クライアントと接続する）
 //var client = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
