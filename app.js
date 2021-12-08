@@ -50,7 +50,6 @@ if( settings_redis_url ){
 }else{
   if( settings_redis_port ){
     params.port = settings_redis_port;
-    redis_param = 1;
   }
   if( settings_redis_server ){
     params.host = settings_redis_server;
@@ -58,15 +57,12 @@ if( settings_redis_url ){
   }
   if( settings_redis_db ){
     params.db = settings_redis_db;
-    redis_param = 1;
   }
   if( settings_redis_username ){
     params.username = settings_redis_username;
-    redis_param = 1;
   }
   if( settings_redis_password ){
     params.password = settings_redis_password;
-    redis_param = 1;
   }
 }
 if( redis_param == 1 && settings_redis_ca ){
@@ -75,9 +71,6 @@ if( redis_param == 1 && settings_redis_ca ){
   };
 }
 var redis = ( redis_param ? new Redis( params ) : null );
-
-//.  HTTP(WebSocket) client（クライアントと接続する）
-//var client = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
 
 
 //. Page for guest
@@ -110,7 +103,7 @@ app.get( '/savedimages', function( req, res ){
   if( columns ){
     columns = parseInt( columns );
   }else{
-    columns = settings.defaultcolumns;
+    columns = 5;
   }
   res.render( 'savedimages', { room: room, columns: columns } );
 });
@@ -129,15 +122,21 @@ var clients = {};
 function subscribeMessage( room ){
   if( rooms.indexOf( room ) == -1 ){
     rooms.push( room );
-    clients[room] = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );
-    clients[room].subscribe( room );
+    clients[room] = ( redis_param ? new Redis( params ) : null );
+    if( clients[room] ){
+      clients[room].subscribe( room );
+    }
   }
-  clients[room].on( 'message', function( room, message ){
-    //. client.ejs の wsSendButton を押してメッセージが送信された時（channel は実質固定？）
-    //. まず ws.message が呼ばれて、続いてこっちが呼ばれる
-    //console.log( 'client.message: broadcast', channel, message );  //. このサーバーに接続している全ウェブソケットクライアントにブロードキャスト
-    broadcast( room, JSON.parse( message ) );
-  });
+  if( clients[room] ){
+    clients[room].on( 'message', function( room, message ){
+      //. client.ejs の wsSendButton を押してメッセージが送信された時（channel は実質固定？）
+      //. まず ws.message が呼ばれて、続いてこっちが呼ばれる
+      //console.log( 'client.message: broadcast', channel, message );  //. このサーバーに接続している全ウェブソケットクライアントにブロードキャスト
+
+      //. message = {"uuid":"17c3xxxxxx","room":"room1","name":"xxx","comment":"","timestamp":1638952424770,"image_src":"data:image/png;base64,iVBO..."}
+      broadcast( room, JSON.parse( message ) );
+    });
+  }
 }
 //subscribeMessage( my_channel );  //. 'my_channel' というチャネル（＝ルーム？）にサブスクライブ
 
@@ -165,9 +164,14 @@ wss.on( 'connection', function( ws, request ){
         subscribeMessage( room );
       }
 
-      redis.publish( room, text );  //. Redis をサブスクライブしている全ウェブソケットにパブリッシュする
+      if( redis ){
+        redis.publish( room, text );  //. Redis をサブスクライブしている全ウェブソケットにパブリッシュする
+      }else{
+        //. Redis 未使用時のブロードキャストをどうする？(#4)
+        //. message = {"uuid":"17c3xxxxxx","room":"room1","name":"xxx","comment":"","timestamp":1638952424770,"image_src":"data:image/png;base64,iVBO..."}
+        broadcast( room, JSON.parse( text ) );
+      }
     }
-
   });
 
   ws.on( 'close', function( code, reason ){
