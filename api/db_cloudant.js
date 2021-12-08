@@ -3,35 +3,19 @@ var express = require( 'express' ),
     multer = require( 'multer' ),
     bodyParser = require( 'body-parser' ),
     fs = require( 'fs' ),
-    cloudantlib = require( '@cloudant/cloudant' ),
+    { CloudantV1 } = require( '@ibm-cloud/cloudant' ),
     uuidv1 = require( 'uuid/v1' ),
     api = express();
 
 var settings = require( '../settings' );
 
-var db = null;
 var cloudant = null;
-if( settings.db_username && settings.db_password ){
-  cloudant = cloudantlib( { account: settings.db_username, password: settings.db_password } );
-  if( cloudant ){
-    cloudant.db.get( settings.db_name, function( err, body ){
-      if( err ){
-        if( err.statusCode == 404 ){
-          cloudant.db.create( settings.db_name, function( err, body ){
-            if( err ){
-              db = null;
-            }else{
-              db = cloudant.db.use( settings.db_name );
-            }
-          });
-        }else{
-          db = cloudant.db.use( settings.db_name );
-        }
-      }else{
-        db = cloudant.db.use( settings.db_name );
-      }
-    });
-  }
+if( settings.db_username && settings.db_password && settings.db_url ){
+  process.env['CLOUDANT_AUTH_TYPE'] = 'BASIC';
+  process.env['CLOUDANT_USERNAME'] = settings.db_username;
+  process.env['CLOUDANT_PASSWORD'] = settings.db_password;
+  process.env['CLOUDANT_URL'] = settings.db_url;
+  cloudant = CloudantV1.newInstance( { serviceName: 'CLOUDANT' } );
 }
 
 
@@ -43,7 +27,7 @@ api.use( express.Router() );
 api.post( '/image', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
-  if( db ){
+  if( cloudant ){
     var imgpath = req.file.path;
     var imgtype = req.file.mimetype;
     //var imgsize = req.file.size;
@@ -71,18 +55,17 @@ api.post( '/image', function( req, res ){
         }
       }
     };
-    db.insert( params, image_id, function( err, body, header ){
-      if( err ){
-        console.log( err );
-        var p = JSON.stringify( { status: false, error: err }, null, 2 );
-        res.status( 400 );
-        res.write( p );
-        res.end();
-      }else{
-        var p = JSON.stringify( { status: true, id: image_id, body: body }, null, 2 );
-        res.write( p );
-        res.end();
-      }
+    cloudant.postDocument( { db: settings.db_name, document: params } ).then( function( result ){
+      var p = JSON.stringify( { status: true, id: image_id, body: result }, null, 2 );
+      res.write( p );
+      res.end();
+    }).catch( function( err ){
+      console.log( err );
+      var p = JSON.stringify( { status: false, error: err }, null, 2 );
+      res.status( 400 );
+      res.write( p );
+      res.end();
+    }).finally( function(){
       fs.unlink( imgpath, function( err ){} );
     });
   }else{
@@ -93,11 +76,21 @@ api.post( '/image', function( req, res ){
 });
 
 api.get( '/image', function( req, res ){
-  if( db ){
-    var image_id = req.query.id;
-    db.attachment.get( image_id, 'image', function( err1, body1 ){
-      res.contentType( 'image/png' );
-      res.end( body1, 'binary' );
+  if( cloudant ){
+    var id = req.query.id;
+    cloudant.getDocument( { db: settings.db_name, docId: id, attachments: true } ).then( function( result0 ){
+      var att = result0.result._attachments;
+      var content_type = att.image.content_type;
+      var data = att.image.data;
+      var image = new Buffer( data, 'base64' );
+      res.contentType( content_type );
+      res.end( image, 'binary' );
+    }).catch( function( err0 ){
+      console.log( err0 );
+      var p = JSON.stringify( { status: false, error: err0 }, null, 2 );
+      res.status( 400 );
+      res.write( p );
+      res.end();
     });
   }else{
     res.contentType( 'application/json; charset=utf-8' );
@@ -110,31 +103,28 @@ api.get( '/image', function( req, res ){
 api.delete( '/image', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
-  if( db ){
+  if( cloudant ){
     var id = req.query.id;
 
     //. Cloudant から削除
-    db.get( id, null, function( err1, body1, header1 ){
-      if( err1 ){
-        err1.image_id = "error-1";
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, error: err1 } ) );
+    cloudant.getDocument( { db: settings.db_name, docId: id } ).then( function( result0 ){
+      var rev = result0._rev;
+      cloudant.deleteDocument( { db: settings.db_name, docId: id, rev: rev } ).then( function( result ){
+        res.write( JSON.stringify( { status: true, body: result } ) );
         res.end();
-      }
-
-      var rev = body1._rev;
-      db.destroy( id, rev, function( err2, body2, header2 ){
-        if( err2 ){
-          err2.image_id = "error-2";
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, error: err2 } ) );
-          res.end();
-        }
-
-        body2.image_id = id;
-        res.write( JSON.stringify( { status: true, body: body2 } ) );
+      }).catch( function( err ){
+        console.log( err );
+        var p = JSON.stringify( { status: false, error: err }, null, 2 );
+        res.status( 400 );
+        res.write( p );
         res.end();
       });
+    }).catch( function( err0 ){
+      console.log( err0 );
+      var p = JSON.stringify( { status: false, error: err0 }, null, 2 );
+      res.status( 400 );
+      res.write( p );
+      res.end();
     });
   }else{
     res.status( 400 );
@@ -149,37 +139,42 @@ api.get( '/images', function( req, res ){
 
   var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
   var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
-  var room = req.query.room ? req.query.room : settings.defaultroom;
+  var room = req.query.room ? req.query.room : 'default';
 
-  if( db ){
-    db.find( { selector: { room: { "$eq": room } }, fields: [ "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] }, function( err, result ){
-      if( err ){
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-        res.end();
-      }else{
-        var total = result.docs.length;
-        var images = [];
-        result.docs.forEach( function( doc ){
-          if( doc._id.indexOf( '_' ) !== 0 && doc.type && doc.type == 'image' ){
-            images.push( doc );
-          }
-        });
-
-        images.sort( sortByTimestamp );
-
-        if( offset || limit ){
-          if( offset + limit > total ){
-            images = images.slice( offset );
-          }else{
-            images = images.slice( offset, offset + limit );
-          }
+  if( cloudant ){
+    var query = [{
+      selector: { room: { "$eq": room } },
+      fields: [ "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ]
+    }];
+    cloudant.postAllDocsQueries( { db: settings.db_name, includeDocs: true, queries: query } ).then( function( result ){
+      console.log( result.result.results[0].rows );
+      var total = result.result.results.length;
+      var images = [];
+      result.result.results.forEach( function( doc ){
+        if( doc._id.indexOf( '_' ) !== 0 && doc.type && doc.type == 'image' ){
+          images.push( doc );
         }
+      });
 
-        var result = { status: true, room: room, total: total, limit: limit, offset: offset, images: images };
-        res.write( JSON.stringify( result, 2, null ) );
-        res.end();
+      images.sort( sortByTimestamp );
+
+      if( offset || limit ){
+        if( offset + limit > total ){
+          images = images.slice( offset );
+        }else{
+          images = images.slice( offset, offset + limit );
+        }
       }
+
+      var result = { status: true, room: room, total: total, limit: limit, offset: offset, images: images };
+      res.write( JSON.stringify( result, 2, null ) );
+      res.end();
+    }).catch( function( err0 ){
+      console.log( err0 );
+      var p = JSON.stringify( { status: false, error: err0 }, null, 2 );
+      res.status( 400 );
+      res.write( p );
+      res.end();
     });
   }else{
     res.status( 400 );

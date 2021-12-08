@@ -12,9 +12,10 @@ var express = require( 'express' ),
 var settings = require( './settings' );
 
 //. DB
-var dbapi = require('./api/db_cloudant');
+//var dbapi = require( './api/db_cloudant' );
+var dbapi = require( './api/db_cloudant_old' );
 //var dbapi = require('./api/db_postgresql');
-app.use('/db', dbapi);
+app.use( '/db', dbapi );
 
 app.use( bodyParser.urlencoded( { extended: true } ) );
 app.use( bodyParser.json() );
