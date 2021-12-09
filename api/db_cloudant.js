@@ -142,15 +142,13 @@ api.get( '/images', function( req, res ){
   var room = req.query.room ? req.query.room : 'default';
 
   if( cloudant ){
-    var query = [{
-      selector: { room: { "$eq": room } },
-      fields: [ "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ]
-    }];
-    cloudant.postAllDocsQueries( { db: settings.db_name, includeDocs: true, queries: query } ).then( function( result ){
-      console.log( result.result.results[0].rows );
-      var total = result.result.results.length;
+    var selector = { room: { "$eq": room } };
+    cloudant.postFind( { db: settings.db_name, selector: selector, fields: [  "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] } ).then( function( result ){
+      //console.log( JSON.stringify( result ) );
+      //console.log( result.result.docs[0] );
+      var total = result.result.docs.length;
       var images = [];
-      result.result.results.forEach( function( doc ){
+      result.result.docs.forEach( function( doc ){
         if( doc._id.indexOf( '_' ) !== 0 && doc.type && doc.type == 'image' ){
           images.push( doc );
         }
