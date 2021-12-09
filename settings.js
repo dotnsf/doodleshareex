@@ -15,3 +15,6 @@ exports.db_name = 'doodleshareex';
 
 //. PostgreSQL
 exports.database_url = '';
+
+//. DB
+exports.usedb = 'cloudant_old';

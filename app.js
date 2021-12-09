@@ -10,11 +10,13 @@ var express = require( 'express' ),
     app = express();
 
 var settings = require( './settings' );
+var settings_usedb = 'USEDB' in process.env ? process.env.USEDB : settings.usedb;
 
 //. DB
 //var dbapi = require( './api/db_cloudant' );
 //var dbapi = require( './api/db_cloudant_old' );
-var dbapi = require( './api/db_postgresql' );
+//var dbapi = require( './api/db_postgresql' );
+var dbapi = require( './api/db_' + settings_usedb );
 app.use( '/db', dbapi );
 
 app.use( bodyParser.urlencoded( { extended: true } ) );
