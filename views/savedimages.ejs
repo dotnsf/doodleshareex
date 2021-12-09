@@ -32,7 +32,7 @@ $(function(){
          console.log( image );
          var tr = '<tr>'
            + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + image._id + '" comment="' + image.comment + '"/></td>'
-           + '<td><img src="/db/image?id=' + image._id + '" width="200"/></td>'
+           + '<td><img src="/db/image?id=' + ( image._id ? image._id : image.id ) + '" width="200"/></td>'
            + '<td>' + image.name + '</td>'
            + '<td>' + image.comment + '</td>'
            + '<td>' + timestamp2datetime( image.timestamp ) + '</td>'
@@ -49,6 +49,9 @@ $(function(){
 
 function timestamp2datetime( ts ){
   if( ts ){
+    if( typeof ts == 'string' ){
+      ts = parseInt( ts );
+    }
     var dt = new Date( ts );
     var yyyy = dt.getFullYear();
     var mm = dt.getMonth() + 1;

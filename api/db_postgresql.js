@@ -12,13 +12,16 @@ process.env.PGSSLMODE = 'no-verify';
 var PG = require( 'pg' );
 PG.defaults.ssl = true;
 var database_url = 'DATABASE_URL' in process.env ? process.env.DATABASE_URL : settings.database_url; 
+var pg_ca = 'PG_CA' in process.env ? process.env.PG_CA : settings.pg_ca;
 var pg = null;
+var pg_params = { idleTimeoutMillis: ( 3 * 86400 * 1000 ) };
 if( database_url ){
   console.log( 'database_url = ' + database_url );
-  pg = new PG.Pool({
-    connectionString: database_url,
-    idleTimeoutMillis: ( 3 * 86400 * 1000 )
-  });
+  pg_params.connectionString = database_url;
+  if( pg_ca ){
+    pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: true };
+  }
+  pg = new PG.Pool( pg_params );
   pg.on( 'error', function( err ){
     console.log( 'error on working', err );
     if( err.code && err.code.startsWith( '5' ) ){
@@ -30,10 +33,7 @@ if( database_url ){
 function try_reconnect( ts ){
   setTimeout( function(){
     console.log( 'reconnecting...' );
-    pg = new PG.Pool({
-      connectionString: database_url,
-      idleTimeoutMillis: ( 3 * 86400 * 1000 )
-    });
+    pg = new PG.Pool( pg_params );
     pg.on( 'error', function( err ){
       console.log( 'error on retry(' + ts + ')', err );
       if( err.code && err.code.startsWith( '5' ) ){
@@ -50,7 +50,7 @@ api.use( bodyParser.urlencoded( { extended: true } ) );
 api.use( bodyParser.json() );
 api.use( express.Router() );
 
-api.post( '/image', function( req, res ){
+api.post( '/image', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
   var conn = null;
@@ -72,9 +72,12 @@ api.post( '/image', function( req, res ){
       var room = req.body.room;
       var uuid = req.body.uuid;
       var comment = req.body.comment;
+      var timestamp = req.body.timestamp;
+      var name = req.body.name;
+      var ts = ( new Date() ).getTime();
 
-      var sql = "insert into images( id, body, contenttype, timestamp, title, comment, room, uuid, created, updated ) values( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 )";
-      var query = { text: sql, values: [ image_id, img, imgtype, timestamp, comment, room, title, uuid, ts, ts ] };
+      var sql = "insert into images( id, body, contenttype, timestamp, name, comment, room, uuid, created, updated ) values( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 )";
+      var query = { text: sql, values: [ image_id, img, imgtype, timestamp, name, comment, room, uuid, ts, ts ] };
       conn.query( query, function( err, result ){
         fs.unlink( imgpath, function( err ){} );
         if( err ){
@@ -104,7 +107,7 @@ api.post( '/image', function( req, res ){
   }
 });
 
-api.get( '/image', function( req, res ){
+api.get( '/image', async function( req, res ){
   var conn = null;
   try{
     if( pg ){
@@ -155,9 +158,10 @@ api.get( '/image', function( req, res ){
   }
 });
 
-api.delete( '/image', function( req, res ){
+api.delete( '/image', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
+  var conn = null;
   try{
     if( pg ){
       conn = await pg.connect();
@@ -194,13 +198,14 @@ api.delete( '/image', function( req, res ){
 });
 
 
-api.get( '/images', function( req, res ){
+api.get( '/images', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
   var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
   var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
   var room = req.query.room ? req.query.room : 'default';
 
+  var conn = null;
   try{
     if( pg ){
       conn = await pg.connect();
