@@ -69,7 +69,8 @@ if( settings_redis_url ){
 }
 if( redis_param == 1 && settings_redis_ca ){
   redis_params.tls = {
-    ca: fs.readFileSync( settings_redis_ca )
+    //ca: fs.readFileSync( settings_redis_ca )
+    ca: settings_redis_ca
   };
 }
 var redis = ( redis_param ? new Redis( redis_params ) : null );

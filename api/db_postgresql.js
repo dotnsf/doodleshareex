@@ -19,7 +19,8 @@ if( database_url ){
   console.log( 'database_url = ' + database_url );
   pg_params.connectionString = database_url;
   if( pg_ca ){
-    pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: true };
+    //pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: true };
+    pg_params.ssl = { ca: pg_ca, rejectUnauthorized: true };
   }
   pg = new PG.Pool( pg_params );
   pg.on( 'error', function( err ){
