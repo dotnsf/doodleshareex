@@ -19,8 +19,13 @@ if( database_url ){
   console.log( 'database_url = ' + database_url );
   pg_params.connectionString = database_url;
   if( pg_ca ){
-    pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: true };
-    //pg_params.ssl = { ca: pg_ca, rejectUnauthorized: true }; //. #8
+    if( pg_ca.indexOf( '--BEGIN CERTIFICATE--' ) > -1 && pg_ca.indexOf( '--END CERTIFICATE--' ) > -1 ){
+      pg_params.ssl = { ca: pg_ca, rejectUnauthorized: true }; //. #8
+    }else{
+      pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: true };
+    }
+  }else{
+    pg_params.ssl = { rejectUnauthorized: false };
   }
   pg = new PG.Pool( pg_params );
   pg.on( 'error', function( err ){

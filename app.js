@@ -68,10 +68,15 @@ if( settings_redis_url ){
   }
 }
 if( redis_param == 1 && settings_redis_ca ){
-  redis_params.tls = {
-    ca: fs.readFileSync( settings_redis_ca )
-    //ca: settings_redis_ca //. #8
-  };
+  if( settings_redis_ca.indexOf( '--BEGIN CERTIFICATE--' ) > -1 && settings_redis_ca.indexOf( '--END CERTIFICATE--' ) > -1 ){
+    redis_params.tls = {
+      ca: settings_redis_ca //. #8
+    };
+  }else{
+    redis_params.tls = {
+      ca: fs.readFileSync( settings_redis_ca )
+    };
+  }
 }
 var redis = ( redis_param ? new Redis( redis_params ) : null );
 
