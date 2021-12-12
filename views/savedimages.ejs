@@ -94,8 +94,8 @@ function redrawImages(){
 
         var image = groups[i][j];
         var tbl = '<table><tr>'
-          + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + ( image._id ? image._id : image.id ) + '" comment="' + image.comment + '"/></td>'
-          + '<td>' + image.name + '<br/><img src="/db/image?id=' + ( image._id ? image._id : image.id ) + '" title="' + image.comment + '" width="200"/><br/>'
+          + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + ( image._id ? image._id : image.id ) + '" comment="' + image.comment + '" dname="' + image.name + '"/></td>'
+          + '<td>' + name2link( image.name ) + '<br/><img src="/db/image?id=' + ( image._id ? image._id : image.id ) + '" title="' + image.comment + '" width="200"/><br/>'
           + timestamp2datetime( image.timestamp ) + '</td>'
           + '</tr></table>';
         li += tbl;
@@ -134,7 +134,7 @@ function selected_images(){
   var ids = [];
   var comments = [];
   $('.chk_images:checked').each( function( idx, chk_image ){
-    console.log( idx, chk_image );
+    //console.log( idx, chk_image );
     var id = $(chk_image).prop( 'id' ).substr( 10 );
     ids.push( id );
     var comment = $(chk_image).attr( 'comment' );
@@ -181,6 +181,43 @@ function appendCardGroups( cardgroups_selector, cards ){
       $('#cards-'+row).append( dummycard );
     }
   }
+}
+
+//. #9
+function named_images( name ){
+  var ids = [];
+  var comments = [];
+  $('.chk_images').each( function( idx, chk_image ){
+    //console.log( idx, chk_image );
+    var dname = $(chk_image).attr( 'dname' );
+    if( dname == name ){
+      var id = $(chk_image).prop( 'id' ).substr( 10 );
+      ids.push( id );
+      var comment = $(chk_image).attr( 'comment' );
+      comments.push( comment );
+    }
+  });
+
+  $('#card-groups').html( '' );
+  $.colorbox.remove();
+  var cards = [];
+  for( var i = 0; i < ids.length; i ++ ){
+    var id = ids[i];
+    var card = '<div id="card_' + id + '" class="card">'
+      + name + '<br/>'
+      + '<img class="card-img-top" id="image_' + id + '" src="/db/image?id=' + id + '"/>'
+      + '<div class="card-body"><p class="card-text">' + comments[i] + '</p></div>'
+      + '</div>';
+    cards.push( card );
+  }
+
+  appendCardGroups( '#card-groups', cards );
+  $('#imagesModal').modal();
+}
+
+function name2link( name ){
+  var a = '<a href="#" onclick="named_images(\'' + name + '\');">' + name + '</a>';
+  return a;
 }
 </script>
 
