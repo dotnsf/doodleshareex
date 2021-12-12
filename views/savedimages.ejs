@@ -16,18 +16,30 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 
 <script>
+var images = [];
 $(function(){
+  $('#interlude').change( function(){
+    $('#display_interlude').val( $('#interlude').val() );
+    redrawImages();
+  });
+  
   $.extend( $.fn.dataTable.defaults, {
     language: {
       url: '//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json'
     }
   });
- $('#images_table_tbody').html( '' );
- $.ajax({
-   type: 'GET',
-   url: '/db/images?room=<%= room %>',
-   success: function( result ){
-     if( result && result.status ){
+  $('#images_table_tbody').html( '' );
+  $.ajax({
+    type: 'GET',
+    url: '/db/images?room=<%= room %>',
+    success: function( result ){
+      if( result && result.status ){
+        images = [];
+        for( var i = 0; i < result.images.length; i ++ ){
+          images.push( result.images[i] );
+        }
+        redrawImages();
+       /*
        result.images.forEach( function( image ){
          console.log( image );
          var tr = '<tr>'
@@ -39,13 +51,64 @@ $(function(){
            + '</tr>';
          $('#images_table_tbody').append( tr );
        });
-     }
-   },
-   error: function( e0, e1, e2 ){
-     console.log( e0, e1, e2 );
-   }
- })
+       */
+      }
+    },
+    error: function( e0, e1, e2 ){
+      console.log( e0, e1, e2 );
+    }
+  })
 });
+
+function redrawImages(){
+  $('#cards-groups').html( '' );
+  if( images && images.length > 0 ){
+    var interlude = parseInt( $('#interlude').val() );
+    var groups = [];
+    if( interlude == 0 ){
+      groups.push( [] );
+      images.forEach( function( image ){
+        image.timestamp = parseInt( image.timestamp );
+        groups[0].push( image );
+      });
+    }else{
+      var last_timestamp = 0;
+      for( var i = 0; i < images.length; i ++ ){
+        var image = images[i];
+        image.timestamp = parseInt( image.timestamp );
+        if( i == 0 || ( image.timestamp + interlude * 1000 < last_timestamp && groups.length < 6 ) ){
+          groups.push( [] );
+        }
+        groups[groups.length-1].push( image );
+        last_timestamp = image.timestamp;
+      }
+    }
+
+    for( var i = 0 ; i < groups.length; i ++ ){
+      var n = [ 12, 12, 6, 4, 3, 2, 2 ][groups.length];
+      var div_col = '<div class="col-sm-' + n + '">';
+      div_col += '<div class="card"><ul class="list-group list-group-flush">';
+
+      for( var j = 0; j < groups[i].length; j ++ ){
+        var li = '<li class="list-group-item">';
+
+        var image = groups[i][j];
+        var tbl = '<table><tr>'
+          + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + ( image._id ? image._id : image.id ) + '" comment="' + image.comment + '"/></td>'
+          + '<td>' + image.name + '<br/><img src="/db/image?id=' + ( image._id ? image._id : image.id ) + '" title="' + image.comment + '" width="200"/><br/>'
+          + timestamp2datetime( image.timestamp ) + '</td>'
+          + '</tr></table>';
+        li += tbl;
+
+        li += '</li>';
+        div_col += li;
+      }
+ 
+      div_col += '</ul></div></div>';     
+      $('#cards-groups').append( div_col );
+    }
+  }
+}
 
 function timestamp2datetime( ts ){
   if( ts ){
@@ -135,6 +198,19 @@ html, body{
 <h1><%= room %></h1>
 
 <div class="container">
+  <div>
+    <table style="width: 100%;">
+      <tr>
+        <td>
+          <input type="range" class="form-control" id="interlude" min="0" max="200" value="0" step="10"/>
+        </td>
+        <td>
+          <input type="text" style="width: 50px;" value="0" id="display_interlude" readonly/>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <!--
   <table id="image_table" class="table table-bordered table-striped">
     <thead>
       <tr><th>#</th><th>画像</th><th>名前</th><th>コメント</th><th>日付時刻</th></tr>
@@ -142,6 +218,10 @@ html, body{
     <tbody id="images_table_tbody">
     </tbody>
   </table>
+  -->
+  <div class="row" id="cards-groups">
+
+  </div>
 
   <button id="selected_images_btn" class="btn btn-primary" onClick="selected_images();">選択画像を表示</button>
 </div>
