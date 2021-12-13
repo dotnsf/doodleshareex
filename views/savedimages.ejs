@@ -94,8 +94,8 @@ function redrawImages(){
 
         var image = groups[i][j];
         var tbl = '<table><tr>'
-          + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + ( image._id ? image._id : image.id ) + '" comment="' + image.comment + '" dname="' + image.name + '"/></td>'
-          + '<td>' + name2link( image.name ) + '<br/><img src="/db/image?id=' + ( image._id ? image._id : image.id ) + '" title="' + image.comment + '" width="200"/><br/>'
+          + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + ( image._id ? image._id : image.id ) + '" comment="' + image.comment + '" dname="' + image.name + '" uuid="' + image.uuid + '"/></td>'
+          + '<td>' + name2link( image.name, image.uuid ) + '<br/><img src="/db/image?id=' + ( image._id ? image._id : image.id ) + '" title="' + image.comment + '" width="200"/><br/>'
           + timestamp2datetime( image.timestamp ) + '</td>'
           + '</tr></table>';
         li += tbl;
@@ -184,17 +184,20 @@ function appendCardGroups( cardgroups_selector, cards ){
 }
 
 //. #9
-function named_images( name ){
+function named_images( _uuid ){
   var ids = [];
   var comments = [];
+  var names = [];
   $('.chk_images').each( function( idx, chk_image ){
     //console.log( idx, chk_image );
-    var dname = $(chk_image).attr( 'dname' );
-    if( dname == name ){
+    var uuid = $(chk_image).attr( 'uuid' );
+    if( uuid == _uuid ){
       var id = $(chk_image).prop( 'id' ).substr( 10 );
       ids.push( id );
       var comment = $(chk_image).attr( 'comment' );
       comments.push( comment );
+      var name = $(chk_image).attr( 'dname' );
+      names.push( name );
     }
   });
 
@@ -204,7 +207,7 @@ function named_images( name ){
   for( var i = 0; i < ids.length; i ++ ){
     var id = ids[i];
     var card = '<div id="card_' + id + '" class="card">'
-      + name + '<br/>'
+      + names[i] + '<br/>'
       + '<img class="card-img-top" id="image_' + id + '" src="/db/image?id=' + id + '"/>'
       + '<div class="card-body"><p class="card-text">' + comments[i] + '</p></div>'
       + '</div>';
@@ -215,8 +218,8 @@ function named_images( name ){
   $('#imagesModal').modal();
 }
 
-function name2link( name ){
-  var a = '<a href="#" onclick="named_images(\'' + name + '\');">' + name + '</a>';
+function name2link( name, uuid ){
+  var a = '<a href="#" onclick="named_images(\'' + uuid + '\');">' + name + '</a>';
   return a;
 }
 </script>
@@ -239,7 +242,7 @@ html, body{
     <table style="width: 100%;">
       <tr>
         <td>
-          <input type="range" class="form-control" id="interlude" min="0" max="200" value="0" step="10"/>
+          <input type="range" class="form-control" id="interlude" min="0" max="300" value="0" step="10"/>
         </td>
         <td>
           <input type="text" style="width: 50px;" value="0" id="display_interlude" readonly/>
