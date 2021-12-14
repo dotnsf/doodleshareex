@@ -82,18 +82,6 @@ if( redis_param == 1 && settings_redis_ca ){
 var redis = ( redis_param ? new Redis( redis_params ) : null );
 
 //. Basic Auth
-/*
-app.all( '/view', basicAuth( async function( user, pass ){
-  var id = req.query.room;   //. req?
-  if( !id ){ id = 'default'; }
-  var enc_pass = crypto.createHash( 'sha1' ).update( pass ).digest( 'hex' );
-
-  //. 未作成の room が指定された場合の挙動をどうする？
-  //. 未作成でもこの実装だとベーシック認証ダイアログは表示される
-  var r = await dbapi.readRoom( id, user, enc_pass );
-  return r.status;
-}));
-*/
 app.use( '/view', async function( req, res, next ){
   var id = req.query.room;   //. req?
   if( !id ){ id = 'default'; }

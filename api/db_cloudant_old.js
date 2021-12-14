@@ -202,11 +202,11 @@ api.get( '/images', function( req, res ){
 api.readRoom = async function( id, basic_id, basic_password ){
   return new Promise( async ( resolve, reject ) => {
     if( db ){
-      //. Cloudant から削除
       db.get( id, { include_docs: true }, function( err1, body1, header1 ){
         if( err1 ){
-          console.log( err1 );
-          resolve( { status: false, error: err1 } );
+          //console.log( err1 );
+          //resolve( { status: false, error: err1 } );
+          resolve( { status: true, room: null, error: err1 } );
         }else{
           var room = body1;
     

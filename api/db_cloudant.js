@@ -218,8 +218,9 @@ api.readRoom = async function( id, basic_id, basic_password ){
           //resolve( { status: false, error: "not found." } );
         }
       }).catch( function( err0 ){
-        console.log( err0 );
-        resolve( { status: false, error: err0 } );
+        //console.log( err0 );
+        //resolve( { status: false, error: err0 } );
+        resolve( { status: true, room: null, error: err0 } );
       });
     }else{
       resolve( { status: false, error: "db is not initialized." } );
