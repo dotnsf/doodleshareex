@@ -31,7 +31,7 @@ spec:
         image: dotnsf/doodleshareex
         env:
         - name: REDIS_SERVER
-          value: "redisserver"
+          value: "159.122.175.21"
         - name: REDIS_PORT
           value: "30379"
         - name: USEDB
