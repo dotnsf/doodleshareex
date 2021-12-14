@@ -10,30 +10,35 @@ var express = require( 'express' ),
 
 var settings = require( '../settings' );
 
+var settings_db_username = 'DB_USERNAME' in process.env ? process.env.DB_USERNAME : settings.db_username; 
+var settings_db_password = 'DB_PASSWORD' in process.env ? process.env.DB_PASSWORD : settings.db_password; 
+var settings_db_url = 'DB_URL' in process.env ? process.env.DB_URL : settings.db_url; 
+var settings_db_name = 'DB_NAME' in process.env ? process.env.DB_NAME : settings.db_name; 
+
 var db = null;
 var cloudant = null;
-if( settings.db_username && settings.db_password ){
-  var params = { account: settings.db_username, password: settings.db_password };
-  if( settings.db_url ){
-    params.url = settings.db_url;
+if( settings_db_username && settings_db_password ){
+  var params = { account: settings_db_username, password: settings_db_password };
+  if( settings_db_url ){
+    params.url = settings_db_url;
   }
   cloudant = cloudantlib( params );
   if( cloudant ){
-    cloudant.db.get( settings.db_name, function( err, body ){
+    cloudant.db.get( settings_db_name, function( err, body ){
       if( err ){
         if( err.statusCode == 404 ){
-          cloudant.db.create( settings.db_name, function( err, body ){
+          cloudant.db.create( settings_db_name, function( err, body ){
             if( err ){
               db = null;
             }else{
-              db = cloudant.db.use( settings.db_name );
+              db = cloudant.db.use( settings_db_name );
             }
           });
         }else{
-          db = cloudant.db.use( settings.db_name );
+          db = cloudant.db.use( settings_db_name );
         }
       }else{
-        db = cloudant.db.use( settings.db_name );
+        db = cloudant.db.use( settings_db_name );
       }
     });
   }

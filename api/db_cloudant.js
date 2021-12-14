@@ -10,12 +10,17 @@ var express = require( 'express' ),
 
 var settings = require( '../settings' );
 
+var settings_db_username = 'DB_USERNAME' in process.env ? process.env.DB_USERNAME : settings.db_username; 
+var settings_db_password = 'DB_PASSWORD' in process.env ? process.env.DB_PASSWORD : settings.db_password; 
+var settings_db_url = 'DB_URL' in process.env ? process.env.DB_URL : settings.db_url; 
+var settings_db_name = 'DB_NAME' in process.env ? process.env.DB_NAME : settings.db_name; 
+
 var cloudant = null;
-if( settings.db_username && settings.db_password && settings.db_url ){
+if( settings_db_username && settings_db_password && settings_db_url ){
   process.env['CLOUDANT_AUTH_TYPE'] = 'BASIC';
-  process.env['CLOUDANT_USERNAME'] = settings.db_username;
-  process.env['CLOUDANT_PASSWORD'] = settings.db_password;
-  process.env['CLOUDANT_URL'] = settings.db_url;
+  process.env['CLOUDANT_USERNAME'] = settings_db_username;
+  process.env['CLOUDANT_PASSWORD'] = settings_db_password;
+  process.env['CLOUDANT_URL'] = settings_db_url;
   cloudant = CloudantV1.newInstance( { serviceName: 'CLOUDANT' } );
 }
 
@@ -56,7 +61,7 @@ api.post( '/image', function( req, res ){
         }
       }
     };
-    cloudant.postDocument( { db: settings.db_name, document: params } ).then( function( result ){
+    cloudant.postDocument( { db: settings_db_name, document: params } ).then( function( result ){
       var p = JSON.stringify( { status: true, id: image_id, body: result }, null, 2 );
       res.write( p );
       res.end();
@@ -79,7 +84,7 @@ api.post( '/image', function( req, res ){
 api.get( '/image', function( req, res ){
   if( cloudant ){
     var id = req.query.id;
-    cloudant.getDocument( { db: settings.db_name, docId: id, attachments: true } ).then( function( result0 ){
+    cloudant.getDocument( { db: settings_db_name, docId: id, attachments: true } ).then( function( result0 ){
       var att = result0.result._attachments;
       var content_type = att.image.content_type;
       var data = att.image.data;
@@ -108,9 +113,9 @@ api.delete( '/image', function( req, res ){
     var id = req.query.id;
 
     //. Cloudant から削除
-    cloudant.getDocument( { db: settings.db_name, docId: id } ).then( function( result0 ){
+    cloudant.getDocument( { db: settings_db_name, docId: id } ).then( function( result0 ){
       var rev = result0._rev;
-      cloudant.deleteDocument( { db: settings.db_name, docId: id, rev: rev } ).then( function( result ){
+      cloudant.deleteDocument( { db: settings_db_name, docId: id, rev: rev } ).then( function( result ){
         res.write( JSON.stringify( { status: true, body: result } ) );
         res.end();
       }).catch( function( err ){
@@ -144,7 +149,7 @@ api.get( '/images', function( req, res ){
 
   if( cloudant ){
     var selector = { room: { "$eq": room } };
-    cloudant.postFind( { db: settings.db_name, selector: selector, fields: [  "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] } ).then( function( result ){
+    cloudant.postFind( { db: settings_db_name, selector: selector, fields: [  "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] } ).then( function( result ){
       //console.log( JSON.stringify( result ) );
       //console.log( result.result.docs[0] );
       var total = result.result.docs.length;
@@ -187,7 +192,7 @@ api.readRoom = async function( id, basic_id, basic_password ){
   return new Promise( async ( resolve, reject ) => {
     if( cloudant ){
       //. Cloudant から削除
-      cloudant.getDocument( { db: settings.db_name, docId: id } ).then( function( result0 ){
+      cloudant.getDocument( { db: settings_db_name, docId: id } ).then( function( result0 ){
         var room = result0;
     
         if( room ){
@@ -245,7 +250,7 @@ api.post( '/room/:id', async function( req, res ){
         created: ts,
         updated: ts
       };
-      cloudant.postDocument( { db: settings.db_name, document: params } ).then( function( result ){
+      cloudant.postDocument( { db: settings_db_name, document: params } ).then( function( result ){
         var p = JSON.stringify( { status: true, id: id, body: result }, null, 2 );
         res.write( p );
         res.end();
@@ -320,7 +325,7 @@ api.put( '/room/:id', async function( req, res ){
       r.room.basic_password = enc_new_basic_password;
       r.room.updated = ts;
 
-      cloudant.postDocument( { db: settings.db_name, document: r.room } ).then( function( result ){
+      cloudant.postDocument( { db: settings_db_name, document: r.room } ).then( function( result ){
         var p = JSON.stringify( { status: true, id: id, body: result }, null, 2 );
         res.write( p );
         res.end();
@@ -362,7 +367,7 @@ api.delete( '/room/:id', async function( req, res ){
     var r = await api.readRoom( id, basic_id, enc_basic_password  );
     if( r.status && r.room ){
       var rev = r.room._rev;
-      cloudant.deleteDocument( { db: settings.db_name, docId: id, rev: rev } ).then( function( result ){
+      cloudant.deleteDocument( { db: settings_db_name, docId: id, rev: rev } ).then( function( result ){
         res.write( JSON.stringify( { status: true } ) );
         res.end();
       }).catch( function( err ){
