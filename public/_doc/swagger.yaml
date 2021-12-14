@@ -1,0 +1,206 @@
+swagger: '2.0'
+info:
+  description: Doodle Share Ex API ドキュメント
+  version: 0.0.1
+  title: Doodle Share Ex REST APIs
+host: localhost:8080
+basePath: /db
+tags:
+  - name: image
+    description: Image APIs
+  - name: room
+    description: Room APIs
+schemes:
+  - http
+  - https
+paths:
+  /images:
+    get:
+      tags:
+        - image
+      summary: 全画像取得
+      description: 特定room内の全画像取得
+      produces:
+        - application/json
+      parameters:
+        - name: room
+          type: string
+          in: query
+          description: room
+          required: true
+        - name: limit
+          type: string
+          in: query
+          description: limit 
+        - name: offset
+          type: string
+          in: query
+          description: offset 
+      responses:
+        '200':
+          description: 成功
+        '400':
+          description: エラー
+  /image:
+#    post:
+#      tags:
+#        - image
+#      summary: 画像保存
+#      description: 新規画像保存
+#      produces:
+#        - application/json
+#      parameters:
+#        - name: id
+#          type: string
+#          in: query
+#          description: image id
+#          required: true
+#      responses:
+#        '200':
+#          description: 成功
+#        '400':
+#          description: エラー
+    get:
+      tags:
+        - image
+      summary: 画像取得
+      description: 特定idの画像取得
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          type: string
+          in: query
+          description: image id
+          required: true
+      responses:
+        '200':
+          description: 成功
+        '400':
+          description: エラー
+    delete:
+      tags:
+        - image
+      summary: 画像削除
+      description: 特定idの画像削除
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          type: string
+          in: query
+          description: image id
+          required: true
+      responses:
+        '200':
+          description: 成功
+        '400':
+          description: エラー
+  /room/{id}:
+    post:
+      tags:
+        - room
+      summary: room作成
+      description: room作成
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          type: string
+          in: path
+          description: room id
+          required: true
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/RoomRequest'
+      responses:
+        '200':
+          description: 成功
+        '400':
+          description: エラー
+    get:
+      tags:
+        - room
+      summary: room取得
+      description: room取得
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          type: string
+          in: path
+          description: room id
+          required: true
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/RoomRequest'
+      responses:
+        '200':
+          description: 成功
+        '400':
+          description: エラー
+    put:
+      tags:
+        - room
+      summary: room更新
+      description: room更新
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          type: string
+          in: path
+          description: room id
+          required: true
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/RoomRequest'
+      responses:
+        '200':
+          description: 成功
+        '400':
+          description: エラー
+    delete:
+      tags:
+        - room
+      summary: room削除
+      description: room削除
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          type: string
+          in: path
+          description: room id
+          required: true
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/RoomRequest'
+      responses:
+        '200':
+          description: 成功
+        '400':
+          description: エラー
+definitions:
+  RoomRequest:
+    type: object
+    properties:
+      uuid:
+        type: string
+        description: UUID
+      basic_id:
+        type: string
+        description: Basic ID
+      basic_password:
+        type: string
+        description: Basic パスワード
+      new_basic_id:
+        type: string
+        description: New Basic ID
+      new_basic_password:
+        type: string
+        description: New Basic パスワード

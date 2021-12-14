@@ -2,6 +2,7 @@
 
 var express = require( 'express' ),
     bodyParser = require( 'body-parser' ),
+    crypto = require( 'crypto' ),
     ejs = require( 'ejs' ),
     fs = require( 'fs' ),
     http = require( 'http' ),
@@ -80,6 +81,47 @@ if( redis_param == 1 && settings_redis_ca ){
 }
 var redis = ( redis_param ? new Redis( redis_params ) : null );
 
+//. Basic Auth
+/*
+app.all( '/view', basicAuth( async function( user, pass ){
+  var id = req.query.room;   //. req?
+  if( !id ){ id = 'default'; }
+  var enc_pass = crypto.createHash( 'sha1' ).update( pass ).digest( 'hex' );
+
+  //. 未作成の room が指定された場合の挙動をどうする？
+  //. 未作成でもこの実装だとベーシック認証ダイアログは表示される
+  var r = await dbapi.readRoom( id, user, enc_pass );
+  return r.status;
+}));
+*/
+app.use( '/view', async function( req, res, next ){
+  var id = req.query.room;   //. req?
+  if( !id ){ id = 'default'; }
+
+  var r = await dbapi.readRoom( id );
+  if( r && r.status ){
+    //. ID&PWなし (or ID&PWが正しい) or 指定のIDを持つroomなし
+    return next();
+  }else{
+    //. 指定のIDを持つroomは存在しているが ID&PW 間違い
+    if( req.headers.authorization ){
+      var b64auth = req.headers.authorization.split( ' ' )[1] || '';
+      var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
+      var enc_pass = crypto.createHash( 'sha1' ).update( pass ).digest( 'hex' );
+      var r = await dbapi.readRoom( id, user, enc_pass );
+      if( r && r.status ){
+        //. ID&PWが正しい
+        return next();
+      }else{
+        res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+        res.status( 401 ).send( 'Authentication required.' );
+      }
+    }else{
+      res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+      res.status( 401 ).send( 'Authentication required.' );
+    }
+  }
+});
 
 //. Page for guest
 app.get( '/client', function( req, res ){

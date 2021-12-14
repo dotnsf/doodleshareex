@@ -2,6 +2,7 @@
 var express = require( 'express' ),
     multer = require( 'multer' ),
     bodyParser = require( 'body-parser' ),
+    crypto = require( 'crypto' ),
     fs = require( 'fs' ),
     uuidv1 = require( 'uuid/v1' ),
     api = express();
@@ -260,6 +261,280 @@ api.get( '/images', async function( req, res ){
     }
   }
 });
+
+//. #11
+api.readRoom = async function( id, basic_id, basic_password ){
+  return new Promise( async ( resolve, reject ) => {
+    var conn = null;
+    try{
+      if( pg ){
+        conn = await pg.connect();
+
+        var sql = "select * from rooms where id = $1";
+        var query = { text: sql, values: [ id ] };
+        conn.query( query, function( err, result ){
+          if( err ){
+            console.log( err );
+            resolve( { status: false, error: err } );
+          }else{
+            //console.log( result );
+            var room = null;
+            if( result.rows.length > 0 && result.rows[0].id ){
+              try{
+                room = result.rows[0];
+              }catch( e ){
+              }
+            }
+    
+            if( room ){
+              if( !room.basic_id && !room.basic_password ){
+                resolve( { status: true, room: room } );
+              }else{
+                if( room.basic_id == basic_id && room.basic_password == basic_password ){
+                  resolve( { status: true, room: room } );
+                }else{
+                  resolve( { status: false, error: 'wrong credentials' } );
+                }
+              }
+            }else{
+              //. 指定の room が見つからなかった場合、この扱いをどうする？
+  
+              //.   - [ ] 指定の room を自動作成した上でアクセスを認める？
+              //.         その場合のパスワードなどはどうする？？
+              //room = ...
+              //resolve( { status: true, room: room } );
+              //.   - [ ] room は作成しないが、アクセス（利用）を認める？
+              resolve( { status: true, room: null } );
+              //.   - [ ] room を作る前のアクセスは認めない？
+              //resolve( { status: false, error: "not found." } );
+            }
+          }
+        });
+      }else{
+        resolve( { status: false, error: "db is not initialized." } );
+      }
+    }catch( e ){
+      console.log( e );
+      resolve( { status: false, error: e } );
+    }finally{
+      if( conn ){
+        conn.release();
+      }
+    }
+  });
+}
+
+api.post( '/room/:id', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var conn = null;
+  try{
+    if( pg ){
+      conn = await pg.connect();
+
+      var id = req.params.id;
+      var r = await api.readRoom( id );
+      if( !r.status || r.room == null ){
+        //. 指定の room が存在していないことを確認できたので、作成
+        var uuid = req.body.uuid;
+        var basic_id = req.body.basic_id;
+        var basic_password = req.body.basic_password;
+        var enc_basic_password = getHash( basic_password );
+        var ts = ( new Date() ).getTime();
+
+        var sql = "insert into rooms( id, uuid, basic_id, basic_password, created, updated ) values( $1, $2, $3, $4, $5, $6 )";
+        var query = { text: sql, values: [ id, uuid, basic_id, enc_basic_password, ts, ts ] };
+        conn.query( query, function( err, result ){
+          if( err ){
+            console.log( err );
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, error: err } ) );
+            res.end();
+          }else{
+            res.write( JSON.stringify( { status: true } ) );
+            res.end();
+          }
+        });
+      }else{
+        res.status( 400 );
+        res.write( JSON.stringify( { status: false, error: 'room existed.' } ) );
+        res.end();
+      }
+    }else{
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, error: 'db is not initialized.' } ) );
+      res.end();
+    }
+  }catch( e ){
+    console.log( e );
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, error: e } ) );
+    res.end();
+  }finally{
+    if( conn ){
+      conn.release();
+    }
+  }
+});
+
+api.get( '/room/:id', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  if( pg ){
+    var id = req.params.id;
+    var uuid = req.body.uuid;
+    var basic_id = req.body.basic_id;
+    var basic_password = req.body.basic_password;
+    var enc_basic_password = getHash( basic_password );
+    var r = await api.readRoom( id, basic_id, enc_basic_password  );
+    if( r.status && r.room ){
+      res.write( JSON.stringify( { status: true, room: r.room } ) );
+      res.end();
+    }else{
+      if( r.error ){
+        res.status( 400 );
+        res.write( JSON.stringify( { status: false, error: r.error } ) );
+        res.end();
+      }else{
+        //. まだ存在していない
+        res.status( 400 );
+        res.write( JSON.stringify( { status: false, error: "not existed." } ) );
+        res.end();
+      }
+    }
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, error: 'db is not initialized.' } ) );
+    res.end();
+  }
+});
+
+api.put( '/room/:id', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var conn = null;
+  try{
+    if( pg ){
+      conn = await pg.connect();
+
+      var id = req.params.id;
+      var uuid = req.body.uuid;
+      var basic_id = req.body.basic_id;
+      var basic_password = req.body.basic_password;
+      var enc_basic_password = getHash( basic_password );
+      var r = await api.readRoom( id, basic_id, enc_basic_password  );
+      if( r.status && r.room ){
+        var new_basic_id = req.body.new_basic_id;
+        var new_basic_password = req.body.new_basic_password;
+        var enc_new_basic_password = getHash( new_basic_password );
+        var ts = ( new Date() ).getTime();
+
+        var sql = "update rooms set basic_id = $1, basic_password = $2, updated = $3 where id = $4";
+        var query = { text: sql, values: [ new_basic_id, enc_new_basic_password, ts, id ] };
+        conn.query( query, function( err, result ){
+          if( err ){
+            console.log( err );
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, error: err } ) );
+            res.end();
+          }else{
+            res.write( JSON.stringify( { status: true } ) );
+            res.end();
+          }
+        });
+      }else{
+        if( r.error ){
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: r.error } ) );
+          res.end();
+        }else{
+          //. まだ存在していない
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: "not existed." } ) );
+          res.end();
+        }
+      }
+    }else{
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, error: 'db is not initialized.' } ) );
+      res.end();
+    }
+  }catch( e ){
+    console.log( e );
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, error: e } ) );
+    res.end();
+  }finally{
+    if( conn ){
+      conn.release();
+    }
+  }
+});
+
+api.delete( '/room/:id', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var conn = null;
+  try{
+    if( pg ){
+      conn = await pg.connect();
+
+      var id = req.params.id;
+      var uuid = req.body.uuid;
+      var basic_id = req.body.basic_id;
+      var basic_password = req.body.basic_password;
+      var enc_basic_password = getHash( basic_password );
+      var r = await api.readRoom( id, basic_id, enc_basic_password  );
+      if( r.status && r.room ){
+        var sql = "delete from rooms where id = $1";
+        var query = { text: sql, values: [ id ] };
+        conn.query( query, function( err, result ){
+          if( err ){
+            console.log( err );
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, error: err } ) );
+            res.end();
+          }else{
+            res.write( JSON.stringify( { status: true } ) );
+            res.end();
+          }
+        });
+      }else{
+        if( r.error ){
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: r.error } ) );
+          res.end();
+        }else{
+          //. まだ存在していない
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: "not existed." } ) );
+          res.end();
+        }
+      }
+    }else{
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, error: 'db is not initialized.' } ) );
+      res.end();
+    }
+  }catch( e ){
+    console.log( e );
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, error: e } ) );
+    res.end();
+  }finally{
+    if( conn ){
+      conn.release();
+    }
+  }
+});
+
+function getHash( s ){
+  if( s ){
+    return crypto.createHash( 'sha1' ).update( s ).digest( 'hex' );
+  }else{
+    return '';
+  }
+}
 
 
 function timestamp2datetime( ts ){
