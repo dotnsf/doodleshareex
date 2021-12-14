@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redisserver
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+    nodePort: 30379
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-commander
+spec:
+  selector:
+    app: redis-commander
+  ports:
+  - port: 8081
+    protocol: TCP
+    targetPort: 8081
+    nodePort: 30081
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-commander
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-commander
+  template:
+    metadata:
+      labels:
+        app: redis-commander
+    spec:
+      containers:
+      - name: redis-commander
+        image: rediscommander/redis-commander
+        env:
+        - name: REDIS_HOST
+          value: "159.122.175.21"
+        - name: REDIS_PORT
+          value: "30379"
+        ports:
+        - containerPort: 8081
