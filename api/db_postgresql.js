@@ -29,6 +29,8 @@ if( database_url ){
     //. #17 PostgreSQL との接続が SSL でなければ、これすらも不要？
     //. この行をコメントにすると、SSL 接続時に PG_CA の指定は必須になる
     //pg_params.ssl = { rejectUnauthorized: false };
+    PG.defaults.ssl = false;
+    pg_params.ssl = false;
   }
   pg = new PG.Pool( pg_params );
   pg.on( 'error', function( err ){
@@ -65,7 +67,7 @@ api.post( '/image', async function( req, res ){
   var conn = null;
   try{
     if( pg ){
-      conn = await pg.connect();
+      conn = await pg.connect();  //. Error: The server does not support SSL connections
 
       var imgpath = req.file.path;
       var imgtype = req.file.mimetype;
