@@ -26,7 +26,9 @@ if( database_url ){
       pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: true };
     }
   }else{
-    pg_params.ssl = { rejectUnauthorized: false };
+    //. #17 PostgreSQL との接続が SSL でなければ、これすらも不要？
+    //. この行をコメントにすると、SSL 接続時に PG_CA の指定は必須になる
+    //pg_params.ssl = { rejectUnauthorized: false };
   }
   pg = new PG.Pool( pg_params );
   pg.on( 'error', function( err ){
