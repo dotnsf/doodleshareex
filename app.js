@@ -78,7 +78,7 @@ if( redis_param == 1 && settings_redis_ca ){
     };
   }
 }
-console.log( { redis_params } );
+//console.log( { redis_params } );
 var redis = ( redis_param ? new Redis( redis_params ) : null );
 
 //. Basic Auth
