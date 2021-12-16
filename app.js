@@ -14,9 +14,6 @@ var settings = require( './settings' );
 var settings_usedb = 'USEDB' in process.env ? process.env.USEDB : settings.usedb;
 
 //. DB
-//var dbapi = require( './api/db_cloudant' );
-//var dbapi = require( './api/db_cloudant_old' );
-//var dbapi = require( './api/db_postgresql' );
 var dbapi = require( './api/db_' + settings_usedb );
 app.use( '/db', dbapi );
 
@@ -71,14 +68,17 @@ if( settings_redis_url ){
 if( redis_param == 1 && settings_redis_ca ){
   if( settings_redis_ca.indexOf( '--BEGIN CERTIFICATE--' ) > -1 && settings_redis_ca.indexOf( '--END CERTIFICATE--' ) > -1 ){
     redis_params.tls = {
-      ca: settings_redis_ca //. #8
+      rejectUnauthorized: false, //. #19
+      ca: settings_redis_ca //. #8,
     };
   }else{
     redis_params.tls = {
+      rejectUnauthorized: false, //. #19
       ca: fs.readFileSync( settings_redis_ca )
     };
   }
 }
+console.log( { redis_params } );
 var redis = ( redis_param ? new Redis( redis_params ) : null );
 
 //. Basic Auth

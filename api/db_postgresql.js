@@ -21,9 +21,11 @@ if( database_url ){
   pg_params.connectionString = database_url;
   if( pg_ca ){
     if( pg_ca.indexOf( '--BEGIN CERTIFICATE--' ) > -1 && pg_ca.indexOf( '--END CERTIFICATE--' ) > -1 ){
-      pg_params.ssl = { ca: pg_ca, rejectUnauthorized: true }; //. #8
+      //pg_params.ssl = { ca: pg_ca, rejectUnauthorized: true }; //. #8
+      pg_params.ssl = { ca: pg_ca, rejectUnauthorized: false }; //. #18
     }else{
-      pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: true };
+      //pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: true };
+      pg_params.ssl = { ca: fs.readFileSync( pg_ca, 'utf-8' ), rejectUnauthorized: false };  //. #18
     }
   }else{
     //. #17 PostgreSQL との接続が SSL でなければ、これすらも不要？
@@ -32,6 +34,7 @@ if( database_url ){
     PG.defaults.ssl = false;
     pg_params.ssl = false;
   }
+  //console.log( { pg_params } );
   pg = new PG.Pool( pg_params );
   pg.on( 'error', function( err ){
     console.log( 'error on working', err );
