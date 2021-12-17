@@ -154,6 +154,18 @@ server.on( 'upgrade', function( request, socket, head ){
   });
 });
 
+//. #22
+app.post( '/setcookie', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var value = req.body.value;
+  //console.log( 'value = ' + value );
+  res.setHeader( 'Set-Cookie', value );
+
+  res.write( JSON.stringify( { status: true }, 2, null ) );
+  res.end();
+});
+
 //var my_channel = 'my_channel';
 var rooms = [];
 var clients = {};

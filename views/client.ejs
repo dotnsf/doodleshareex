@@ -7,6 +7,7 @@
 <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"/>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 <link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet"/>
+<script src="/common.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 
 <link rel="shortcut icon" href="/icon.png" type="image/png"/>
@@ -583,52 +584,6 @@ function redrawCanvas(){
   }
 
   sendImage();
-}
-
-function generateUUID(){
-  //. Cookie の値を調べて、有効ならその値で、空だった場合は生成する
-  var did = null;
-  cookies = document.cookie.split(";");
-  for( var i = 0; i < cookies.length; i ++ ){
-    var str = cookies[i].split("=");
-    var une = unescape( str[0] );
-    if( une == " deviceid" || une == "deviceid" ){
-      did = unescape( unescape( str[1] ) );
-    }
-  }
-
-  if( did == null ){
-    var s = 1000;
-    did = ( new Date().getTime().toString(16) ) + Math.floor( s * Math.random() ).toString(16);
-  }
-
-  var dt = ( new Date() );
-  var ts = dt.getTime();
-  ts += 1000 * 60 * 60 * 24 * 365 * 100; //. 100 years
-  dt.setTime( ts );
-  var value = ( "deviceid=" + did + '; expires=' + dt.toUTCString() + '; path=/' );
-  if( isMobileSafari() ){
-    $.ajax({
-      url: '/setcookie',
-      type: 'POST',
-      data: { value: value },
-      success: function( r ){
-        //console.log( 'success: ', r );
-      },
-      error: function( e0, e1, e2 ){
-        //console.log( 'error: ', e1, e2 );
-      }
-    });
-  }else{
-    document.cookie = ( value );
-    //console.log( 'value: ', value );
-  }
-
-  return did;
-}
-
-function isMobileSafari(){
-  return ( navigator.userAgent.indexOf( 'Safari' ) > 0 && navigator.userAgent.indexOf( 'Mobile' ) > 0 );
 }
 
 function sendImage(){

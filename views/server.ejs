@@ -10,6 +10,7 @@
 
 <link href="/colorbox.css" rel="stylesheet"/>
 <script src="/jquery.colorbox-min.js"></script>
+<script src="/common.js"></script>
 
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 
@@ -64,6 +65,8 @@ html, body{
 </div>
 
 <script>
+var uuid = generateUUID();
+
 var socket_ids = [];
 var ws = null;
 
