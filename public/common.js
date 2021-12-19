@@ -1,4 +1,24 @@
 
+function timestamp2datetime( ts ){
+  if( ts ){
+    if( typeof ts == 'string' ){
+      ts = parseInt( ts );
+    }
+    var dt = new Date( ts );
+    var yyyy = dt.getFullYear();
+    var mm = dt.getMonth() + 1;
+    var dd = dt.getDate();
+    var hh = dt.getHours();
+    var nn = dt.getMinutes();
+    var ss = dt.getSeconds();
+    var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
+      + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
+    return datetime;
+  }else{
+    return "";
+  }
+}
+
 function generateUUID(){
   //. Cookie の値を調べて、有効ならその値で、空だった場合は生成する
   var did = null;

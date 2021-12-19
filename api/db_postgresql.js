@@ -399,9 +399,14 @@ api.get( '/room/:id', async function( req, res ){
       res.end();
     }else{
       if( r.error ){
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, error: r.error } ) );
-        res.end();
+        if( r.error == 'wrong credentials' ){
+          res.write( JSON.stringify( { status: true, room: null, error: r.error } ) );
+          res.end();
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: r.error } ) );
+          res.end();
+        }
       }else{
         //. まだ存在していない
         res.status( 400 );

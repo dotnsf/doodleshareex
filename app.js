@@ -146,6 +146,10 @@ app.get( '/savedimages', function( req, res ){
   res.render( 'savedimages', { room: room, columns: columns } );
 });
 
+app.get( '/basicauth', function( req, res ){
+  res.render( 'basicauth', {} );
+});
+
 server.on( 'upgrade', function( request, socket, head ){
   wss.handleUpgrade( request, socket, head, function( ws ){
     //. client.ejs の wsButton を押して接続した時
