@@ -540,6 +540,63 @@ api.delete( '/room/:id', async function( req, res ){
   }
 });
 
+api.get( '/rooms', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
+  var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
+  var uuid = req.query.uuid ? req.query.uuid : '';
+
+  var conn = null;
+  try{
+    if( pg && uuid ){
+      conn = await pg.connect();
+
+      var sql = "select * from rooms where uuid = $1 order by updated desc";
+      if( limit ){
+        sql += " limit " + limit;
+      }
+      if( offset ){
+        sql += " start " + offset;
+      }
+      var query = { text: sql, values: [ uuid ] };
+      conn.query( query, function( err, result ){
+        if( err ){
+          console.log( err );
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: err } ) );
+          res.end();
+        }else{
+          var rooms = [];
+          if( result.rows.length > 0 ){
+            try{
+              rooms = result.rows;
+            }catch( e ){
+            }
+          }
+  
+          var result = { status: true, limit: limit, offset: offset, rooms: rooms };
+          res.write( JSON.stringify( result, null, 2 ) );
+          res.end();
+        }
+      });
+    }else{
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, error: 'db is not initialized.' } ) );
+      res.end();
+    }
+  }catch( e ){
+    console.log( e );
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, error: e } ) );
+    res.end();
+  }finally{
+    if( conn ){
+      conn.release();
+    }
+  }
+});
+
 function getHash( s ){
   if( s ){
     return crypto.createHash( 'sha1' ).update( s ).digest( 'hex' );

@@ -26,6 +26,37 @@ $(function(){
       url: '//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json'
     }
   });
+
+  $('#rooms-table-body').html( '' );
+  $.ajax({
+    type: 'GET',
+    url: '/db/rooms?uuid=' + uuid,
+    success: function( result ){
+      console.log( result );
+      if( result && result.status && result.rooms ){
+        for( var i = 0; i < result.rooms.length; i ++ ){
+          var room = result.rooms[i];
+          var tr = '<tr>'
+            + '<td>' + ( room._id ? room._id : room.id ) + '</td>'
+            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + ( room._id ? room._id : room.id ) + '\');">更新</button>'
+            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + ( room._id ? room._id : room.id ) + '\');">削除</button></td>'
+            + '</tr>';
+          $('#rooms-table-body').append( tr );
+        }
+
+        var tr = '<tr>'
+          + '<td><input type="text" style="width: 200px;" id="room"/></td>'
+          + '<td><button class="btn btn-xs btn-success" onClick="toNewBasicIDPW();">作成</button></td>'
+          + '</tr>';
+        $('#rooms-table-body').append( tr );
+      }else{
+      }
+    },
+    error: function( e0, e1, e2 ){
+      console.log( e0, e1, e2 );
+    }
+  });
+
   $('#form1').submit( function(){
     var room = $('#room').val();
     if( room ){
@@ -37,18 +68,25 @@ $(function(){
           if( result ){
             if( result.status ){
               //. room が存在している
-              alert( '指定したルーム: ' + room + ' は登録済でした。認証情報の変更または削除が可能です。')
+              alert( '指定したルーム: ' + room + ' は登録済でした。')
+              /*
               $('#room').val( '' );
               $('#room_name_2').html( room );
               $('#div_0').css( 'display', 'none' );
               $('#div_2').css( 'display', 'block' );
+              $('#div_3').css( 'display', 'block' );
+              */
             }else{
               //. room が存在していない
               alert( '指定したルーム: ' + room + ' は未登録でした。認証情報を指定して新規作成が可能です。')
               $('#room').val( '' );
+              $('#basic_id').val( '' );
+              $('#basic_password').val( '' );
               $('#room_name_1').html( room );
               $('#div_0').css( 'display', 'none' );
               $('#div_1').css( 'display', 'block' );
+              $('#div_2').css( 'display', 'none' );
+              $('#div_3').css( 'display', 'none' );
             }
           }
         },
@@ -57,15 +95,34 @@ $(function(){
           //. room が存在していない
           alert( '指定したルーム: ' + room + ' は未登録でした。認証情報を指定して新規作成が可能です。')
           $('#room').val( '' );
+          $('#basic_id').val( '' );
+          $('#basic_password').val( '' );
           $('#room_name_1').html( room );
           $('#div_0').css( 'display', 'none' );
           $('#div_1').css( 'display', 'block' );
+          $('#div_2').css( 'display', 'none' );
+          $('#div_3').css( 'display', 'none' );
         }
       });
     }
     return false;
   });
 });
+
+function toNewBasicIDPW( room ){
+  if( !room ){
+    room = $('#room').val();
+  }
+
+  $('#room_name_1').html( room );
+  $('#basic_id').val( '' );
+  $('#basic_password').val( '' );
+
+  $('#div_0').css( 'display', 'none' );
+  $('#div_1').css( 'display', 'block' );
+  $('#div_2').css( 'display', 'none' );
+  $('#div_3').css( 'display', 'none' );
+}
 
 function newBasicIDPW(){
   var room = $('#room_name_1').html();
@@ -86,8 +143,13 @@ function newBasicIDPW(){
         console.log( result );
         alert( '指定した room: ' + room  + ' を新規登録しました。' );
         $('#room_name_1').html( '' );
+        /*
         $('#div_0').css( 'display', 'block' );
         $('#div_1').css( 'display', 'none' );
+        $('#div_2').css( 'display', 'none' );
+        $('#div_3').css( 'display', 'none' );
+        */
+        location.href = '/basicauth';
       }
     },
     error: function( e0, e1, e2 ){
@@ -95,6 +157,19 @@ function newBasicIDPW(){
       alert( '指定した room: ' + room  + ' の作成に失敗しました(' + e2 + ')。' );
     }
   });
+}
+
+function toUpdateBasicIDPW( room ){
+  $('#room_name_2').html( room );
+  $('#old_basic_id').val( '' );
+  $('#old_basic_password').val( '' );
+  $('#new_basic_id').val( '' );
+  $('#new_basic_password').val( '' );
+
+  $('#div_0').css( 'display', 'none' );
+  $('#div_1').css( 'display', 'none' );
+  $('#div_2').css( 'display', 'block' );
+  $('#div_3').css( 'display', 'none' );
 }
 
 function updateBasicIDPW(){
@@ -120,21 +195,37 @@ function updateBasicIDPW(){
         console.log( result );
         alert( '指定した room: ' + room  + ' を更新しました。' );
         $('#room_name_2').html( '' );
+        /*
         $('#div_0').css( 'display', 'block' );
+        $('#div_1').css( 'display', 'none' );
         $('#div_2').css( 'display', 'none' );
+        $('#div_3').css( 'display', 'none' );
+        */
+        location.href = '/basicauth';
       }
     },
     error: function( e0, e1, e2 ){
       console.log( e0, e1, e2 );
-      alert( '指定した room: ' + room  + ' の更新に失敗しました(' + e2 + ')。現在の ID & PW が間違っている可能性があります。' );
+      alert( '指定した room: ' + room  + ' の更新に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
     }
   });
 }
 
+function toDeleteBasicIDPW( room ){
+  $('#room_name_3').html( room );
+  $('#del_basic_id').val( '' );
+  $('#del_basic_password').val( '' );
+
+  $('#div_0').css( 'display', 'none' );
+  $('#div_1').css( 'display', 'none' );
+  $('#div_2').css( 'display', 'none' );
+  $('#div_3').css( 'display', 'block' );
+}
+
 function deleteBasicIDPW(){
-  var room = $('#room_name_2').html();
-  var id = $('#old_basic_id').val();
-  var pw = $('#old_basic_password').val();
+  var room = $('#room_name_3').html();
+  var id = $('#del_basic_id').val();
+  var pw = $('#del_basic_password').val();
   var data = {
     basic_id: id,
     basic_password: pw,
@@ -149,14 +240,19 @@ function deleteBasicIDPW(){
       if( result && result.status ){
         console.log( result );
         alert( '指定した room: ' + room  + ' を削除しました。' );
-        $('#room_name_2').html( '' );
+        $('#room_name_3').html( '' );
+        /*
         $('#div_0').css( 'display', 'block' );
+        $('#div_1').css( 'display', 'none' );
         $('#div_2').css( 'display', 'none' );
+        $('#div_3').css( 'display', 'none' );
+        */
+        location.href = '/basicauth';
       }
     },
     error: function( e0, e1, e2 ){
       console.log( e0, e1, e2 );
-      alert( '指定した room: ' + room  + ' の削除に失敗しました(' + e2 + ')。現在の ID & PW が間違っている可能性があります。' );
+      alert( '指定した room: ' + room  + ' の削除に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
     }
   });
 }
@@ -166,6 +262,7 @@ function cancelProcess(){
   $('#div_0').css( 'display', 'block' );
   $('#div_1').css( 'display', 'none' );
   $('#div_2').css( 'display', 'none' );
+  $('#div_3').css( 'display', 'none' );
 }
 </script>
 
@@ -184,14 +281,12 @@ html, body{
 
 <div class="container" id="div_0">
   <div>
-    <table style="width: 100%;">
-      <tr>
-        <td>
-          <form id="form1">
-          ルーム <input type="text" class="form-control" value="" id="room"/>
-          </form>
-        </td>
-      </tr>
+    <table style="width: 100%;" class="table table-bordered">
+      <thead>
+        <tr><th>room</th><th>actions</th></tr>
+      </thead>
+      <tbody id="rooms-table-body">
+      </tbody>
     </table>
   </div>
 </div>
@@ -233,32 +328,24 @@ html, body{
     </tr>
   </table>
   <button class="btn btn-xs btn-primary" onClick="updateBasicIDPW();">更新</button>
-  <button class="btn btn-xs btn-danger" onClick="deleteBasicIDPW();">削除</button>
   <button class="btn btn-xs btn-secondary" onClick="cancelProcess();">キャンセル</button>
 </div>
 
-<div class="modal bd-example-modal-lg fade" id="imagesModal" tabindex="-1" role="dialog" aria-labbelledby="imagesModal" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="imagesModalLabel"></h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body" id="imagesmodal-body">
-        <div id="card-groups">
-        </div>
-      </div>
-      <div class="modal-footer btn-center">
-        <!--
-        <button type="button" class="btn btn-info btn-xs py-0" onClick="migrateFrom();"><i class="fas fa-file-export"></i></button>
-        -->
-      </div>
-    </div>
-  </div>
+<div class="container" id="div_3" style="display:none;">
+  <h1 id="room_name_3"></h1>
+  <table class="table">
+    <tr>
+      <td>ID</td>
+      <td><input type="text" class="form-control" id="del_basic_id"/></td>
+    </tr>
+    <tr>
+      <td>Password</td>
+      <td><input type="password" class="form-control" id="del_basic_password"/></td>
+    </tr>
+  </table>
+  <button class="btn btn-xs btn-danger" onClick="deleteBasicIDPW();">削除</button>
+  <button class="btn btn-xs btn-secondary" onClick="cancelProcess();">キャンセル</button>
 </div>
-
 
 </body>
 </html>

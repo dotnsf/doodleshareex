@@ -402,6 +402,53 @@ api.delete( '/room/:id', async function( req, res ){
   }
 });
 
+api.get( '/rooms', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
+  var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
+  var uuid = req.query.uuid ? req.query.uuid : '';
+
+  if( cloudant && uuid ){
+    var selector = { uuid: { "$eq": uuid } };
+    cloudant.postFind( { db: settings_db_name, selector: selector, fields: [  "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] } ).then( function( result ){
+      //console.log( JSON.stringify( result ) );
+      //console.log( result.result.docs[0] );
+      var total = result.result.docs.length;
+      var rooms = [];
+      result.result.docs.forEach( function( doc ){
+        if( doc._id.indexOf( '_' ) !== 0 && doc.type && doc.type == 'room' ){
+          rooms.push( doc );
+        }
+      });
+
+      rooms.sort( sortByTimestamp );
+
+      if( offset || limit ){
+        if( offset + limit > total ){
+          rooms = rooms.slice( offset );
+        }else{
+          rooms = rooms.slice( offset, offset + limit );
+        }
+      }
+
+      var result = { status: true, uuid: uuid, total: total, limit: limit, offset: offset, rooms: rooms };
+      res.write( JSON.stringify( result, 2, null ) );
+      res.end();
+    }).catch( function( err0 ){
+      console.log( err0 );
+      var p = JSON.stringify( { status: false, error: err0 }, null, 2 );
+      res.status( 400 );
+      res.write( p );
+      res.end();
+    });
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+    res.end();
+  }
+});
+
 function getHash( s ){
   if( s ){
     return crypto.createHash( 'sha1' ).update( s ).digest( 'hex' );

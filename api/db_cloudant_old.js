@@ -159,7 +159,7 @@ api.get( '/images', function( req, res ){
 
   var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
   var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
-  var room = req.query.room ? req.query.room : settings.defaultroom;
+  var room = req.query.room ? req.query.room : 'default';
 
   if( db ){
     db.find( { selector: { room: { "$eq": room } }, fields: [ "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] }, function( err, result ){
@@ -411,6 +411,50 @@ api.delete( '/room/:id', async function( req, res ){
         res.end();
       }
     }
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+    res.end();
+  }
+});
+
+api.get( '/rooms', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
+  var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
+  var uuid = req.query.uuid ? req.query.uuid : '';
+
+  if( db && uuid ){
+    db.find( { selector: { uuid: { "$eq": uuid } }, fields: [ "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] }, function( err, result ){
+      if( err ){
+        res.status( 400 );
+        res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
+        res.end();
+      }else{
+        var total = result.docs.length;
+        var rooms = [];
+        result.docs.forEach( function( doc ){
+          if( doc._id.indexOf( '_' ) !== 0 && doc.type && doc.type == 'room' ){
+            rooms.push( doc );
+          }
+        });
+
+        rooms.sort( sortByTimestamp );
+
+        if( offset || limit ){
+          if( offset + limit > total ){
+            rooms = rooms.slice( offset );
+          }else{
+            rooms = rooms.slice( offset, offset + limit );
+          }
+        }
+
+        var result = { status: true, uuid: uuid, total: total, limit: limit, offset: offset, rooms: rooms };
+        res.write( JSON.stringify( result, 2, null ) );
+        res.end();
+      }
+    });
   }else{
     res.status( 400 );
     res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
