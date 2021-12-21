@@ -36,10 +36,11 @@ $(function(){
       if( result && result.status && result.rooms ){
         for( var i = 0; i < result.rooms.length; i ++ ){
           var room = result.rooms[i];
+          var id = ( room._id ? room._id : room.id );
           var tr = '<tr>'
-            + '<td>' + ( room._id ? room._id : room.id ) + '</td>'
-            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + ( room._id ? room._id : room.id ) + '\');">更新</button>'
-            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + ( room._id ? room._id : room.id ) + '\');">削除</button></td>'
+            + '<td><a target="_blank" href="/view?room=' + id + '">' + id + '</a></td>'
+            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + id + '\');">更新</button>'
+            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + id + '\');">削除</button></td>'
             + '</tr>';
           $('#rooms-table-body').append( tr );
         }
@@ -69,13 +70,6 @@ $(function(){
             if( result.status ){
               //. room が存在している
               alert( '指定したルーム: ' + room + ' は登録済でした。')
-              /*
-              $('#room').val( '' );
-              $('#room_name_2').html( room );
-              $('#div_0').css( 'display', 'none' );
-              $('#div_2').css( 'display', 'block' );
-              $('#div_3').css( 'display', 'block' );
-              */
             }else{
               //. room が存在していない
               alert( '指定したルーム: ' + room + ' は未登録でした。認証情報を指定して新規作成が可能です。')
@@ -143,12 +137,6 @@ function newBasicIDPW(){
         console.log( result );
         alert( '指定した room: ' + room  + ' を新規登録しました。' );
         $('#room_name_1').html( '' );
-        /*
-        $('#div_0').css( 'display', 'block' );
-        $('#div_1').css( 'display', 'none' );
-        $('#div_2').css( 'display', 'none' );
-        $('#div_3').css( 'display', 'none' );
-        */
         location.href = '/basicauth';
       }
     },
@@ -195,12 +183,6 @@ function updateBasicIDPW(){
         console.log( result );
         alert( '指定した room: ' + room  + ' を更新しました。' );
         $('#room_name_2').html( '' );
-        /*
-        $('#div_0').css( 'display', 'block' );
-        $('#div_1').css( 'display', 'none' );
-        $('#div_2').css( 'display', 'none' );
-        $('#div_3').css( 'display', 'none' );
-        */
         location.href = '/basicauth';
       }
     },
@@ -241,12 +223,6 @@ function deleteBasicIDPW(){
         console.log( result );
         alert( '指定した room: ' + room  + ' を削除しました。' );
         $('#room_name_3').html( '' );
-        /*
-        $('#div_0').css( 'display', 'block' );
-        $('#div_1').css( 'display', 'none' );
-        $('#div_2').css( 'display', 'none' );
-        $('#div_3').css( 'display', 'none' );
-        */
         location.href = '/basicauth';
       }
     },

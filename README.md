@@ -38,6 +38,28 @@ Trial application which tries to use WebSocket with Redis so that application ca
   - Confirm each message would be sent to all client
 
 
+## How to run with docker without Redis
+
+- You can omit Redis only when you use single application server.
+
+- Run single app with PORT as environment variable(Default = 8080):
+
+  - `$ node app`
+
+  - or `$ PORT=8081 node app`
+
+
+## How to start Doodle-Share
+
+- Access to following URL, and participants can login with QRcode:
+
+  - `http(s)://xxx.xxx.xxx.xxx/view?room=roomname`
+
+- Or, access to following URL, create/configure Basic authentication credential, and start session:
+
+  - `http(s)://xxx.xxx.xxx.xxx/basicauth`
+
+
 ## References
 
 https://qiita.com/rihofujino/items/7bf4b99e2176f63ca7ef
