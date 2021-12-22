@@ -154,46 +154,59 @@ api.delete( '/image', function( req, res ){
 });
 
 
-api.get( '/images', function( req, res ){
+//. #11
+api.readImages = async function( limit, offset, room ){
+  return new Promise( async ( resolve, reject ) => {
+    if( db ){
+      var selector = { type: { "$eq": "image" } };
+      if( room ){
+        selector = { room: { "$eq": room } };
+      }
+      db.find( { selector: selector, fields: [ "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] }, function( err, result ){
+        if( err ){
+          resolve( { status: false, error: err } );
+        }else{
+          var total = result.docs.length;
+          var images = [];
+          result.docs.forEach( function( doc ){
+            if( doc._id.indexOf( '_' ) !== 0 && doc.type && doc.type == 'image' ){
+              images.push( doc );
+            }
+          });
+
+          images.sort( sortByTimestamp );
+
+          if( offset || limit ){
+            if( offset + limit > total ){
+              images = images.slice( offset );
+            }else{
+              images = images.slice( offset, offset + limit );
+            }
+          }
+
+          resolve( { status: true, limit: limit, offset: offset, images: images } );
+        }
+      });
+    }else{
+      resolve( { status: false, error: 'db is failed to initialize.' } );
+    }
+  });
+}
+
+api.get( '/images', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
   var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
   var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
-  var room = req.query.room ? req.query.room : 'default';
+  var room = req.query.room ? req.query.room : ''; //'default';
 
-  if( db ){
-    db.find( { selector: { room: { "$eq": room } }, fields: [ "_id", "_rev", "name", "type", "comment", "timestamp", "room", "uuid" ] }, function( err, result ){
-      if( err ){
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, message: err }, 2, null ) );
-        res.end();
-      }else{
-        var total = result.docs.length;
-        var images = [];
-        result.docs.forEach( function( doc ){
-          if( doc._id.indexOf( '_' ) !== 0 && doc.type && doc.type == 'image' ){
-            images.push( doc );
-          }
-        });
-
-        images.sort( sortByTimestamp );
-
-        if( offset || limit ){
-          if( offset + limit > total ){
-            images = images.slice( offset );
-          }else{
-            images = images.slice( offset, offset + limit );
-          }
-        }
-
-        var result = { status: true, room: room, total: total, limit: limit, offset: offset, images: images };
-        res.write( JSON.stringify( result, 2, null ) );
-        res.end();
-      }
-    });
-  }else{
+  var r = await api.readImages( limit, offset, room );
+  if( !r.status ){
     res.status( 400 );
-    res.write( JSON.stringify( { status: false, message: 'db is failed to initialize.' }, 2, null ) );
+    res.write( JSON.stringify( { status: false, error: r.error } ) );
+    res.end();
+  }else{
+    res.write( JSON.stringify( { status: true, limit: limit, offset: offset, images: r.images } ) );
     res.end();
   }
 });

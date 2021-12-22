@@ -21,3 +21,7 @@ exports.usedb = 'cloudant_old';
 
 //. LIFF
 exports.liff_id = '';
+
+//. #25
+exports.admin_id = 'admin';
+exports.admin_pw = 'pass';

@@ -40,6 +40,8 @@ var settings_redis_db = 'REDIS_DB' in process.env ? process.env.REDIS_DB : setti
 var settings_redis_username = 'REDIS_USERNAME' in process.env ? process.env.REDIS_USERNAME : settings.redis_username;
 var settings_redis_password = 'REDIS_PASSWORD' in process.env ? process.env.REDIS_PASSWORD : settings.redis_password;
 var settings_liff_id = 'LIFF_ID' in process.env ? process.env.LIFF_ID : settings.liff_id;
+var settings_admin_id = 'ADMIN_ID' in process.env ? process.env.ADMIN_ID : settings.admin_id;
+var settings_admin_pw = 'ADMIN_PW' in process.env ? process.env.ADMIN_PW : settings.admin_pw;
 
 //. Redis（サーバーと接続する）
 //var redis = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
@@ -112,6 +114,22 @@ app.use( '/view', async function( req, res, next ){
   }
 });
 
+app.use( '/admin', async function( req, res, next ){
+  if( req.headers.authorization ){
+    var b64auth = req.headers.authorization.split( ' ' )[1] || '';
+    var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
+    if( user == settings_admin_id && pass == settings_admin_pw ){
+      return next();
+    }else{
+      res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+      res.status( 401 ).send( 'Authentication required.' );
+    }
+  }else{
+    res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+    res.status( 401 ).send( 'Authentication required.' );
+  }
+});
+
 //. Page for guest
 app.get( '/client', function( req, res ){
   var name = req.query.name;
@@ -147,8 +165,32 @@ app.get( '/savedimages', function( req, res ){
   res.render( 'savedimages', { room: room, columns: columns } );
 });
 
+//. #20
 app.get( '/basicauth', function( req, res ){
   res.render( 'basicauth', {} );
+});
+
+//. #25
+app.get( '/admin', async function( req, res ){
+  var limit = req.query.limit;
+  if( limit ){
+    limit = parseInt( limit );
+  }else{
+    limit = 0;
+  }
+  var offset = req.query.offset;
+  if( offset ){
+    offset = parseInt( offset );
+  }else{
+    offset = 0;
+  }
+
+  var images = [];
+  var r = await dbapi.readImages( limit, offset );
+  if( r.status ){
+    images = r.images;
+  }
+  res.render( 'admin', { limit: limit, offset: offset, images: images } );
 });
 
 server.on( 'upgrade', function( request, socket, head ){

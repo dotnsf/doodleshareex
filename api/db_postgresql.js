@@ -212,60 +212,70 @@ api.delete( '/image', async function( req, res ){
 });
 
 
+//. #11
+api.readImages = async function( limit, offset, room ){
+  return new Promise( async ( resolve, reject ) => {
+    var conn = null;
+    try{
+      if( pg ){
+        conn = await pg.connect();
+
+        var sql = "select * from images" + ( room ? " where room = $1" : "" ) + " order by timestamp desc";
+        if( limit ){
+          sql += " limit " + limit;
+        }
+        if( offset ){
+          sql += " start " + offset;
+        }
+        var query = { text: sql, values: [] };
+        if( room ){
+          query.values.push( room );
+        }
+        conn.query( query, function( err, result ){
+          if( err ){
+            console.log( err );
+            resolve( { status: false, error: err } );
+          }else{
+            var images = [];
+            if( result.rows.length > 0 ){
+              try{
+                images = result.rows;
+              }catch( e ){
+              }
+            }
+  
+            resolve( { status: true, images: images } );
+          }
+        });
+      }else{
+        resolve( { status: false, error: 'db is not initialized.' } );
+      }
+    }catch( e ){
+      console.log( e );
+      resolve( { status: false, error: e } );
+    }finally{
+      if( conn ){
+        conn.release();
+      }
+    }
+  });
+}
+
 api.get( '/images', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
   var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
   var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
-  var room = req.query.room ? req.query.room : 'default';
+  var room = req.query.room ? req.query.room : ''; //'default';
 
-  var conn = null;
-  try{
-    if( pg ){
-      conn = await pg.connect();
-
-      var sql = "select * from images where room = $1 order by timestamp desc";
-      if( limit ){
-        sql += " limit " + limit;
-      }
-      if( offset ){
-        sql += " start " + offset;
-      }
-      var query = { text: sql, values: [ room ] };
-      conn.query( query, function( err, result ){
-        if( err ){
-          console.log( err );
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, error: err } ) );
-          res.end();
-        }else{
-          var images = [];
-          if( result.rows.length > 0 ){
-            try{
-              images = result.rows;
-            }catch( e ){
-            }
-          }
-  
-          var result = { status: true, limit: limit, offset: offset, images: images };
-          res.write( JSON.stringify( result, null, 2 ) );
-          res.end();
-        }
-      });
-    }else{
-      res.status( 400 );
-      res.write( JSON.stringify( { status: false, error: 'db is not initialized.' } ) );
-      res.end();
-    }
-  }catch( e ){
-    console.log( e );
+  var r = await api.readImages( limit, offset, room );
+  if( !r.status ){
     res.status( 400 );
-    res.write( JSON.stringify( { status: false, error: e } ) );
+    res.write( JSON.stringify( { status: false, error: r.error } ) );
     res.end();
-  }finally{
-    if( conn ){
-      conn.release();
-    }
+  }else{
+    res.write( JSON.stringify( { status: true, limit: limit, offset: offset, images: r.images } ) );
+    res.end();
   }
 });
 
