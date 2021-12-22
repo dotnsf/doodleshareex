@@ -18,3 +18,6 @@ exports.database_url = '';
 
 //. DB
 exports.usedb = 'cloudant_old';
+
+//. LIFF
+exports.liff_id = '';

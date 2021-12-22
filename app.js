@@ -39,6 +39,7 @@ var settings_redis_ca = 'REDIS_CA' in process.env ? process.env.REDIS_CA : setti
 var settings_redis_db = 'REDIS_DB' in process.env ? process.env.REDIS_DB : settings.redis_db;
 var settings_redis_username = 'REDIS_USERNAME' in process.env ? process.env.REDIS_USERNAME : settings.redis_username;
 var settings_redis_password = 'REDIS_PASSWORD' in process.env ? process.env.REDIS_PASSWORD : settings.redis_password;
+var settings_liff_id = 'LIFF_ID' in process.env ? process.env.LIFF_ID : settings.liff_id;
 
 //. Redis（サーバーと接続する）
 //var redis = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
@@ -120,7 +121,7 @@ app.get( '/client', function( req, res ){
 
   subscribeMessage( room );
 
-  res.render( 'client', { name: name, room: room } );
+  res.render( 'client', { name: name, room: room, liff_id: settings_liff_id } );
 });
 
 //. Page for admin
