@@ -8,6 +8,9 @@
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 <link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet"/>
 <script src="/common.js"></script>
+<% if( liff_id && room == 'line' ){ %>
+<script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+<% } %>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 
 <link rel="shortcut icon" href="/icon.png" type="image/png"/>
@@ -119,8 +122,35 @@ var backgroundcolor = null;
 
 var ws = null;
 
+<% if( liff_id ){ %>
+var profile = null;
+//var userId = null;
+//var name = null;
+//var picurl = null;
+<% } %>
+
 //. 参考: https://gist.github.com/Cartman0/436459b9b85cfdd1ca9c
 $(function(){
+<% if( liff_id && room == 'line' ){ %>
+  //. 参考: https://liff-stp.herokuapp.com/
+  liff.init( { liffId: '<%= liff_id %>' } ).then( function(){
+    if( !liff.isInClient() ){
+      if( !liff.isLoggedIn() ){
+        liff.login({
+          redirectUri: base_url + '?room=<%= room %>&name=<%= name %>'
+        });
+      }
+    }
+
+    liff.getProfile().then( function( p ){
+      profile = p;
+    }).catch( function( err ){
+      console.log( "liff.getProfile(): " + JSON.stringify( err ) );
+    });
+  }).catch( function( err ){
+    console.log( "liff.init(): " + JSON.stringify( err ) );
+  });
+<% } %>
   //. ヒストリバック無効化
   if( window.history && window.history.pushState ){
     history.pushState( "nohb", null, null );
@@ -490,6 +520,35 @@ function saveImage(){
       $('#qrcode_toast').toast( { delay: 1000 } );
       $('#qrcode_toast').toast( 'show' );
       console.log( data );
+<% if( liff_id && room == 'line' ){ %>
+      //. https://developers.line.biz/ja/reference/messaging-api/#image-message
+      var img_url = base_url + 'db/image?id=' + ( result._id ? result._id : result.id );
+
+      var data = {
+        type: "image",
+        originalContentUrl: img_url,
+        previewImageUrl: img_url
+      };
+
+      if( liff.isInClient() ){
+        //. Use sendMessages()
+        liff.sendMessages([ data ]).then( function(){
+          console.log( 'message sent' );
+          liff.closeWindow();
+        }).catch( function( err ){
+          console.log( 'error', err );
+          alert( JSON.stringify( err, null, 2 ) );
+        });
+      }else{
+        liff.shareTargetPicker([ data ]).then( function(){
+          console.log( 'message sent' );
+          //liff.closeWindow();
+        }).catch( function( err ){
+          console.log( 'error', err );
+          alert( JSON.stringify( err, null, 2 ) );
+        });
+      }
+<% } %>
     },
     error: function( jqXHR, textStatus, errorThrown ){
       console.log( textStatus + ': ' + errorThrown );
