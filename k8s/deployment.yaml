@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
+  #annotations:
     #app.openshift.io/vcs-ref: f7580aa1eb6f7176705176e201ecff4de93edafb
     #app.openshift.io/vcs-uri: https://github.com/cloud-native-garage-method-japan-cohort/kei-kimura-express-sample-app.git
   labels:
@@ -37,14 +37,14 @@ spec:
             failureThreshold: 3
             httpGet:
               path: /
-              port: 3000
+              port: 8080
               scheme: HTTP
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
           name: my-tekton-pipeline-project
           ports:
-            - containerPort: 3000
+            - containerPort: 8080
               name: http
               protocol: TCP
           readinessProbe:
