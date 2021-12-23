@@ -24,7 +24,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
+  #annotations:
     #app.openshift.io/vcs-ref: f7580aa1eb6f7176705176e201ecff4de93edafb
     #app.openshift.io/vcs-uri: https://github.com/upslopeio/express-sample-app
     enzo: "true"
@@ -58,6 +58,20 @@ spec:
         - name: PROTOCOLS
         - name: LOG_LEVEL
           value: debug
+        - name: REDIS_SERVER
+          value: 159.122.175.21
+        - name: REDIS_PORT
+          value: 30379
+        - name: REDIS_DB
+          value: 0
+        - name: USEDB
+          value: postgresql
+        - name: DATABASE_URL
+          value: postgres://admin:Passw0rd@159.122.175.21:30432/mydb
+        - name: ADMIN_ID
+          value: admin
+        - name: ADMIN_PW
+          value: P@ssw0rd
         image: quay.io/dotnsf/doodleshareex
         imagePullPolicy: IfNotPresent
         livenessProbe:
