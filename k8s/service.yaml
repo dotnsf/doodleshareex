@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: my-tekton-pipeline-project
+    app.kubernetes.io/instance: my-tekton-pipeline-project
+    app.kubernetes.io/name: my-tekton-pipeline-project
+  name: my-tekton-pipeline-project
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    app.kubernetes.io/instance: my-tekton-pipeline-project
+    app.kubernetes.io/name: my-tekton-pipeline-project
+  sessionAffinity: None
+  type: ClusterIP
