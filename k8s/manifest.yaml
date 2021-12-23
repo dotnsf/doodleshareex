@@ -67,11 +67,11 @@ spec:
         - name: USEDB
           value: "postgresql"
         - name: DATABASE_URL
-          value: "postgres://admin:Passw0rd@159.122.175.21:30432/mydb"
+          value: "postgres://xxxxx:xxxxx@159.122.175.21:30432/mydb"
         - name: ADMIN_ID
-          value: "admin"
+          value: "xxxxx"
         - name: ADMIN_PW
-          value: "P@ssw0rd"
+          value: "xxxxx"
         image: quay.io/dotnsf/doodleshareex
         imagePullPolicy: IfNotPresent
         livenessProbe:
