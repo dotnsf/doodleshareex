@@ -32,11 +32,11 @@ spec:
           - name: LOG_LEVEL
             value: debug
           - name: REDIS_SERVER
-            value: 159.122.175.21
+            value: "159.122.175.21"
           - name: REDIS_PORT
             value: 30379
           - name: REDIS_DB
-            value: 0
+            value: "0"
           - name: USEDB
             value: postgresql
           - name: DATABASE_URL
