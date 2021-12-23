@@ -61,17 +61,17 @@ spec:
         - name: REDIS_SERVER
           value: "159.122.175.21"
         - name: REDIS_PORT
-          value: 30379
+          value: "30379"
         - name: REDIS_DB
           value: "0"
         - name: USEDB
-          value: postgresql
+          value: "postgresql"
         - name: DATABASE_URL
-          value: postgres://admin:Passw0rd@159.122.175.21:30432/mydb
+          value: "postgres://admin:Passw0rd@159.122.175.21:30432/mydb"
         - name: ADMIN_ID
-          value: admin
+          value: "admin"
         - name: ADMIN_PW
-          value: P@ssw0rd
+          value: "P@ssw0rd"
         image: quay.io/dotnsf/doodleshareex
         imagePullPolicy: IfNotPresent
         livenessProbe:
