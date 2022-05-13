@@ -1,4 +1,6 @@
 .git/
 node_modules/
 npm-debug.log
+settings.js.*
+.memo.txt
 yaml/

@@ -30,9 +30,9 @@ if( database_url ){
   }else{
     //. #17 PostgreSQL との接続が SSL でなければ、これすらも不要？
     //. この行をコメントにすると、SSL 接続時に PG_CA の指定は必須になる
-    //pg_params.ssl = { rejectUnauthorized: false };
+    pg_params.ssl = { rejectUnauthorized: false };
     PG.defaults.ssl = false;
-    pg_params.ssl = false;
+    //pg_params.ssl = false;
   }
   //console.log( { pg_params } );
   pg = new PG.Pool( pg_params );
@@ -285,7 +285,7 @@ api.readRoom = async function( id, basic_id, basic_password ){
     var conn = null;
     try{
       if( pg ){
-        conn = await pg.connect();
+        conn = await pg.connect();  //. no pg_hba.conf entry for host "xx.xx.xx.xx", user "xxxx", database "xxxx", no encryption
 
         var sql = "select * from rooms where id = $1";
         var query = { text: sql, values: [ id ] };
@@ -294,7 +294,6 @@ api.readRoom = async function( id, basic_id, basic_password ){
             console.log( err );
             resolve( { status: false, error: err } );
           }else{
-            //console.log( result );
             var room = null;
             if( result.rows.length > 0 && result.rows[0].id ){
               try{

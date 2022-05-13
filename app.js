@@ -39,7 +39,6 @@ var settings_redis_ca = 'REDIS_CA' in process.env ? process.env.REDIS_CA : setti
 var settings_redis_db = 'REDIS_DB' in process.env ? process.env.REDIS_DB : settings.redis_db;
 var settings_redis_username = 'REDIS_USERNAME' in process.env ? process.env.REDIS_USERNAME : settings.redis_username;
 var settings_redis_password = 'REDIS_PASSWORD' in process.env ? process.env.REDIS_PASSWORD : settings.redis_password;
-var settings_liff_id = 'LIFF_ID' in process.env ? process.env.LIFF_ID : settings.liff_id;
 var settings_admin_id = 'ADMIN_ID' in process.env ? process.env.ADMIN_ID : settings.admin_id;
 var settings_admin_pw = 'ADMIN_PW' in process.env ? process.env.ADMIN_PW : settings.admin_pw;
 
@@ -139,7 +138,7 @@ app.get( '/client', function( req, res ){
 
   subscribeMessage( room );
 
-  res.render( 'client', { name: name, room: room, liff_id: settings_liff_id } );
+  res.render( 'client', { name: name, room: room } );
 });
 
 //. Page for admin
