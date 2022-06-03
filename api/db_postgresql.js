@@ -4,7 +4,7 @@ var express = require( 'express' ),
     bodyParser = require( 'body-parser' ),
     crypto = require( 'crypto' ),
     fs = require( 'fs' ),
-    uuidv1 = require( 'uuid/v1' ),
+    { v4: uuidv4 } = require( 'uuid' ),
     api = express();
 
 var settings = require( '../settings' );
@@ -79,7 +79,7 @@ api.post( '/image', async function( req, res ){
       var imgfilename = req.file.filename;
       var filename = req.file.originalname;
 
-      var image_id = uuidv1();
+      var image_id = uuidv4();
       var img = fs.readFileSync( imgpath );
       //var img64 = new Buffer( img ).toString( 'base64' );
 
