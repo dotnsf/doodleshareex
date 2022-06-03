@@ -42,9 +42,9 @@ $(function(){
         for( var i = 0; i < result.rooms.length; i ++ ){
           var room = result.rooms[i];
           var tr = '<tr>'
-            + '<td>' + ( room.id ) + '</td>'
-            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + ( room.id ) + '\');">更新</button>'
-            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + ( room.id ) + '\');">削除</button></td>'
+            + '<td><a target="_blank" href="/view?room=' + room.id + '">' + room.id + '</a></td>'
+            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + room.id + '\');">更新</button>'
+            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + room.id + '\');">削除</button></td>'
             + '</tr>';
           $('#rooms-table-body').append( tr );
         }
