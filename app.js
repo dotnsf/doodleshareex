@@ -144,8 +144,9 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
 
   //. logout
   app.get( '/auth0/logout', function( req, res ){
-    req.logout();
-    res.redirect( '/basicauth' );
+    req.logout( function(){
+      res.redirect( '/' );
+    });
   });
 
   app.get( '/auth0/callback', async function( req, res, next ){
