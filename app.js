@@ -202,17 +202,23 @@ app.use( '/view', async function( req, res, next ){
 
 app.use( '/admin', async function( req, res, next ){
   if( req.headers.authorization ){
-    var b64auth = req.headers.authorization.split( ' ' )[1] || '';
-    var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
-    if( user == settings_admin_id && pass == settings_admin_pw ){
-      return next();
+    console.log( settings_admin_id, settings_admin_pw );
+    if( settings_admin_id && settings_admin_pw ){
+      var b64auth = req.headers.authorization.split( ' ' )[1] || '';
+      var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
+      if( user == settings_admin_id && pass == settings_admin_pw ){
+        return next();
+      }else{
+        res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+        res.status( 401 ).send( 'Authentication required.' );
+      }
     }else{
-      res.set( 'WWW-Authenticate', 'Basic realm="401"' );
-      res.status( 401 ).send( 'Authentication required.' );
+      return next();
     }
   }else{
-    res.set( 'WWW-Authenticate', 'Basic realm="401"' );
-    res.status( 401 ).send( 'Authentication required.' );
+    //res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+    //res.status( 401 ).send( 'Authentication required.' );
+    return next();
   }
 });
 

@@ -35,9 +35,12 @@ Trial application which tries to use WebSocket with Redis so that application ca
 
 - Now, Administrator can open server view:
 
-  - http://localhost:8080/view
+  - `http://localhost:8080/view`
 
     - Any running server can be OK.
+
+  - or `http://localhost:8080/basicauth` to start from registering dedicated room.
+
 
 - User can access to application(s) with different browsers or different tabs:
 
