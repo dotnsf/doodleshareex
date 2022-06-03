@@ -17,7 +17,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 
 <script>
+<% if( user ){ %>
+var uuid = '<%= user %>';
+<% }else{ %>
 var uuid = generateUUID();
+<% } %>
+console.log( 'uuid = ' + uuid );
 
 var rooms = [];
 $(function(){
@@ -37,9 +42,9 @@ $(function(){
         for( var i = 0; i < result.rooms.length; i ++ ){
           var room = result.rooms[i];
           var tr = '<tr>'
-            + '<td>' + ( room._id ? room._id : room.id ) + '</td>'
-            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + ( room._id ? room._id : room.id ) + '\');">更新</button>'
-            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + ( room._id ? room._id : room.id ) + '\');">削除</button></td>'
+            + '<td>' + ( room.id ) + '</td>'
+            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + ( room.id ) + '\');">更新</button>'
+            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + ( room.id ) + '\');">削除</button></td>'
             + '</tr>';
           $('#rooms-table-body').append( tr );
         }
@@ -80,7 +85,7 @@ $(function(){
               //. room が存在していない
               alert( '指定したルーム: ' + room + ' は未登録でした。認証情報を指定して新規作成が可能です。')
               $('#room').val( '' );
-              $('#basic_id').val( '' );
+              $('#basic_id').val( uuid );
               $('#basic_password').val( '' );
               $('#room_name_1').html( room );
               $('#div_0').css( 'display', 'none' );
@@ -95,7 +100,7 @@ $(function(){
           //. room が存在していない
           alert( '指定したルーム: ' + room + ' は未登録でした。認証情報を指定して新規作成が可能です。')
           $('#room').val( '' );
-          $('#basic_id').val( '' );
+          $('#basic_id').val( uuid );
           $('#basic_password').val( '' );
           $('#room_name_1').html( room );
           $('#div_0').css( 'display', 'none' );
@@ -115,7 +120,7 @@ function toNewBasicIDPW( room ){
   }
 
   $('#room_name_1').html( room );
-  $('#basic_id').val( '' );
+  $('#basic_id').val( uuid );
   $('#basic_password').val( '' );
 
   $('#div_0').css( 'display', 'none' );
@@ -161,9 +166,9 @@ function newBasicIDPW(){
 
 function toUpdateBasicIDPW( room ){
   $('#room_name_2').html( room );
-  $('#old_basic_id').val( '' );
+  $('#old_basic_id').val( uuid );
+  console.log( '#old_basic_id: ' + uuid );
   $('#old_basic_password').val( '' );
-  $('#new_basic_id').val( '' );
   $('#new_basic_password').val( '' );
 
   $('#div_0').css( 'display', 'none' );
@@ -174,14 +179,13 @@ function toUpdateBasicIDPW( room ){
 
 function updateBasicIDPW(){
   var room = $('#room_name_2').html();
-  var old_id = $('#old_basic_id').val();
+  var id = $('#old_basic_id').val();
   var old_pw = $('#old_basic_password').val();
-  var new_id = $('#new_basic_id').val();
   var new_pw = $('#new_basic_password').val();
   var data = {
-    basic_id: old_id,
+    basic_id: id,
     basic_password: old_pw,
-    new_basic_id: new_id,
+    new_basic_id: id,
     new_basic_password: new_pw,
     uuid: uuid
   };
@@ -213,7 +217,7 @@ function updateBasicIDPW(){
 
 function toDeleteBasicIDPW( room ){
   $('#room_name_3').html( room );
-  $('#del_basic_id').val( '' );
+  $('#del_basic_id').val( uuid );
   $('#del_basic_password').val( '' );
 
   $('#div_0').css( 'display', 'none' );
@@ -296,7 +300,7 @@ html, body{
   <table class="table">
     <tr>
       <td>ID</td>
-      <td><input type="text" class="form-control" id="basic_id"/></td>
+      <td><input type="text" class="form-control" id="basic_id" disabled="disabled"/></td>
     </tr>
     <tr>
       <td>Password</td>
@@ -312,15 +316,11 @@ html, body{
   <table class="table">
     <tr>
       <td>Current ID</td>
-      <td><input type="text" class="form-control" id="old_basic_id"/></td>
+      <td><input type="text" class="form-control" id="old_basic_id" disabled="disabled"/></td>
     </tr>
     <tr>
       <td>Current Password</td>
       <td><input type="password" class="form-control" id="old_basic_password"/></td>
-    </tr>
-    <tr>
-      <td>New ID</td>
-      <td><input type="text" class="form-control" id="new_basic_id"/></td>
     </tr>
     <tr>
       <td>New Password</td>
@@ -336,7 +336,7 @@ html, body{
   <table class="table">
     <tr>
       <td>ID</td>
-      <td><input type="text" class="form-control" id="del_basic_id"/></td>
+      <td><input type="text" class="form-control" id="del_basic_id" disabled="disabled"/></td>
     </tr>
     <tr>
       <td>Password</td>

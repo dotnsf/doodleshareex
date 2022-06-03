@@ -6,10 +6,12 @@ var express = require( 'express' ),
     ejs = require( 'ejs' ),
     fs = require( 'fs' ),
     http = require( 'http' ),
+    passport = require( 'passport' ),
     Redis = require( 'ioredis' ),
+    session = require( 'express-session' ),
     WebSocket = require( 'ws' ),
     app = express();
-
+  
 var settings = require( './settings' );
 var settings_usedb = 'USEDB' in process.env ? process.env.USEDB : settings.usedb;
 
@@ -41,6 +43,12 @@ var settings_redis_username = 'REDIS_USERNAME' in process.env ? process.env.REDI
 var settings_redis_password = 'REDIS_PASSWORD' in process.env ? process.env.REDIS_PASSWORD : settings.redis_password;
 var settings_admin_id = 'ADMIN_ID' in process.env ? process.env.ADMIN_ID : settings.admin_id;
 var settings_admin_pw = 'ADMIN_PW' in process.env ? process.env.ADMIN_PW : settings.admin_pw;
+
+//. #26
+var settings_redirect_uri = 'AUTH0_REDIRECT_URI' in process.env ? process.env.AUTH0_REDIRECT_URI : settings.auth0_redirect_uri; 
+var settings_client_id = 'AUTH0_CLIENT_ID' in process.env ? process.env.AUTH0_CLIENT_ID : settings.auth0_client_id; 
+var settings_client_secret = 'AUTH0_CLIENT_SECRET' in process.env ? process.env.AUTH0_CLIENT_SECRET : settings.auth0_client_secret; 
+var settings_domain = 'AUTH0_DOMAIN' in process.env ? process.env.AUTH0_DOMAIN : settings.auth0_domain; 
 
 //. Redis（サーバーと接続する）
 //var redis = settings_redis_url ? ( new Redis( settings_redis_url ) ) : ( new Redis( settings_redis_port, settings_redis_server ) );   //. Redis container
@@ -82,6 +90,85 @@ if( redis_param == 1 && settings_redis_ca ){
 }
 //console.log( { redis_params } );
 var redis = ( redis_param ? new Redis( redis_params ) : null );
+
+//. #26
+var RedisStore = require( 'connect-redis' )( session );
+
+//. setup session
+var session_params = { 
+  secret: 'doodleshareex',
+  resave: false,
+  cookie: {
+    path: '/',
+    maxAge: ( 365 * 24 * 60 * 60 * 1000 )
+  },
+  saveUninitialized: false
+};
+if( redis ){
+  session_params.store = new RedisStore( { client: redis } );
+}
+app.use( session( session_params ) );
+
+//. Auth0
+var strategy = null;
+var Auth0Strategy = require( 'passport-auth0' );
+if( settings_redirect_uri && settings_client_id && settings_client_secret && settings_domain ){
+  strategy = new Auth0Strategy({
+    domain: settings_domain,
+    clientID: settings_client_id,
+    clientSecret: settings_client_secret,
+    callbackURL: settings_redirect_uri
+  }, function( accessToken, refreshToken, extraParams, profile, done ){
+    //console.log( accessToken, refreshToken, extraParams, profile );
+    profile.idToken = extraParams.id_token;
+    return done( null, profile );
+  });
+  passport.use( strategy );
+
+  passport.serializeUser( function( user, done ){
+    done( null, user );
+  });
+  passport.deserializeUser( function( user, done ){
+    done( null, user );
+  });
+
+  app.use( passport.initialize() );
+  app.use( passport.session() );
+
+  //. login
+  app.get( '/auth0/login', passport.authenticate( 'auth0', {
+    scope: 'openid profile email'
+  }, function( req, res ){
+    res.redirect( '/basicauth' );
+  }));
+
+  //. logout
+  app.get( '/auth0/logout', function( req, res ){
+    req.logout();
+    res.redirect( '/basicauth' );
+  });
+
+  app.get( '/auth0/callback', async function( req, res, next ){
+    passport.authenticate( 'auth0', function( err, user ){
+      if( err ) return next( err );
+      if( !user ) return res.redirect( '/auth0/login' );
+
+      req.logIn( user, function( err ){
+        if( err ) return next( err );
+        res.redirect( '/basicauth' );
+      });
+    })( req, res, next );
+  });
+
+  //. access restriction
+  app.all( '/basicauth*', function( req, res, next ){
+    if( !req.user || !req.user.displayName ){
+      res.redirect( '/auth0/login' );
+    }else{
+      next();
+    }
+  });
+}
 
 //. Basic Auth
 app.use( '/view', async function( req, res, next ){
@@ -166,7 +253,11 @@ app.get( '/savedimages', function( req, res ){
 
 //. #20
 app.get( '/basicauth', function( req, res ){
-  res.render( 'basicauth', {} );
+  if( settings_redirect_uri && settings_client_id && settings_client_secret && settings_domain ){
+    res.render( 'basicauth', { user: req.user.displayName } );
+  }else{
+    res.render( 'basicauth', { user: '' } );
+  }
 });
 
 //. #25
