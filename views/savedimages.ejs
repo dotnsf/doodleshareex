@@ -39,19 +39,6 @@ $(function(){
           images.push( result.images[i] );
         }
         redrawImages();
-       /*
-       result.images.forEach( function( image ){
-         console.log( image );
-         var tr = '<tr>'
-           + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + image._id + '" comment="' + image.comment + '"/></td>'
-           + '<td><img src="/db/image?id=' + ( image._id ? image._id : image.id ) + '" width="200"/></td>'
-           + '<td>' + image.name + '</td>'
-           + '<td>' + image.comment + '</td>'
-           + '<td>' + timestamp2datetime( image.timestamp ) + '</td>'
-           + '</tr>';
-         $('#images_table_tbody').append( tr );
-       });
-       */
       }
     },
     error: function( e0, e1, e2 ){
@@ -94,9 +81,10 @@ function redrawImages(){
 
         var image = groups[i][j];
         var tbl = '<table><tr>'
-          + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + ( image._id ? image._id : image.id ) + '" comment="' + image.comment + '" dname="' + image.name + '" uuid="' + image.uuid + '"/></td>'
-          + '<td>' + name2link( image.name, image.uuid ) + '<br/><img src="/db/image?id=' + ( image._id ? image._id : image.id ) + '" title="' + image.comment + '" width="200"/><br/>'
+          + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + image.id + '" comment="' + image.comment + '" dname="' + image.name + '" uuid="' + image.uuid + '"/></td>'
+          + '<td>' + name2link( image.name, image.uuid ) + '<br/><img src="/db/image?id=' + image.id + '" title="' + image.comment + '" width="200"/><br/>'
           + timestamp2datetime( image.timestamp ) + '</td>'
+          + '<td><button class="btn btn-danger" onClick="deleteImage(\'' + image.id + '\');">削除</button></td>'
           + '</tr></table>';
         li += tbl;
 
@@ -222,6 +210,21 @@ function name2link( name, uuid ){
   var a = '<a href="#" onclick="named_images(\'' + uuid + '\');">' + name + '</a>';
   return a;
 }
+
+function deleteImage( image_id ){
+  if( confirm( image_id + ' の画像を削除します' ) ){
+    $.ajax({
+      url: '/db/image?id=' + image_id,
+      type: 'DELETE',
+      success: function( result ){
+        location.href = '/savedimages?room=<%= room %>';
+      },
+      error: function( e0, e1, e2 ){
+        alert( e1, e2 );
+      }
+    });
+  }
+}
 </script>
 
 <style type="text/css">
@@ -242,7 +245,7 @@ html, body{
     <table style="width: 100%;">
       <tr>
         <td>
-          <input type="range" class="form-control" id="interlude" min="0" max="300" value="0" step="10"/>
+          <input type="range" class="form-control" id="interlude" min="0" max="3600" value="0" step="10"/>
         </td>
         <td>
           <input type="text" style="width: 50px;" value="0" id="display_interlude" readonly/>

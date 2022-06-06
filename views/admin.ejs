@@ -23,6 +23,7 @@ $(function(){
       url: '//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json'
     }
   });
+  /*
   $('#images_table').DataTable({
     columnDefs: [{ 
       targets: [ 0, 5 ], 
@@ -31,6 +32,7 @@ $(function(){
     }],
     order: [ [ 4, 'desc' ] ]
   });
+  */
 });
 
 function timestamp2datetime( ts ){
@@ -113,12 +115,12 @@ html, body{
       <tbody>
 <% for( var i = 0; i < images.length; i ++ ){ %>
         <tr>
-          <td><img src="/db/image?id=<%= images[i].id ? images[i].id : images[i]._id %>" width="200px"/></td>
+          <td><img src="/db/image?id=<%= images[i].id %>" width="200px"/></td>
           <td><%= images[i].room %></td>
           <td><%= images[i].uuid %></td>
           <td><%= images[i].name %></td>
           <td><%= timestamp2datetime( images[i].created ? images[i].created : images[i].timestamp ) %></td>
-          <td><button class="btn btn-danger" onClick="deleteImage('<%= images[i].id ? images[i].id : images[i]._id %>');">削除</button></td>
+          <td><button class="btn btn-danger" onClick="deleteImage('<%= images[i].id %>');">削除</button></td>
         </tr>
 <% } %>
       </tbody>
