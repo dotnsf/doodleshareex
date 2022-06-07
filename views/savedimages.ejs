@@ -225,6 +225,34 @@ function deleteImage( image_id ){
     });
   }
 }
+
+//. #29
+function toggle_select_all(){
+  var c = $('#select_all_for_checked_users').prop( 'checked' );
+  if( c ){
+    //. チェックが入った絵の uuid 一覧を取得する
+    var uuids = [];
+    $('.chk_images').each( function( i, e ){
+      var uuid = $(e).attr( 'uuid' );
+      if( $(e).prop( 'checked' ) && uuids.indexOf( uuid ) == -1 ){
+        uuids.push( uuid );
+      }
+    });
+
+    //. 同じ uuid の全ての絵にチェックを入れる
+    $('.chk_images').each( function( i, e ){
+      var uuid = $(e).attr( 'uuid' );
+      if( uuids.indexOf( uuid ) > -1 ){
+        $(e).attr( 'checked', true ).prop( 'checked', true ).change();
+      }
+    });
+  }else{
+    //. 全てのチェックを外す
+    $('.chk_images').each( function( i, e ){
+      $(e).attr( 'checked', false ).prop( 'checked', false ).change();
+    });
+  }
+}
 </script>
 
 <style type="text/css">
@@ -266,6 +294,8 @@ html, body{
 
   </div>
 
+  <label><input type="checkbox" id="select_all_for_checked_users" onChange="toggle_select_all();">同じユーザーの描いた画像を全てチェック</button></label>
+  <br/>
   <button id="selected_images_btn" class="btn btn-primary" onClick="selected_images();">選択画像を表示</button>
 </div>
 

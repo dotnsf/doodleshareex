@@ -349,7 +349,10 @@ wss.on( 'connection', function( ws, request ){
     //console.log( message );
 
     //. message = room:text
-    if( message.indexOf( ":" ) > -1 ){
+    if( Buffer.isBuffer( message ) ){
+      message = ( new TextDecoder ).decode( new Uint8Array( message ) );
+    }
+    if( typeof message == 'string' && message.indexOf( ":" ) > -1 ){
       var n = message.indexOf( ":" );
       var room = message.substring( 0, n );
       var text = message.substring( n + 1 );
