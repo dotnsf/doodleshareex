@@ -47,7 +47,7 @@ $(function(){
   });
 
   //. チェックボックスが操作されたら「同じユーザーの描いた画像を全てチェック」のチェックは無条件に外す
-  $('chk_images').change( function(){
+  $('.chk_images').change( function(){
     $(select_all_for_checked_users).attr( 'checked', false ).prop( 'checked', false ).change();
   });
 });
@@ -332,7 +332,7 @@ html, body{
 
   <div class="chkbox">
     <input type="checkbox" id="select_all_for_checked_users" onChange="toggle_select_all();"/>
-    <label for="select_all_for_checked_users">同じユーザーの描いた画像を全てチェック</label>
+    <label for="select_all_for_checked_users">　同じユーザーの描いた画像を全てチェック</label>
   </div>
   <br/>
   <button id="selected_images_btn" class="btn btn-primary" onClick="selected_images();">選択画像を表示</button>
