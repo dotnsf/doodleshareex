@@ -1,8 +1,39 @@
-# WebSocket with Redis
+# Doodle Share Ex
 
 ## Overview
 
-Trial application which tries to use WebSocket with Redis so that application can be scaled-in/out.
+Trial application, which tries to use WebSocket with Redis so that application can be scaled-in/out, based on [Doodle Share](https://github.com/dotnsf/doodleshare).
+
+
+## How to use
+
+### As an Administrator who want to host free doodling(without passcode).
+
+- Access to hosting URL:
+
+  - `https://doodleshareex.herokuapp.com/view?room=XXXXXXXX`
+
+  - `XXXXXXXX` (room parameter) have to be **unique** string, like your name and timestamp.
+  
+    - Ex. `https://doodleshareex.herokuapp.com/view?room=kkimura-20220608`
+
+  - Show screen's **QR code** to your guests, and ask them to enter your room with this QR code.
+
+  - You can view semi-realtime doodling with your screen. Guest can save their doodle.
+
+  - If you want to see doodles list in your room, you can click QR code, and they would navigate you to image list page.
+
+### As an Administrator who want to host doodling with passcode.
+
+- Access to hosting URL, and sign-in/up with your ID&passcode:
+
+  - `https://doodleshareex.herokuapp.com/basicauth`
+
+- You can see/create/update/delete your reserved room.
+
+  - You will be asked your password to update room information.
+
+- You can click one room in this page, and you will be navigated to room page.
 
 
 ## How to run with docker
