@@ -15,6 +15,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 
+<link rel="shortcut icon" href="/icon.png" type="image/png"/>
+<link rel="icon" href="/icon.png" type="image/png"/>
+<link rel="apple-touch-icon" href="/icon.png"/>
+
 <script>
 var images = [];
 $(function(){
@@ -44,11 +48,6 @@ $(function(){
     error: function( e0, e1, e2 ){
       console.log( e0, e1, e2 );
     }
-  });
-
-  //. チェックボックスが操作されたら「同じユーザーの描いた画像を全てチェック」のチェックは無条件に外す
-  $('.chk_images').change( function(){
-    $(select_all_for_checked_users).attr( 'checked', false ).prop( 'checked', false ).change();
   });
 });
 
@@ -99,6 +98,12 @@ function redrawImages(){
  
       div_col += '</ul></div></div>';     
       $('#cards-groups').append( div_col );
+
+      //. チェックボックスが操作されたら「同じユーザーの描いた画像を全てチェック」のチェックは無条件に外す
+      $('.chk_images').change( function(){
+        //. ここを有効にしてしまうと、永久にチェックが付かなくなる
+        //$('#select_all_for_checked_users').attr( 'checked', false ).prop( 'checked', false ); //.change();
+      });
     }
   }
 }
@@ -233,6 +238,7 @@ function deleteImage( image_id ){
 
 //. #29
 function toggle_select_all(){
+  //console.log( 'toggle_select_all()' );
   var c = $('#select_all_for_checked_users').prop( 'checked' );
   if( c ){
     //. チェックが入った絵の uuid 一覧を取得する
@@ -248,12 +254,14 @@ function toggle_select_all(){
     $('.chk_images').each( function( i, e ){
       var uuid = $(e).attr( 'uuid' );
       if( uuids.indexOf( uuid ) > -1 ){
+        //$(e).attr( 'checked', true ).prop( 'checked', true ).change();
         $(e).attr( 'checked', true ).prop( 'checked', true ).change();
       }
     });
   }else{
     //. 全てのチェックを外す
     $('.chk_images').each( function( i, e ){
+      //$(e).attr( 'checked', false ).prop( 'checked', false ).change();
       $(e).attr( 'checked', false ).prop( 'checked', false ).change();
     });
   }
