@@ -44,7 +44,12 @@ $(function(){
     error: function( e0, e1, e2 ){
       console.log( e0, e1, e2 );
     }
-  })
+  });
+
+  //. チェックボックスが操作されたら「同じユーザーの描いた画像を全てチェック」のチェックは無条件に外す
+  $('chk_images').change( function(){
+    $(select_all_for_checked_users).attr( 'checked', false ).prop( 'checked', false ).change();
+  });
 });
 
 function redrawImages(){
@@ -262,6 +267,37 @@ html, body{
   font-size: 20px;
   color: #333;
 }
+
+.chkbox{
+  margin: 0 0 10px 20px
+}
+.chkbox label{
+  padding-left: 38px;
+  font-size: 32px;
+  line-height: 32px;
+  display: inline-block;
+  cursor: pointer;
+  position: relative;
+}
+.chkbox label:before{
+  content: '';
+  width: 32px;
+  height: 32px;
+  display: inline-block;
+  position: absolute;
+  background-color: #fff;
+  box-shadow: inset 1px 2px 3px 0px #000;
+  border-radius: 6px 6px 6px 6px;
+}
+.chkbox input[type=checkbox]{
+  display: none;
+}
+.chkbox input[type=checkbox]:checked + label:before{
+  content: '\2713';
+  font-size: 34px;
+  color: #fff;
+  background-color: #08f;
+}
 </style>
 </head>
 <body>
@@ -294,7 +330,10 @@ html, body{
 
   </div>
 
-  <label><input type="checkbox" id="select_all_for_checked_users" onChange="toggle_select_all();">同じユーザーの描いた画像を全てチェック</button></label>
+  <div class="chkbox">
+    <input type="checkbox" id="select_all_for_checked_users" onChange="toggle_select_all();"/>
+    <label for="select_all_for_checked_users">同じユーザーの描いた画像を全てチェック</label>
+  </div>
   <br/>
   <button id="selected_images_btn" class="btn btn-primary" onClick="selected_images();">選択画像を表示</button>
 </div>
