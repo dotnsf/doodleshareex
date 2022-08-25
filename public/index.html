@@ -53,6 +53,7 @@ $(function(){
     var str = param.split( '=' );
     if( str[0] == 'room' ){
       $('#room').val( unescape( str[1] ) );
+      $('#room').prop( 'readonly', 'readonly' );
     }
   });
 });
