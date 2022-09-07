@@ -4,8 +4,9 @@
 <meta charset="UTF-8"/>
 <title>ベーシック認証編集</title>
 <script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
-<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet"/>
-<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.min.js"></script>
+<link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet"/>
 <link rel="stylesheet" href="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css"/> 
 <script src="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
 
@@ -301,6 +302,12 @@ function myLogout(){
     location.href = '/auth0/logout?returnTo=' + location.protocol + '//' + location.host + '/basicauth';
   }
 }
+
+function myPurchase(){
+  if( confirm( 'プライベートルーム購入手続きに移動しますか？' ) ){
+    location.href = '/pay/reserve';
+  }
+}
 </script>
 
 <style type="text/css">
@@ -317,17 +324,13 @@ html, body{
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="#">DoodleShare Ex - ルーム検索</a>
   <ul class="navbar-nav mr-auto">
-    <li class="nav-item">
-      <a class="btn btn-success" href="/pay/reserve">プライベートルーム利用権購入</a>
-    </li>
   </ul>
   <ul class="navbar-nav ml-auto">
 <% if( user ){ %>
-  <!-- #28 -->
+    <!-- #28 -->
     <li class="nav-item">
-      <button class="btn btn-warning" onClick="myLogout();"> <!-- ログアウト -->
-        <%= user.displayName %>（プライベートルーム利用可能回数:<%= user.type %>）
-      </button>
+      <a class="btn btn-warning" href="#" onClick="myLogout();" title="<%= user.displayName %>\n（プライベートルーム利用可能回数:<%= user.type %>）"><i class="fas fa-user"></i></a>
+      <a class="btn btn-success" href="#" onClick="myPurchase();" title="プライベートルーム利用権購入"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
     </li>
 <% } %>
   </ul>
