@@ -9,7 +9,7 @@ var express = require( 'express' ),
 
 var settings = require( '../settings' );
 
-process.env.PGSSLMODE = 'no-verify';
+//process.env.PGSSLMODE = 'no-verify';
 var PG = require( 'pg' );
 PG.defaults.ssl = true;
 var database_url = 'DATABASE_URL' in process.env ? process.env.DATABASE_URL : settings.database_url; 
@@ -30,7 +30,7 @@ if( database_url ){
   }else{
     //. #17 PostgreSQL との接続が SSL でなければ、これすらも不要？
     //. この行をコメントにすると、SSL 接続時に PG_CA の指定は必須になる
-    pg_params.ssl = { rejectUnauthorized: false };
+    //pg_params.ssl = { rejectUnauthorized: false };
     PG.defaults.ssl = false;
     //pg_params.ssl = false;
   }
@@ -360,13 +360,17 @@ api.post( '/room/:id', async function( req, res ){
 
         var sql = "insert into rooms( id, uuid, basic_id, basic_password, created, updated ) values( $1, $2, $3, $4, $5, $6 )";
         var query = { text: sql, values: [ id, uuid, basic_id, enc_basic_password, ts, ts ] };
-        conn.query( query, function( err, result ){
+        conn.query( query, async function( err, result ){
           if( err ){
             console.log( err );
             res.status( 400 );
             res.write( JSON.stringify( { status: false, error: err } ) );
             res.end();
           }else{
+            /* 作成時のみ権利を消費する */
+            if( basic_password ){
+              await api.deleteUserType( uuid );
+            }
             res.write( JSON.stringify( { status: true } ) );
             res.end();
           }
@@ -452,13 +456,20 @@ api.put( '/room/:id', async function( req, res ){
 
         var sql = "update rooms set basic_id = $1, basic_password = $2, updated = $3 where id = $4";
         var query = { text: sql, values: [ new_basic_id, enc_new_basic_password, ts, id ] };
-        conn.query( query, function( err, result ){
+        conn.query( query, async function( err, result ){
           if( err ){
             console.log( err );
             res.status( 400 );
             res.write( JSON.stringify( { status: false, error: err } ) );
             res.end();
           }else{
+            /* 更新時は権利を消費しない
+            //. でもこれだと作成時にパスワード無し＆更新時にパスワード有りが無料でできてしまう
+            //. パスワード無しからパスワード有りへの変更は認めないルールが必要
+            if( new_basic_password ){
+              await api.deleteUserType( uuid );
+            }
+            */
             res.write( JSON.stringify( { status: true } ) );
             res.end();
           }
@@ -642,6 +653,212 @@ function sortByTimestamp( a, b ){
 
   return r;
 }
+
+//. #33
+//. getUser
+api.getUser = async function( user_id ){
+  return new Promise( async ( resolve, reject ) => {
+    if( pg ){
+      var conn = await pg.connect();
+      if( conn ){
+        try{
+          var sql = "select * from users where id = $1";
+          var query = { text: sql, values: [ user_id ] };
+          conn.query( query, function( err, result ){
+            if( err ){
+              console.log( err );
+              resolve( { status: false, error: err } );
+            }else{
+              if( result && result.rows && result.rows.length > 0 ){
+                resolve( { status: true, user: result.rows[0] } );
+              }else{
+                //resolve( { status: false, error: 'no data' } );
+                var t = ( new Date() ).getTime();
+                sql = "insert into users ( id, type, created, updated ) values ( $1, $2, $3, $4 )";
+                query = { text: sql, values: [ user_id, 0, t, t ] };
+                conn.query( query, function( err, result ){
+                  if( err ){
+                    console.log( err );
+                    resolve( { status: false, error: err } );
+                  }else{
+                    resolve( { status: true, user: { id: user_id, type: 0, created: t, updated: t } } );
+                  }
+                });
+              }
+            }
+          });
+        }catch( e ){
+          console.log( e );
+          resolve( { status: false, error: err } );
+        }finally{
+          if( conn ){
+            conn.release();
+          }
+        }
+      }else{
+        resolve( { status: false, error: 'no connection.' } );
+      }
+    }else{
+      resolve( { status: false, error: 'db not ready.' } );
+    }
+  });
+};
+
+//. addUserType
+api.addUserType = async function( user_id ){
+  return new Promise( async ( resolve, reject ) => {
+    if( pg ){
+      var conn = await pg.connect();
+      if( conn ){
+        if( !user_id ){
+          resolve( { status: false, error: 'no id.' } );
+        }else{
+          try{
+            var r = await this.getUser( user_id );
+            if( r && r.status && r.user ){
+              var sql = 'update users set type = type + 1, updated = $1 where id = $2';
+              var t = ( new Date() ).getTime();
+              var query = { text: sql, values: [ t, user_id ] };
+              conn.query( query, function( err, result ){
+                if( err ){
+                  console.log( err );
+                  resolve( { status: false, error: err } );
+                }else{
+                  resolve( { status: true, result: result } );
+                }
+              });
+            }else{
+              var sql = 'insert into users ( id, type, created, updated ) values ( $1, $2, $3, $4 )';
+              var t = ( new Date() ).getTime();
+              var query = { text: sql, values: [ user_id, user_type, t, t ] };
+              conn.query( query, function( err, result ){
+                if( err ){
+                  console.log( err );
+                  resolve( { status: false, error: err } );
+                }else{
+                  resolve( { status: true, result: result } );
+                }
+              });
+            }
+          }catch( e ){
+            console.log( e );
+            resolve( { status: false, error: err } );
+          }finally{
+            if( conn ){
+              conn.release();
+            }
+          }
+        }
+      }else{
+        resolve( { status: false, error: 'no connection.' } );
+      }
+    }else{
+      resolve( { status: false, error: 'db not ready.' } );
+    }
+  });
+};
+
+//. deleteUserType
+api.deleteUserType = async function( user_id ){
+  return new Promise( async ( resolve, reject ) => {
+    if( pg ){
+      var conn = await pg.connect();
+      if( conn ){
+        if( !user_id ){
+          resolve( { status: false, error: 'no id.' } );
+        }else{
+          try{
+            var r = await this.getUser( user_id );
+            if( r && r.status && r.user ){
+              if( r.user.type ){
+                var sql = 'update users set type = type - 1, updated = $1 where id = $2';
+                var t = ( new Date() ).getTime();
+                var query = { text: sql, values: [ t, user_id ] };
+                conn.query( query, function( err, result ){
+                  if( err ){
+                    console.log( err );
+                    resolve( { status: false, error: err } );
+                  }else{
+                    resolve( { status: true, result: result } );
+                  }
+                });
+              }else{
+                resolve( { status: false, error: 'not enough type.' } );
+              }
+            }else{
+              var sql = 'delete from users where id = $1';
+              var t = ( new Date() ).getTime();
+              var query = { text: sql, values: [ user_id ] };
+              conn.query( query, function( err, result ){
+                if( err ){
+                  console.log( err );
+                  resolve( { status: false, error: err } );
+                }else{
+                  resolve( { status: true, result: result } );
+                }
+              });
+            }
+          }catch( e ){
+            console.log( e );
+            resolve( { status: false, error: err } );
+          }finally{
+            if( conn ){
+              conn.release();
+            }
+          }
+        }
+      }else{
+        resolve( { status: false, error: 'no connection.' } );
+      }
+    }else{
+      resolve( { status: false, error: 'db not ready.' } );
+    }
+  });
+};
+
+//. createTransaction
+api.createTransaction = async function( transaction_id, user_id, order_id, amount, currency ){
+  return new Promise( async function( resolve, reject ){
+    if( pg ){
+      conn = await pg.connect();
+      if( conn ){
+        try{
+          var sql = 'insert into transactions( id, user_id, order_id, amount, currency, created, updated ) values ( $1, $2, $3, $4, $5, $6, $7 )';
+          var t = ( new Date() ).getTime();
+          var query = { text: sql, values: [ transaction_id, user_id, order_id, amount, currency, t, t ] };
+          conn.query( query, function( err, result ){
+            if( err ){
+              console.log( err );
+              resolve( { status: false, error: err } );
+            }else{
+              resolve( { status: true, result: result } );
+            }
+          });
+        }catch( e ){
+          console.log( e );
+          resolve( { status: false, error: err } );
+        }finally{
+          if( conn ){
+            conn.release();
+          }
+        }
+      }else{
+        resolve( { status: false, error: 'no connection.' } );
+      }
+    }else{
+      resolve( { status: false, error: 'db not ready.' } );
+    }
+  });
+};
+
+api.get( '/delete_user_type', async function( req, res ){
+  var user_id = req.query.user_id;
+  if( user_id ){
+    await api.deleteUserType( user_id );
+  }
+  res.redirect( '/basicauth' );
+});
+
 
 
 //. api をエクスポート

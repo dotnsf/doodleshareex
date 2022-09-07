@@ -266,11 +266,29 @@ app.get( '/savedimages', function( req, res ){
 });
 
 //. #20
-app.get( '/basicauth', function( req, res ){
+app.get( '/basicauth', async function( req, res ){
+  /*
   if( settings_redirect_uri && settings_client_id && settings_client_secret && settings_domain ){
     res.render( 'basicauth', { user: req.user.displayName } );
   }else{
     res.render( 'basicauth', { user: '' } );
+  }
+  */
+  var user = null;
+  if( req.user ){ 
+    //. ログインが確認できた場合はそのユーザー属性を持ってメインページへ
+    user = req.user;
+    var user_id = user.displayName; //user.emails[0].value;
+    var r = await dbapi.getUser( user_id );
+    if( r && r.status && r.user ){
+      user.type = r.user.type;
+    }else{
+      user.type = 0;
+    }
+    res.render( 'basicauth', { user: user } );
+  }else{
+    //. ログインが確認できない場合はログインページへ
+    res.redirect( '/auth0/login' );
   }
 });
 
@@ -388,6 +406,79 @@ wss.on( 'connection', function( ws, request ){
     //. いつ？？
     console.log( 'ws.error: ', error );
     console.log( 'Client connection errored (%s)', error );
+  });
+});
+
+
+//. #33 LINE Pay 用
+var { v4: uuidv4 } = require( 'uuid' );
+var cache = require( 'memory-cache' );
+
+var line_pay = require( 'line-pay' );
+var pay = new line_pay({
+  channelId: process.env.LINE_PAY_CHANNEL_ID,
+  channelSecret: process.env.LINE_PAY_CHANNEL_SECRET,
+  hostname: process.env.LINE_PAY_HOSTNAME,
+  isSandbox: true
+});
+
+//. 購入画面
+app.use( '/pay/reserve', function( req, res ){
+  //. 購入内容
+  var options = JSON.parse( fs.readFileSync( './item.json' ) );
+  options.orderId = uuidv4();
+  options.confirmUrl = process.env.LINE_PAY_CONFIRM_URL;
+
+  //. トランザクション ID をキーに購入内容をいったん記録して支払いページへ
+  pay.reserve( options ).then( ( response ) => {
+    var reservation = options;
+    reservation.transactionId = response.info.transactionId;
+    console.log( `Reservation was made. Detail is following.` );
+    console.log( reservation );
+
+    cache.put( reservation.transactionId, reservation );
+    res.redirect( response.info.paymentUrl.web );
+  });
+});
+
+//. 支払い画面
+app.use( '/pay/confirm', function( req, res ){
+  if( !req.query.transactionId ){
+    throw new Error( 'Transaction Id not found' );
+  }
+
+  //. 購入内容を取り出す
+  var reservation = cache.get( req.query.transactionId );
+  if( !reservation ){
+    throw new Error( 'Reservation not found' );
+  }
+
+  console.log( `Retrieved following reservation.` );
+  console.log( reservation );
+
+  //. 確認内容
+  var confirmation = {
+    transactionId: req.query.transactionId,
+    amount: reservation.amount,
+    currency: reservation.currency
+  };
+
+  console.log( `Going to confirm payment with following options` );
+  console.log( confirmation );
+
+  //. 支払い処理を実行
+  pay.confirm( confirmation ).then( async function( response ){
+    //. confirmation の内容（とreservation.orderId）をユーザー ID に紐づけて記録すればよい
+    //. LINE Pay の取引内訳に transactionId が記録されているはず
+    //.            売上結果にも transactionId と orderId が記録されているはず
+    var user_id = ( req.user ? req.user.displayName : null );
+    if( user_id ){
+      await dbapi.addUserType( user_id );
+      await dbapi.createTransaction( confirmation.transactionId, user_id, reservation.orderId, confirmation.amount, confirmation.currency );
+    }
+
+    //. 元の画面にリダイレクト
+    res.redirect( '/basicauth' );
   });
 });
 

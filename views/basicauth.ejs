@@ -24,7 +24,7 @@
 
 <script>
 <% if( user ){ %>
-var uuid = '<%= user %>';
+var uuid = '<%= user.displayName %>';
 <% }else{ %>
 var uuid = generateUUID();
 <% } %>
@@ -125,100 +125,120 @@ function toNewBasicIDPW( room ){
     room = $('#room').val();
   }
 
-  $('#room_name_1').html( room );
-  $('#basic_id').val( uuid );
-  $('#basic_password').val( '' );
+  if( room ){
+    $('#room_name_1').html( room );
+    $('#basic_id').val( uuid );
+    $('#basic_password').val( '' );
 
-  $('#div_0').css( 'display', 'none' );
-  $('#div_1').css( 'display', 'block' );
-  $('#div_2').css( 'display', 'none' );
-  $('#div_3').css( 'display', 'none' );
+    $('#div_0').css( 'display', 'none' );
+    $('#div_1').css( 'display', 'block' );
+    $('#div_2').css( 'display', 'none' );
+    $('#div_3').css( 'display', 'none' );
+  }else{
+    alert( 'room の指定が空では作成／更新できません。' );
+  }
 }
 
 function newBasicIDPW(){
   var room = $('#room_name_1').html();
-  var id = $('#basic_id').val();
-  var pw = $('#basic_password').val();
-  var data = {
-    basic_id: id,
-    basic_password: pw,
-    uuid: uuid
-  };
+  if( room ){
+    var id = $('#basic_id').val();
+    var pw = $('#basic_password').val();
+    var data = {
+      basic_id: id,
+      basic_password: pw,
+      uuid: uuid
+    };
 
-  $.ajax({
-    type: 'POST',
-    url: '/db/room/' + room,
-    data: data,
-    success: function( result ){
-      if( result && result.status ){
-        console.log( result );
-        alert( '指定した room: ' + room  + ' を新規登録しました。' );
-        $('#room_name_1').html( '' );
+    $.ajax({
+      type: 'POST',
+      url: '/db/room/' + room,
+      data: data,
+      success: function( result ){
+        if( result && result.status ){
+          console.log( result );
+          alert( '指定した room: ' + room  + ' を新規登録しました。' );
+          $('#room_name_1').html( '' );
         /*
         $('#div_0').css( 'display', 'block' );
         $('#div_1').css( 'display', 'none' );
         $('#div_2').css( 'display', 'none' );
         $('#div_3').css( 'display', 'none' );
         */
-        location.href = '/basicauth';
+          location.href = '/basicauth';
+        }
+      },
+      error: function( e0, e1, e2 ){
+        console.log( e0, e1, e2 );
+        alert( '指定した room: ' + room  + ' の作成に失敗しました(' + e2 + ')。' );
       }
-    },
-    error: function( e0, e1, e2 ){
-      console.log( e0, e1, e2 );
-      alert( '指定した room: ' + room  + ' の作成に失敗しました(' + e2 + ')。' );
-    }
-  });
+    });
+  }else{
+    alert( 'room の指定が空では作成できません。' );
+  }
 }
 
 function toUpdateBasicIDPW( room ){
-  $('#room_name_2').html( room );
-  $('#old_basic_id').val( uuid );
-  console.log( '#old_basic_id: ' + uuid );
-  $('#old_basic_password').val( '' );
-  $('#new_basic_password').val( '' );
+  if( room ){
+    $('#room_name_2').html( room );
+    $('#old_basic_id').val( uuid );
+    console.log( '#old_basic_id: ' + uuid );
+    $('#old_basic_password').val( '' );
+    $('#new_basic_password').val( '' );
 
-  $('#div_0').css( 'display', 'none' );
-  $('#div_1').css( 'display', 'none' );
-  $('#div_2').css( 'display', 'block' );
-  $('#div_3').css( 'display', 'none' );
+    $('#div_0').css( 'display', 'none' );
+    $('#div_1').css( 'display', 'none' );
+    $('#div_2').css( 'display', 'block' );
+    $('#div_3').css( 'display', 'none' );
+  }else{
+    alert( 'room の指定が空では作成／更新できません。' );
+  }
 }
 
 function updateBasicIDPW(){
   var room = $('#room_name_2').html();
-  var id = $('#old_basic_id').val();
-  var old_pw = $('#old_basic_password').val();
-  var new_pw = $('#new_basic_password').val();
-  var data = {
-    basic_id: id,
-    basic_password: old_pw,
-    new_basic_id: id,
-    new_basic_password: new_pw,
-    uuid: uuid
-  };
+  if( room ){
+    var id = $('#old_basic_id').val();
+    var old_pw = $('#old_basic_password').val();
+    var new_pw = $('#new_basic_password').val();
+    if( !old_pw && new_pw ){
+      alert( 'パスワード無しからパスワード有りへの変更はできません。一度削除してから作りなおしてください。' );
+    }else{
+      var data = {
+        basic_id: id,
+        basic_password: old_pw,
+        new_basic_id: id,
+        new_basic_password: new_pw,
+        uuid: uuid
+      };
 
-  $.ajax({
-    type: 'PUT',
-    url: '/db/room/' + room,
-    data: data,
-    success: function( result ){
-      if( result && result.status ){
-        console.log( result );
-        alert( '指定した room: ' + room  + ' を更新しました。' );
-        $('#room_name_2').html( '' );
-        /*
-        $('#div_0').css( 'display', 'block' );
-        $('#div_1').css( 'display', 'none' );
-        $('#div_2').css( 'display', 'none' );
-        $('#div_3').css( 'display', 'none' );
-        */
-        location.href = '/basicauth';
-      }
-    },
-    error: function( e0, e1, e2 ){
-      console.log( e0, e1, e2 );
-      alert( '指定した room: ' + room  + ' の更新に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
+      $.ajax({
+        type: 'PUT',
+        url: '/db/room/' + room,
+        data: data,
+        success: function( result ){
+          if( result && result.status ){
+            console.log( result );
+            alert( '指定した room: ' + room  + ' を更新しました。' );
+            $('#room_name_2').html( '' );
+            /*
+            $('#div_0').css( 'display', 'block' );
+            $('#div_1').css( 'display', 'none' );
+            $('#div_2').css( 'display', 'none' );
+            $('#div_3').css( 'display', 'none' );
+            */
+            location.href = '/basicauth';
+          }
+        },
+        error: function( e0, e1, e2 ){
+          console.log( e0, e1, e2 );
+          alert( '指定した room: ' + room  + ' の更新に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
+        }
+      });
     }
-  });
+  }else{
+    alert( 'room の指定が空では更新できません。' );
+  }
 }
 
 function toDeleteBasicIDPW( room ){
@@ -297,12 +317,17 @@ html, body{
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="#">DoodleShare Ex - ルーム検索</a>
   <ul class="navbar-nav mr-auto">
+    <li class="nav-item">
+      <a class="btn btn-success" href="/pay/reserve">プライベートルーム利用権購入</a>
+    </li>
   </ul>
   <ul class="navbar-nav ml-auto">
 <% if( user ){ %>
   <!-- #28 -->
     <li class="nav-item">
-      <button class="btn btn-warning" onClick="myLogout();">ログアウト</button>
+      <button class="btn btn-warning" onClick="myLogout();"> <!-- ログアウト -->
+        <%= user.displayName %>（プライベートルーム利用可能回数:<%= user.type %>）
+      </button>
     </li>
 <% } %>
   </ul>
@@ -329,7 +354,12 @@ html, body{
     </tr>
     <tr>
       <td>Password</td>
-      <td><input type="password" class="form-control" id="basic_password"/></td>
+      <td><input type="password" class="form-control" id="basic_password"
+<% if( user && user.type > 0 ){ %>
+<% }else{ %>
+        readonly="readonly"
+<% } %>
+        /></td>
     </tr>
   </table>
   <button class="btn btn-xs btn-primary" onClick="newBasicIDPW();">作成</button>
@@ -341,7 +371,7 @@ html, body{
   <table class="table">
     <tr>
       <td>Current ID</td>
-      <td><input type="text" class="form-control" id="old_basic_id" disabled="disabled"/></td>
+      <td><input type="text" class="form-control" id="old_basic_id" readonly="readonly"/></td>
     </tr>
     <tr>
       <td>Current Password</td>
@@ -349,7 +379,7 @@ html, body{
     </tr>
     <tr>
       <td>New Password</td>
-      <td><input type="password" class="form-control" id="new_basic_password"/></td>
+      <td><input type="password" class="form-control" id="new_basic_password" /></td>
     </tr>
   </table>
   <button class="btn btn-xs btn-primary" onClick="updateBasicIDPW();">更新</button>
