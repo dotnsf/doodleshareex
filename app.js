@@ -11,6 +11,9 @@ var express = require( 'express' ),
     session = require( 'express-session' ),
     WebSocket = require( 'ws' ),
     app = express();
+
+//. #34
+require( 'dotenv' ).config();
   
 var settings = require( './settings' );
 var settings_usedb = 'USEDB' in process.env ? process.env.USEDB : settings.usedb;
