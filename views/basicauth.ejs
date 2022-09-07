@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"/>
-<title>ベーシック認証編集</title>
+<title>認証編集</title>
 <script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
 <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css" rel="stylesheet"/>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.min.js"></script>
@@ -55,17 +55,19 @@ $(function(){
             + '</tr>';
           $('#rooms-table-body').append( tr );
         }
+      }
 
 <% if( user && user.type > 0 ){ %>
-        var tr = '<tr>'
-          + '<td><input type="text" style="width: 200px;" id="room"/></td>'
-          + '<td><button class="btn btn-xs btn-success" onClick="toNewBasicIDPW();">作成</button></td>'
-          + '</tr>';
-        $('#rooms-table-body').append( tr );
-<% }else{ %>
+      var tr = '<tr>'
+        + '<td><input type="text" style="width: 200px;" id="room"/></td>'
+        + '<td><button class="btn btn-xs btn-success" onClick="toNewBasicIDPW();">作成</button></td>'
+        + '</tr>';
+      $('#rooms-table-body').append( tr );
 <% } %>
-      }else{
-      }
+      var tr0 = '<tr>'
+        + '<td colspan="2"><a class="btn btn-xs btn-success" href="#" onClick="myPurchase();">プライベートルーム利用権<%= user && user.type > 0 ? "追加" : "購入" %></a></td>'
+        + '</tr>';
+      $('#rooms-table-body').append( tr0 );
     },
     error: function( e0, e1, e2 ){
       console.log( e0, e1, e2 );
