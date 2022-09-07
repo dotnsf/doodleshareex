@@ -144,8 +144,12 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
 
   //. logout
   app.get( '/auth0/logout', function( req, res ){
+    var returnTo = req.query.returnTo; //. #28
     req.logout( function(){
-      res.redirect( '/' );
+      //. #28
+      //. https://auth0.com/docs/product-lifecycle/deprecations-and-migrations/logout-return-to
+      //res.redirect( '/' );
+      res.redirect( 'https://' + settings_domain + '/v2/logout?client_id=' + settings_client_id + '&returnTo=' + returnTo );
     });
   });
 

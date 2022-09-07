@@ -277,7 +277,8 @@ function cancelProcess(){
 
 function myLogout(){
   if( confirm( 'ログアウトしますか？' ) ){
-    location.href = '/auth0/logout';
+    //. #28
+    location.href = '/auth0/logout?returnTo=' + location.protocol + '//' + location.host;
   }
 }
 </script>
@@ -299,11 +300,10 @@ html, body{
   </ul>
   <ul class="navbar-nav ml-auto">
 <% if( user ){ %>
-  <!-- #28 : 今の実装だとログアウトしてもセッションが残ってしまう
+  <!-- #28 -->
     <li class="nav-item">
       <button class="btn btn-warning" onClick="myLogout();">ログアウト</button>
     </li>
-  -->
 <% } %>
   </ul>
 </nav>
