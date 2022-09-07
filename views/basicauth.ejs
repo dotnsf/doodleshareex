@@ -56,11 +56,13 @@ $(function(){
           $('#rooms-table-body').append( tr );
         }
 
+<% if( user && user.type > 0 ){ %>
         var tr = '<tr>'
           + '<td><input type="text" style="width: 200px;" id="room"/></td>'
           + '<td><button class="btn btn-xs btn-success" onClick="toNewBasicIDPW();">作成</button></td>'
           + '</tr>';
         $('#rooms-table-body').append( tr );
+<% } %>
       }else{
       }
     },
