@@ -278,7 +278,7 @@ function cancelProcess(){
 function myLogout(){
   if( confirm( 'ログアウトしますか？' ) ){
     //. #28
-    location.href = '/auth0/logout?returnTo=' + location.protocol + '//' + location.host;
+    location.href = '/auth0/logout?returnTo=' + location.protocol + '//' + location.host + '/basicauth';
   }
 }
 </script>
