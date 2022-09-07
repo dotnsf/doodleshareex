@@ -142,7 +142,7 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
   app.get( '/auth0/login', passport.authenticate( 'auth0', {
     scope: 'openid profile email'
   }, function( req, res ){
-    res.redirect( '/basicauth' );
+    res.redirect( '/auth' );
   }));
 
   //. logout
@@ -163,13 +163,13 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
 
       req.logIn( user, function( err ){
         if( err ) return next( err );
-        res.redirect( '/basicauth' );
+        res.redirect( '/auth' );
       });
     })( req, res, next );
   });
 
   //. access restriction
-  app.all( '/basicauth*', function( req, res, next ){
+  app.all( '/auth*', function( req, res, next ){
     if( !req.user || !req.user.displayName ){
       res.redirect( '/auth0/login' );
     }else{
@@ -266,12 +266,12 @@ app.get( '/savedimages', function( req, res ){
 });
 
 //. #20
-app.get( '/basicauth', async function( req, res ){
+app.get( '/auth', async function( req, res ){
   /*
   if( settings_redirect_uri && settings_client_id && settings_client_secret && settings_domain ){
-    res.render( 'basicauth', { user: req.user.displayName } );
+    res.render( 'auth', { user: req.user.displayName } );
   }else{
-    res.render( 'basicauth', { user: '' } );
+    res.render( 'auth', { user: '' } );
   }
   */
   var user = null;
@@ -478,7 +478,7 @@ app.use( '/pay/confirm', function( req, res ){
     }
 
     //. 元の画面にリダイレクト
-    res.redirect( '/basicauth' );
+    res.redirect( '/auth' );
   });
 });
 

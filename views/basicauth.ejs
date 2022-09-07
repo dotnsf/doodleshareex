@@ -62,6 +62,7 @@ $(function(){
           + '<td><button class="btn btn-xs btn-success" onClick="toNewBasicIDPW();">作成</button></td>'
           + '</tr>';
         $('#rooms-table-body').append( tr );
+<% }else{ %>
 <% } %>
       }else{
       }
@@ -168,7 +169,7 @@ function newBasicIDPW(){
         $('#div_2').css( 'display', 'none' );
         $('#div_3').css( 'display', 'none' );
         */
-          location.href = '/basicauth';
+          location.href = '/auth';
         }
       },
       error: function( e0, e1, e2 ){
@@ -230,7 +231,7 @@ function updateBasicIDPW(){
             $('#div_2').css( 'display', 'none' );
             $('#div_3').css( 'display', 'none' );
             */
-            location.href = '/basicauth';
+            location.href = '/auth';
           }
         },
         error: function( e0, e1, e2 ){
@@ -280,7 +281,7 @@ function deleteBasicIDPW(){
         $('#div_2').css( 'display', 'none' );
         $('#div_3').css( 'display', 'none' );
         */
-        location.href = '/basicauth';
+        location.href = '/auth';
       }
     },
     error: function( e0, e1, e2 ){
@@ -301,7 +302,7 @@ function cancelProcess(){
 function myLogout(){
   if( confirm( 'ログアウトしますか？' ) ){
     //. #28
-    location.href = '/auth0/logout?returnTo=' + location.protocol + '//' + location.host + '/basicauth';
+    location.href = '/auth0/logout?returnTo=' + location.protocol + '//' + location.host + '/auth';
   }
 }
 

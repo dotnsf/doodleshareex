@@ -856,7 +856,7 @@ api.get( '/delete_user_type', async function( req, res ){
   if( user_id ){
     await api.deleteUserType( user_id );
   }
-  res.redirect( '/basicauth' );
+  res.redirect( '/auth' );
 });
 
 
