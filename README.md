@@ -11,11 +11,11 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
 - Access to hosting URL:
 
-  - `https://doodleshareex.herokuapp.com/view?room=XXXXXXXX`
+  - `https://doodleshareex.yellowmix.net/view?room=XXXXXXXX`
 
   - `XXXXXXXX` (room parameter) have to be **unique** string, like your name and timestamp.
   
-    - Ex. `https://doodleshareex.herokuapp.com/view?room=kkimura-20220608`
+    - Ex. `https://doodleshareex.yellowmix.net/view?room=kkimura-20220608`
 
   - Show screen's **QR code** to your guests, and ask them to enter your room with this QR code.
 
@@ -27,7 +27,7 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
 - Access to hosting URL, and sign-in/up with your ID&passcode:
 
-  - `https://doodleshareex.herokuapp.com/auth`
+  - `https://doodleshareex.yellowmix.net/auth`
 
 - You can see/create/update/delete your reserved room.
 
