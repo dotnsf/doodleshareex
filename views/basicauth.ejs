@@ -260,37 +260,39 @@ function toDeleteBasicIDPW( room ){
 
 function deleteBasicIDPW(){
   var room = $('#room_name_3').html();
-  var id = $('#del_basic_id').val();
-  var pw = $('#del_basic_password').val();
-  var data = {
-    basic_id: id,
-    basic_password: pw,
-    uuid: uuid
-  };
+  if( confirm( '鍵付き部屋「' + room + '」と、その利用権を削除しますか（新しい鍵付き部屋を作る場合は新しい権利が必要です）？' ) ){
+    var id = $('#del_basic_id').val();
+    var pw = $('#del_basic_password').val();
+    var data = {
+      basic_id: id,
+      basic_password: pw,
+      uuid: uuid
+    };
 
-  $.ajax({
-    type: 'DELETE',
-    url: '/db/room/' + room,
-    data: data,
-    success: function( result ){
-      if( result && result.status ){
-        console.log( result );
-        alert( '指定した room: ' + room  + ' を削除しました。' );
-        $('#room_name_3').html( '' );
-        /*
-        $('#div_0').css( 'display', 'block' );
-        $('#div_1').css( 'display', 'none' );
-        $('#div_2').css( 'display', 'none' );
-        $('#div_3').css( 'display', 'none' );
-        */
-        location.href = '/auth';
+    $.ajax({
+      type: 'DELETE',
+      url: '/db/room/' + room,
+      data: data,
+      success: function( result ){
+        if( result && result.status ){
+          console.log( result );
+          alert( '指定した room: ' + room  + ' を削除しました。' );
+          $('#room_name_3').html( '' );
+          /*
+          $('#div_0').css( 'display', 'block' );
+          $('#div_1').css( 'display', 'none' );
+          $('#div_2').css( 'display', 'none' );
+          $('#div_3').css( 'display', 'none' );
+          */
+          location.href = '/auth';
+        }
+      },
+      error: function( e0, e1, e2 ){
+        console.log( e0, e1, e2 );
+        alert( '指定した room: ' + room  + ' の削除に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
       }
-    },
-    error: function( e0, e1, e2 ){
-      console.log( e0, e1, e2 );
-      alert( '指定した room: ' + room  + ' の削除に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
-    }
-  });
+    });
+  }
 }
 
 function cancelProcess(){

@@ -27,7 +27,7 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
 - Access to hosting URL, and sign-in/up with your ID&passcode:
 
-  - `https://doodleshareex.herokuapp.com/basicauth`
+  - `https://doodleshareex.herokuapp.com/auth`
 
 - You can see/create/update/delete your reserved room.
 
@@ -54,6 +54,10 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
   - `postgres=# create table if not exists rooms ( id varchar(256) not null primary key, uuid varchar(100) default '', basic_id varchar(50) default '', basic_password varchar(50) default '', created bigint default 0, updated bigint default 0 );`
 
+  - `postgres=# create table if not exists users ( id varchar(50) not null primary key, type int default 0, created bigint default 0, updated bigint default 0 );`
+
+  - `postgres=# create table if not exists transactions ( id varchar(50) not null primary key, user_id varchar(50) not null, order_id varchar(50) not null, amount int default 0, currency varchar(10) default '', created bigint default 0, updated bigint default 0 );`
+
   - `postgres=# \q`
 
 - Run app(s) with PORT as environment variable(Default = 8080):
@@ -70,7 +74,7 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
     - Any running server can be OK.
 
-  - or `http://localhost:8080/basicauth` to start from registering dedicated room.
+  - or `http://localhost:8080/auth` to start from registering dedicated room.
 
 
 - User can access to application(s) with different browsers or different tabs:
