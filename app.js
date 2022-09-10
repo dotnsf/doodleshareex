@@ -246,10 +246,16 @@ app.get( '/client', function( req, res ){
 app.get( '/view', function( req, res ){
   var room = req.query.room;
   if( !room ){ room = 'default'; }
+  var columns = req.query.columns;
+  if( columns ){
+    columns = parseInt( columns );
+  }else{
+    columns = 0;
+  }
 
   subscribeMessage( room );
 
-  res.render( 'server', { room: room } );
+  res.render( 'server', { room: room, columns: columns } );
 });
 
 //. 

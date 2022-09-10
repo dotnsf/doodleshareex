@@ -17,6 +17,10 @@ Trial application, which tries to use WebSocket with Redis so that application c
   
     - Ex. `https://doodleshareex.yellowmix.net/view?room=kkimura-20220608`
 
+  - You can specify `columns` value in query string, which force to set columns number(Default: auto).
+  
+    - Ex. `https://doodleshareex.yellowmix.net/view?room=kkimura-20220608&columns=3`
+
   - Show screen's **QR code** to your guests, and ask them to enter your room with this QR code.
 
   - You can view semi-realtime doodling with your screen. Guest can save their doodle.
