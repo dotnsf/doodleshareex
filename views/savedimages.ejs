@@ -77,13 +77,14 @@ function redrawImages(){
       }
     }
 
+    var id_cnt = 1;
     for( var i = 0 ; i < groups.length; i ++ ){
       var n = [ 12, 12, 6, 4, 3, 2, 2 ][groups.length];
       var div_col = '<div class="col-sm-' + n + '">';
-      div_col += '<div class="card"><ul class="list-group list-group-flush">';
+      div_col += '<div class="card"><ul class="list-group my-list-group list-group-flush">';
 
       for( var j = 0; j < groups[i].length; j ++ ){
-        var li = '<li class="list-group-item">';
+        var li = '<li class="list-group-item" data-id="' + ( id_cnt ++ ) + '" draggable="true">';
 
         var image = groups[i][j];
         var tbl = '<table><tr>'
@@ -105,6 +106,55 @@ function redrawImages(){
       $('.chk_images').change( function(){
         //. ここを有効にしてしまうと、永久にチェックが付かなくなる
         //$('#select_all_for_checked_users').attr( 'checked', false ).prop( 'checked', false ); //.change();
+      });
+    }
+
+    //. DnD イベントハンドラー
+    var lists = $('ul.my-list-group li');
+    lists.on( 'dragstart', onMyDragStart );
+    lists.on( 'dragover', onMyDragOver );
+    lists.on( 'dragleave', onMyDragLeave );
+    lists.on( 'drop', onMyDrop );
+   
+    function onMyDragStart( e ){
+      e.originalEvent.dataTransfer.setData( 'text', $(this).data('id') );
+    }
+
+    function onMyDragOver( e ){
+      e.preventDefault();
+      if( ( e.offsetY ) < ( $(this).innerHeight() / 2 ) ){
+        //. マウスカーソルの位置が要素の半分より上
+        $(this).css({
+          'border-top': '2px solid blue',
+          'border-bottom': ''
+        });
+      }else{
+        //. マウスカーソルの位置が要素の半分より下
+        $(this).css({
+          'border-top': '',
+          'border-bottom': '2px solid blue'
+        });
+      }
+    }
+
+    function onMyDragLeave( e ){
+      $(this).css({
+        'border-top': '',
+        'border-bottom': ''
+      });
+    }
+
+    function onMyDrop( e ){
+      e.preventDefault();
+      var id = e.originalEvent.dataTransfer.getData( 'text' );
+      if( ( e.offsetY ) < $( $(this).innerHeight() / 2 ) ){
+        $('li[data-id=\'' + id + '\']' ).insertBefore( this );
+      }else{
+        $('li[data-id=\'' + id + '\']' ).insertAfter( this );
+      }
+      $(this).css({
+        'border-top': '',
+        'border-bottom': ''
       });
     }
   }
