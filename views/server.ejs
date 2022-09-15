@@ -74,11 +74,12 @@ var cards = [];    //. カード
 var imgs = {};     //. 画像データ
 
 var room = '<%= room %>';
+var client = '<%= client %>';
 
 $(function(){
   init();
 
-  QRCode.toCanvas( document.getElementById( 'qrcode' ), base_url + '?room=' + room, function( err ){
+  QRCode.toCanvas( document.getElementById( 'qrcode' ), base_url + '?room=' + room + '&client=' + client, function( err ){
     if( err ){ console.log( err ); }
   });
 

@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3c.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml">
+<head>
+<title>スクリーンライブ</title>
+<meta charset="utf8"/>
+<meta http-equiv="pragma" content="no-cache"/>
+<script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.min.js"></script>
+<script src="/common.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Screen Collect"/>
+
+<!-- // OGP tags -->
+<meta property="og:title" content="Screen Collect"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://doodleshareex.yellowmix.net/"/>
+<meta property="og:image" content="https://doodleshareex.yellowmix.net/icon.png"/>
+<meta property="og:site_name" content="Doodle Share Ex"/>
+<meta property="og:description" content="スクリーンライブ"/>
+<!-- OGP tags // -->
+
+<!-- // Twitter Card -->
+<meta property="twitter:card" content="summary"/>
+<meta property="twitter:site" content="@dotnsf"/>
+<meta property="twitter:creator" content="@dotnsf"/>
+<meta property="twitter:url" content="https://doodleshareex.yellowmix.net/"/>
+<meta property="twitter:image" content="https://doodleshareex.yellowmix.net/icon.png"/>
+<meta property="twitter:title" content="Doodle Share Ex"/>
+<meta property="twitter:description" content="スクリーンライブ"/>
+<!-- Twitter Card // -->
+
+<script>
+var uuid = generateUUID();
+var ws = null;
+
+var base_url = location.origin + '/';
+
+var localVideo = null;
+var localStream = null;
+
+function gotLocalMediaStream( mediaStream ){
+  //console.log( mediaStream );  //. { id: "id", active: true, }
+  localStream = mediaStream;
+  localVideo.srcObject = mediaStream;
+
+  //. 定期的にスクリーンショットを画像化して送信
+  setInterval( function(){
+    video2image();
+  }, <%= intervalms %> );
+}
+
+function handleLocalMediaStreamError( error ){
+  console.log( "navigator.getUserMedia error: ", error );
+}
+
+
+$(function(){
+  //. 画面サイズ取得
+  var sw = window.parent.screen.width;
+  var sh = window.parent.screen.height;
+  //sw : sh = x : 480; => x = 480 * sw / sh;
+  var x = Math.floor( 480 * sw / sh );
+  $('#video').css( { width: x } );
+  $('#canvas').css( { width: x } );
+  $('#img').css( { width: x, height: 480 } );
+
+  //. ヒストリバック無効化
+  if( window.history && window.history.pushState ){
+    history.pushState( "nohb", null, null );
+    $(window).on( "popState", function( evt ){
+      if( !event.originalEvent.state ){
+        history.pushState( "nohb", null, null );
+        return;
+      }
+    });
+  }
+
+  //. 初期化を通知
+  var name = $('#name').text();
+  var msg = {
+    uuid: uuid,
+    room: '<%= room %>',
+    name: name,
+    width: x,
+    timestamp: ( new Date() ).getTime(),
+    height: 480
+  };
+
+  var mediaStreamConstraints = { video: true };
+  localVideo = document.querySelector( "video" );
+  navigator.mediaDevices.getDisplayMedia( mediaStreamConstraints ).then( gotLocalMediaStream ).catch( handleLocalMediaStreamError );
+
+  //. #39
+  //. Redis 対応
+  ws = location.protocol.indexOf( 'https' ) > -1 ? ( new WebSocket( `wss://${location.host}` ) ) : ( new WebSocket( `ws://${location.host}` ) );
+  ws.onopen = function(){
+    //. 接続できた時
+    console.log( 'WebSocket connection established' );
+  };
+  ws.onmessage = function (message) {
+    var data = JSON.parse( message.data )
+    //showMessage(JSON.stringify(data.message));
+  };
+  ws.onclose = function( event ){
+    ws = null;
+  };
+  ws.onerror = function( event ){
+  };
+});
+
+function video2image(){
+  if( localStream ){
+    var canvas = document.getElementById( 'canvas' );
+    var ctx = canvas.getContext( '2d' );
+
+    var video = document.getElementById( 'video' );
+    var w = video.offsetWidth;
+    var h = video.offsetHeight;
+
+    canvas.setAttribute( "width", w );
+    canvas.setAttribute( "height", h );
+
+    ctx.drawImage( video, 0, 0, w, h );
+    var png = canvas.toDataURL( 'image/png' );
+
+    //. 画像を通知(#39)
+    var msg = {
+      uuid: uuid,
+      room: '<%= room %>',
+      name: '<%= name %>',
+      comment: '',
+      timestamp: ( new Date() ).getTime(),
+      image_src: png
+    };
+    ws.send( '<%= room %>:' + JSON.stringify( msg ) );
+  }
+}
+</script>
+<style>
+html, body {
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+
+.hidetop{
+  position: absolute;
+  top: -500px;
+}
+
+.hide{
+  display: none;
+}
+</style>
+</head>
+<body>
+  <h3 id="name"><%= name %></h3>
+  （このウィンドウを破棄しないでください）
+
+  <!-- Video element (live stream) -->
+  <div class="hidetop">
+    <video autoplay playsinline id="video" width="640" height="480"></video>
+  </div>
+
+  <!-- Canvas element (screenshot) -->
+  <div class="hide">
+    <canvas id="canvas" width="640" height="480"></canvas>
+  </div>
+</body>
+</html>

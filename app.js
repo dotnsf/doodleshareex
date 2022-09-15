@@ -242,10 +242,35 @@ app.get( '/client', function( req, res ){
   res.render( 'client', { name: name, room: room } );
 });
 
+//. Page for #39
+app.get( '/screen', function( req, res ){
+  var name = req.query.name;
+  if( !name ){ name = '' + ( new Date() ).getTime(); }
+  var room = req.query.room;
+  if( !room ){ room = 'default'; }
+  var intervalms = 'INTERVALMS' in process.env ? parseInt( process.env.INTERVALMS ) : 2000;
+  var _intervalms = req.query.intervalms;
+  if( _intervalms ){
+    try{
+      _intervalms = parseInt( _intervalms );
+    }catch( e ){
+    }
+  }
+  if( _intervalms ){
+    intervalms = _intervalms;
+  }
+
+  subscribeMessage( room );
+
+  res.render( 'screen', { name: name, room: room, intervalms: intervalms } );
+});
+
 //. Page for admin
 app.get( '/view', function( req, res ){
   var room = req.query.room;
   if( !room ){ room = 'default'; }
+  var client = req.query.client;
+  if( !client ){ client = ''; }
   var columns = req.query.columns;
   if( columns ){
     columns = parseInt( columns );
@@ -255,7 +280,7 @@ app.get( '/view', function( req, res ){
 
   subscribeMessage( room );
 
-  res.render( 'server', { room: room, columns: columns } );
+  res.render( 'server', { room: room, client: client, columns: columns } );
 });
 
 //. 
