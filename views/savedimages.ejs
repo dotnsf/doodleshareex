@@ -53,11 +53,12 @@ $(function(){
   });
 });
 
+var groups = [];
 function redrawImages(){
   $('#cards-groups').html( '' );
   if( images && images.length > 0 ){
     var interlude = parseInt( $('#interlude').val() );
-    var groups = [];
+    /*var*/ groups = [];
     if( interlude == 0 ){
       groups.push( [] );
       images.forEach( function( image ){
@@ -77,37 +78,7 @@ function redrawImages(){
       }
     }
 
-    var id_cnt = 1;
-    for( var i = 0 ; i < groups.length; i ++ ){
-      var n = [ 12, 12, 6, 4, 3, 2, 2 ][groups.length];
-      var div_col = '<div class="col-sm-' + n + '">';
-      div_col += '<div class="card"><ul class="list-group my-list-group list-group-flush">';
-
-      for( var j = 0; j < groups[i].length; j ++ ){
-        var li = '<li class="list-group-item" data-id="' + ( id_cnt ++ ) + '" draggable="true">';
-
-        var image = groups[i][j];
-        var tbl = '<table><tr>'
-          + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + image.id + '" comment="' + image.comment + '" dname="' + image.name + '" uuid="' + image.uuid + '"/></td>'
-          + '<td>' + name2link( image.name, image.uuid ) + '<br/><img src="/db/image?id=' + image.id + '" title="' + image.comment + '" width="200"/><br/>'
-          + timestamp2datetime( image.timestamp ) + '</td>'
-          + '<td><button class="btn btn-danger" onClick="deleteImage(\'' + image.id + '\');">削除</button></td>'
-          + '</tr></table>';
-        li += tbl;
-
-        li += '</li>';
-        div_col += li;
-      }
- 
-      div_col += '</ul></div></div>';     
-      $('#cards-groups').append( div_col );
-
-      //. チェックボックスが操作されたら「同じユーザーの描いた画像を全てチェック」のチェックは無条件に外す
-      $('.chk_images').change( function(){
-        //. ここを有効にしてしまうと、永久にチェックが付かなくなる
-        //$('#select_all_for_checked_users').attr( 'checked', false ).prop( 'checked', false ); //.change();
-      });
-    }
+    drawGroups();
 
     //. DnD イベントハンドラー
     var lists = $('ul.my-list-group li');
@@ -122,17 +93,37 @@ function redrawImages(){
 
     function onMyDragOver( e ){
       e.preventDefault();
-      if( ( e.offsetY ) < ( $(this).innerHeight() / 2 ) ){
-        //. マウスカーソルの位置が要素の半分より上
+      if( ( e.offsetY ) < ( $(this).innerHeight() / 4 ) ){
+        //. マウスカーソルの位置が要素の四分の１より上
         $(this).css({
           'border-top': '2px solid blue',
-          'border-bottom': ''
+          'border-bottom': '',
+          'border-left': '',
+          'border-right': ''
         });
-      }else{
-        //. マウスカーソルの位置が要素の半分より下
+      }else if( ( e.offsetY ) > ( $(this).innerHeight() / 4 * 3 ) ){
+        //. マウスカーソルの位置が要素の四分の３より下
         $(this).css({
           'border-top': '',
-          'border-bottom': '2px solid blue'
+          'border-bottom': '2px solid blue',
+          'border-left': '',
+          'border-right': ''
+        });
+      }else if( ( e.offsetX ) < ( $(this).innerWidth() / 4 ) ){
+        //. マウスカーソルの位置が要素の四分の１より左
+        $(this).css({
+          'border-top': '',
+          'border-bottom': '',
+          'border-left': '2px solid blue',
+          'border-right': ''
+        });
+      }else if( ( e.offsetX ) > ( $(this).innerWidth() / 4 * 3 ) ){
+        //. マウスカーソルの位置が要素の四分の３より右
+        $(this).css({
+          'border-top': '',
+          'border-bottom': '',
+          'border-left': '',
+          'border-right': '2px solid blue'
         });
       }
     }
@@ -140,22 +131,70 @@ function redrawImages(){
     function onMyDragLeave( e ){
       $(this).css({
         'border-top': '',
-        'border-bottom': ''
+        'border-bottom': '',
+        'border-left': '',
+        'border-right': ''
       });
     }
 
     function onMyDrop( e ){
       e.preventDefault();
       var id = e.originalEvent.dataTransfer.getData( 'text' );
-      if( ( e.offsetY ) < $( $(this).innerHeight() / 2 ) ){
+      if( ( e.offsetY ) < $( $(this).innerHeight() / 4 ) ){
         $('li[data-id=\'' + id + '\']' ).insertBefore( this );
-      }else{
+      }else if( ( e.offsetY ) > ( $(this).innerHeight() / 4 * 3 ) ){
         $('li[data-id=\'' + id + '\']' ).insertAfter( this );
+      }else if( ( e.offsetX ) < ( $(this).innerWidth() / 4 ) ){
+        //. 列挿入 #38
+        //. L.83 の div_col を左に挿入
+        var col_id = $(this).parent().parent().parent().attr( 'data-id' );  //. #col_id の左に挿入する
+        var div_col = '<div class="col-sm-2"><div class="card"><ul class="list-group my-list-group list-group-flush"></ul></div></div>';
+        //$(div_col).insertBefore( $('div[data-id=\'' + col_id + '\']') );
+      }else if( ( e.offsetX ) > ( $(this).innerWidth() / 4 * 3 ) ){
+        //. 列挿入 #38
+        //. L.83 の div_col を右に挿入
       }
       $(this).css({
         'border-top': '',
-        'border-bottom': ''
+        'border-bottom': '',
+        'border-left': '',
+        'border-right': ''
       });
+    }
+
+    function drawGroups(){
+      $('#cards-groups').html( '' );
+      var id_cnt = 1;
+      for( var i = 0 ; i < groups.length; i ++ ){
+        var n = [ 12, 12, 6, 4, 3, 2, 2 ][groups.length];
+        var div_col = '<div class="col-sm-' + n + '" data-id="' + ( i ) + '">';
+        div_col += '<div class="card"><ul class="list-group my-list-group list-group-flush">';
+
+        for( var j = 0; j < groups[i].length; j ++ ){
+          var li = '<li class="list-group-item" data-id="' + ( id_cnt ++ ) + '" draggable="true">';
+  
+          var image = groups[i][j];
+          var tbl = '<table><tr>'
+            + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + image.id + '" comment="' + image.comment + '" dname="' + image.name + '" uuid="' + image.uuid + '"/></td>'
+            + '<td>' + name2link( image.name, image.uuid ) + '<br/><img src="/db/image?id=' + image.id + '" title="' + image.comment + '" width="200"/><br/>'
+            + timestamp2datetime( image.timestamp ) + '</td>'
+            + '<td><button class="btn btn-danger" onClick="deleteImage(\'' + image.id + '\');">削除</button></td>'
+            + '</tr></table>';
+          li += tbl;
+
+          li += '</li>';
+          div_col += li;
+        }
+ 
+        div_col += '</ul></div></div>';     
+        $('#cards-groups').append( div_col );
+
+        //. チェックボックスが操作されたら「同じユーザーの描いた画像を全てチェック」のチェックは無条件に外す
+        $('.chk_images').change( function(){
+          //. ここを有効にしてしまうと、永久にチェックが付かなくなる
+          //$('#select_all_for_checked_users').attr( 'checked', false ).prop( 'checked', false ); //.change();
+        });
+      }
     }
   }
 }
