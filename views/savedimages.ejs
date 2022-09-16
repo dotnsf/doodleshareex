@@ -150,6 +150,9 @@ function redrawImages(){
         var col_id = $(this).parent().parent().parent().attr( 'data-id' );  //. #col_id の左に挿入する
         var div_col = '<div class="col-sm-2"><div class="card"><ul class="list-group my-list-group list-group-flush"></ul></div></div>';
         //$(div_col).insertBefore( $('div[data-id=\'' + col_id + '\']') );
+
+        //. groups 再設定後に drawGroups(); が必要かも？
+        //. でもそのためには時間設定も必要？
       }else if( ( e.offsetX ) > ( $(this).innerWidth() / 4 * 3 ) ){
         //. 列挿入 #38
         //. L.83 の div_col を右に挿入
