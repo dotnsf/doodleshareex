@@ -114,7 +114,7 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
     - If `CLIENT_NUM` = 5 and `INTERVAL_MS` = 1000, ws_client would send message in every (1000/5=)200 ms.
 
-  - `SERVER_URL` : URL of WebSocket server(default: 'http://localhost:8080')
+  - `SERVER_URL` : URL of WebSocket server(default: 'ws://localhost:8080')
 
 
 
