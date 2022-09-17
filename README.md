@@ -94,11 +94,37 @@ Trial application, which tries to use WebSocket with Redis so that application c
   - Confirm each message would be sent to all client
 
 
+## WebSocket client tool
+
+- You can run WebSocket client(`ws_client.js`) to simulate clients, or to use load tester.
+
+  - `$ node ws_client`
+
+- You can specify options as environment variables:
+
+  - `ROOM` : room name(default: 'default')
+
+  - `IMAGES_FOLDER` : name of sample images for WebSocket client(default: 'sample_images')
+
+    - Each images should be `image/png`.
+
+  - `CLIENT_NUM` : number of simulated clients(default: 10)
+
+  - `INTERVAL_MS` : milliseconds of intervals that **each client** send messages to WebSocket server(default: 1000)
+
+    - If `CLIENT_NUM` = 5 and `INTERVAL_MS` = 1000, ws_client would send message in every (1000/5=)200 ms.
+
+  - `SERVER_URL` : URL of WebSocket server(default: 'http://localhost:8080')
+
+
+
 ## References
 
 https://qiita.com/rihofujino/items/7bf4b99e2176f63ca7ef
 
 https://github.com/rihofujino/pubsub-demo
+
+https://qiita.com/n0bisuke/items/cb6216dbb9c3c13a10a8
 
 
 ## Copyright
