@@ -289,10 +289,13 @@ app.get( '/savedimages', function( req, res ){
   if( !room ){ room = 'default'; }
   var columns = req.query.columns;
   if( columns ){
-    columns = parseInt( columns );
-  }else{
-    columns = 5;
+    try{
+      columns = parseInt( columns );
+    }catch( e ){
+    }
   }
+  if( !columns ){ columns = 0; }
+  
   res.render( 'savedimages', { room: room, columns: columns } );
 });
 

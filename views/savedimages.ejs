@@ -53,12 +53,12 @@ $(function(){
   });
 });
 
-var groups = [];
 function redrawImages(){
   $('#cards-groups').html( '' );
   if( images && images.length > 0 ){
+    var groups = [];
+<% if( columns == 0 ){ %>
     var interlude = parseInt( $('#interlude').val() );
-    /*var*/ groups = [];
     if( interlude == 0 ){
       groups.push( [] );
       images.forEach( function( image ){
@@ -77,8 +77,19 @@ function redrawImages(){
         last_timestamp = image.timestamp;
       }
     }
+<% }else{ %>
+    var columns = ( <%= columns %> < images.length ? <%= columns %> : images.length );
+    for( var i = 0; i < images.length; i ++ ){
+      if( i < columns ){
+        groups.push( [] );
+        groups[i].push( images[i] );
+      }else{
+        groups[columns-1].push( images[i] );
+      }
+    }
+<% } %>
 
-    drawGroups();
+    drawGroups( groups );
 
     //. DnD イベントハンドラー
     var lists = $('ul.my-list-group li');
@@ -97,33 +108,13 @@ function redrawImages(){
         //. マウスカーソルの位置が要素の四分の１より上
         $(this).css({
           'border-top': '2px solid blue',
-          'border-bottom': '',
-          'border-left': '',
-          'border-right': ''
+          'border-bottom': ''
         });
       }else if( ( e.offsetY ) > ( $(this).innerHeight() / 4 * 3 ) ){
         //. マウスカーソルの位置が要素の四分の３より下
         $(this).css({
           'border-top': '',
-          'border-bottom': '2px solid blue',
-          'border-left': '',
-          'border-right': ''
-        });
-      }else if( ( e.offsetX ) < ( $(this).innerWidth() / 4 ) ){
-        //. マウスカーソルの位置が要素の四分の１より左
-        $(this).css({
-          'border-top': '',
-          'border-bottom': '',
-          'border-left': '2px solid blue',
-          'border-right': ''
-        });
-      }else if( ( e.offsetX ) > ( $(this).innerWidth() / 4 * 3 ) ){
-        //. マウスカーソルの位置が要素の四分の３より右
-        $(this).css({
-          'border-top': '',
-          'border-bottom': '',
-          'border-left': '',
-          'border-right': '2px solid blue'
+          'border-bottom': '2px solid blue'
         });
       }
     }
@@ -131,9 +122,7 @@ function redrawImages(){
     function onMyDragLeave( e ){
       $(this).css({
         'border-top': '',
-        'border-bottom': '',
-        'border-left': '',
-        'border-right': ''
+        'border-bottom': ''
       });
     }
 
@@ -144,28 +133,14 @@ function redrawImages(){
         $('li[data-id=\'' + id + '\']' ).insertBefore( this );
       }else if( ( e.offsetY ) > ( $(this).innerHeight() / 4 * 3 ) ){
         $('li[data-id=\'' + id + '\']' ).insertAfter( this );
-      }else if( ( e.offsetX ) < ( $(this).innerWidth() / 4 ) ){
-        //. 列挿入 #38
-        //. L.83 の div_col を左に挿入
-        var col_id = $(this).parent().parent().parent().attr( 'data-id' );  //. #col_id の左に挿入する
-        var div_col = '<div class="col-sm-2"><div class="card"><ul class="list-group my-list-group list-group-flush"></ul></div></div>';
-        //$(div_col).insertBefore( $('div[data-id=\'' + col_id + '\']') );
-
-        //. groups 再設定後に drawGroups(); が必要かも？
-        //. でもそのためには時間設定も必要？
-      }else if( ( e.offsetX ) > ( $(this).innerWidth() / 4 * 3 ) ){
-        //. 列挿入 #38
-        //. L.83 の div_col を右に挿入
       }
       $(this).css({
         'border-top': '',
-        'border-bottom': '',
-        'border-left': '',
-        'border-right': ''
+        'border-bottom': ''
       });
     }
 
-    function drawGroups(){
+    function drawGroups( groups ){
       $('#cards-groups').html( '' );
       var id_cnt = 1;
       for( var i = 0 ; i < groups.length; i ++ ){
