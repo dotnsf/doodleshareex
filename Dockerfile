@@ -12,8 +12,8 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 8080
-CMD ["node", "app.js"]
+#EXPOSE 8080
+CMD ["npm", "start"]
 
 
 
