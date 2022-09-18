@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3c.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml">
 <head>
-<title>スクリーンライブ</title>
+<title><%= __('screen.head.title') %></title>
 <meta charset="utf8"/>
 <meta http-equiv="pragma" content="no-cache"/>
 <script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
@@ -16,12 +16,12 @@
 <meta name="apple-mobile-web-app-title" content="Screen Collect"/>
 
 <!-- // OGP tags -->
-<meta property="og:title" content="Screen Collect"/>
+<meta property="og:title" content="<%= __('screen.head.title') %>"/>
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://doodleshareex.yellowmix.net/"/>
 <meta property="og:image" content="https://doodleshareex.yellowmix.net/icon.png"/>
-<meta property="og:site_name" content="Doodle Share Ex"/>
-<meta property="og:description" content="スクリーンライブ"/>
+<meta property="og:site_name" content="<%= __('common.appname') %>"/>
+<meta property="og:description" content="<%= __('screen.head.title') %>"/>
 <!-- OGP tags // -->
 
 <!-- // Twitter Card -->
@@ -30,8 +30,8 @@
 <meta property="twitter:creator" content="@dotnsf"/>
 <meta property="twitter:url" content="https://doodleshareex.yellowmix.net/"/>
 <meta property="twitter:image" content="https://doodleshareex.yellowmix.net/icon.png"/>
-<meta property="twitter:title" content="Doodle Share Ex"/>
-<meta property="twitter:description" content="スクリーンライブ"/>
+<meta property="twitter:title" content="<%= __('common.appname') %>"/>
+<meta property="twitter:description" content="<%= __('screen.head.title') %>"/>
 <!-- Twitter Card // -->
 
 <script>
@@ -161,7 +161,7 @@ html, body {
 </head>
 <body>
   <h3 id="name"><%= name %></h3>
-  （このウィンドウを破棄しないでください）
+  <%= __('screen.body.message') %>
 
   <!-- Video element (live stream) -->
   <div class="hidetop">

@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"/>
-<title>お絵描きライブ(<%= room %>)</title>
+<title><%= __('common.appname') %>(<%= room %>)</title>
 <script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
 <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css" rel="stylesheet"/>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.min.js"></script>
@@ -15,7 +15,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
-<meta name="apple-mobile-web-app-title" content="お絵描きライブ"/>
+<meta name="apple-mobile-web-app-title" content="<%= __('common.appname') %>"/>
 
 <link rel="shortcut icon" href="/icon.png" type="image/png"/>
 <link rel="icon" href="/icon.png" type="image/png"/>
@@ -156,7 +156,7 @@ function redrawImages(){
             + '<td><input type="checkbox" name="chk_image" class="chk_images" id="chk_image_' + image.id + '" comment="' + image.comment + '" dname="' + image.name + '" uuid="' + image.uuid + '"/></td>'
             + '<td>' + name2link( image.name, image.uuid ) + '<br/><img src="/db/image?id=' + image.id + '" title="' + image.comment + '" width="200"/><br/>'
             + timestamp2datetime( image.timestamp ) + '</td>'
-            + '<td><button class="btn btn-danger" onClick="deleteImage(\'' + image.id + '\');">削除</button></td>'
+            + '<td><button class="btn btn-danger" onClick="deleteImage(\'' + image.id + '\');">' + "<%= __('savedimages.button.delete') %>" + '</button></td>'
             + '</tr></table>';
           li += tbl;
 
@@ -291,7 +291,7 @@ function name2link( name, uuid ){
 }
 
 function deleteImage( image_id ){
-  if( confirm( image_id + ' の画像を削除します' ) ){
+  if( confirm( "<%= __('savedimages.confirm.delete1' ) %>" + image_id + "<%= __('savedimages.confirm.delete2' ) %>" ) ){
     $.ajax({
       url: '/db/image?id=' + image_id,
       type: 'DELETE',
@@ -409,10 +409,10 @@ html, body{
 
   <div class="chkbox">
     <input type="checkbox" id="select_all_for_checked_users" onChange="toggle_select_all();"/>
-    <label for="select_all_for_checked_users">　同じユーザーの描いた画像を全てチェック</label>
+    <label for="select_all_for_checked_users"><%= __('savedimages.checkbox.selectall') %></label>
   </div>
   <br/>
-  <button id="selected_images_btn" class="btn btn-primary" onClick="selected_images();">選択画像を表示</button>
+  <button id="selected_images_btn" class="btn btn-primary" onClick="selected_images();"><%= __('savedimages.button.showselectedimages') %></button>
 </div>
 
 <div class="modal bd-example-modal-lg fade" id="imagesModal" tabindex="-1" role="dialog" aria-labbelledby="imagesModal" aria-hidden="true">
@@ -436,7 +436,6 @@ html, body{
     </div>
   </div>
 </div>
-
 
 </body>
 </html>

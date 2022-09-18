@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"/>
-<title>お絵描きライブ - 認証編集</title>
+<title><%= __('common.appname') %> - <%= __('basicauth.title.edit') %></title>
 <script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
 <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css" rel="stylesheet"/>
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.min.js"></script>
@@ -21,7 +21,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
-<meta name="apple-mobile-web-app-title" content="お絵描きライブ"/>
+<meta name="apple-mobile-web-app-title" content="<%= ('common.appname') %>"/>
 
 <script>
 <% if( user ){ %>
@@ -50,8 +50,8 @@ $(function(){
           var room = result.rooms[i];
           var tr = '<tr>'
             + '<td><a target="_blank" href="/view?room=' + room.id + '">' + room.id + '</a></td>'
-            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + room.id + '\');">更新</button>'
-            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + room.id + '\');">削除</button></td>'
+            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.update') %>" + '</button>'
+            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.delete') %>" + '</button></td>'
             + '</tr>';
           $('#rooms-table-body').append( tr );
         }

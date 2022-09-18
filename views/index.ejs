@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<title><%= __('common.appname') %></title>
+<script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+<link rel="shortcut icon" href="/icon.png" type="image/png"/>
+<link rel="icon" href="/icon.png" type="image/png"/>
+<link rel="apple-touch-icon" href="/icon.png"/>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="<%= __('common.appname') %>"/>
+
+<style type="text/css">
+html, body{
+  text-align: center;
+  background-color: #fafafa;
+  font-size: 20px;
+  color: #333;
+}
+.errortext{
+  border: 2px solid #f00;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <select id="client" class="form-control" style="display:none;">
+    <option value="client" selected><%= __('index.client.client') %></option>
+    <option value="screen"><%= __('index.client.screen') %></option>
+  </select>
+  <!-- no room feature -->
+  <input type="text" class="form-control" id="room" value="default" placeholder="<%= __('index.placeholder.room') %>" />
+  <input type="text" class="form-control" id="name" value="" placeholder="<%= __('index.placeholder.yourname') %>" />
+  <input type="button" class="btn btn-xs btn-primary" value="<%= __('index.button.start') %>" onClick="startDrawing();"/>
+</div>
+
+<script>
+$(function(){
+  var cookies = document.cookie.split( '; ' );
+  for( var i = 0; i < cookies.length; i ++ ){
+    var str = cookies[i].split( "=" );
+    if( unescape( str[0] ) == "name" ){
+      $('#name').val( unescape( str[1] ) );
+    }
+  }
+
+  var params = location.search.substring( 1 ).split( '&' );
+  params.forEach( function( param ){
+    var str = param.split( '=' );
+    if( str[0] == 'room' ){
+      $('#room').val( unescape( str[1] ) );
+      $('#room').prop( 'readonly', 'readonly' );
+    }else if( str[0] == 'client' && str[1] ){
+      $('#client').css( 'display', 'block' );
+    }
+  });
+});
+
+function startDrawing(){
+  var client = $('#client').val();
+  if( !client ){ client = 'client'; }
+  var room = $('#room').val();
+  if( !room ){ room = ''; }
+  var name = $('#name').val();
+  if( name ){
+    var maxage = 60 * 60 * 24 * 365 * 100; //. 100years
+    document.cookie = ( "name=" + name + '; max-age=' + maxage );
+    location.href = '/' + client + '?room=' + room + '&name=' + name;
+  }else{
+    $('#name').addClass( 'errortext' );
+    //$('#name').focus();
+  }
+}
+</script>
+</body>
+</html>

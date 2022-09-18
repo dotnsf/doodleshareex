@@ -11,6 +11,7 @@
         "ejs": "^3.1.8",
         "express": "^4.18.1",
         "express-session": "^1.17.3",
+        "i18n": "^0.15.0",
         "ioredis": "^5.0.6",
         "line-pay": "^1.0.16",
         "memory-cache": "^0.2.0",

@@ -6,6 +6,7 @@ var express = require( 'express' ),
     ejs = require( 'ejs' ),
     fs = require( 'fs' ),
     http = require( 'http' ),
+    i18n = require( 'i18n' ),
     passport = require( 'passport' ),
     Redis = require( 'ioredis' ),
     session = require( 'express-session' ),
@@ -29,6 +30,13 @@ app.use( express.static( __dirname + '/public' ) );
 
 app.set( 'views', __dirname + '/views' );
 app.set( 'view engine', 'ejs' );
+
+//. i18n
+i18n.configure({
+  locales: ['ja', 'en'],
+  directory: __dirname + '/locales'
+});
+app.use( i18n.init );
 
 //.  HTTP server
 var server = http.createServer( app );
@@ -231,6 +239,10 @@ app.use( '/admin', async function( req, res, next ){
 });
 
 //. Page for guest
+app.get( '/', function( req, res ){
+  res.render( 'index', {} );
+});
+
 app.get( '/client', function( req, res ){
   var name = req.query.name;
   if( !name ){ name = '' + ( new Date() ).getTime(); }
@@ -301,13 +313,6 @@ app.get( '/savedimages', function( req, res ){
 
 //. #20
 app.get( '/auth', async function( req, res ){
-  /*
-  if( settings_redirect_uri && settings_client_id && settings_client_secret && settings_domain ){
-    res.render( 'auth', { user: req.user.displayName } );
-  }else{
-    res.render( 'auth', { user: '' } );
-  }
-  */
   var user = null;
   if( req.user ){ 
     //. ログインが確認できた場合はそのユーザー属性を持ってメインページへ
