@@ -98,7 +98,7 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
 - You can run WebSocket client(`ws_client.js`) to simulate clients, or to use load tester.
 
-  - `$ node ws_client`
+  - `$ ROOM=dotnsf CLIENT_NUM=5 INTERVAL_MS=5000 SERVER_URL=ws://localhost:8080 node ws_client`
 
 - You can specify options as environment variables:
 
@@ -116,6 +116,20 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
   - `SERVER_URL` : URL of WebSocket server(default: 'ws://localhost:8080')
 
+
+## WebSocket client container image
+
+- You can run WebSocket container image(`dotnsf/doodleshareex-client`) to simulate clients, or to use load tester.
+
+  - `$ docker run -d -e ROOM=dotnsf -e INTERVAL_MS=3000 SERVER_URL=wss://doodleshareex.yellowmix.net dotnsf/doodleshareex-client`
+
+- You can specify options as environment variables:
+
+  - `ROOM` : room name(default: 'default')
+
+  - `INTERVAL_MS` : milliseconds of intervals that client send messages to WebSocket server(default: 1000)
+
+  - `SERVER_URL` : URL of WebSocket server(default: 'ws://localhost:8080')
 
 
 ## References
