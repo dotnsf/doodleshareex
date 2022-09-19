@@ -349,36 +349,42 @@ api.post( '/room/:id', async function( req, res ){
       conn = await pg.connect();
 
       var id = req.params.id;
-      var r = await api.readRoom( id );
-      if( !r.status || r.room == null ){
-        //. 指定の room が存在していないことを確認できたので、作成
-        var uuid = req.body.uuid;
-        var basic_id = req.body.basic_id;
-        var basic_password = req.body.basic_password;
-        var enc_basic_password = getHash( basic_password );
-        var ts = ( new Date() ).getTime();
-
-        var sql = "insert into rooms( id, uuid, basic_id, basic_password, created, updated ) values( $1, $2, $3, $4, $5, $6 )";
-        var query = { text: sql, values: [ id, uuid, basic_id, enc_basic_password, ts, ts ] };
-        conn.query( query, async function( err, result ){
-          if( err ){
-            console.log( err );
-            res.status( 400 );
-            res.write( JSON.stringify( { status: false, error: err } ) );
-            res.end();
-          }else{
-            /* 作成時のみ権利を消費する */
-            if( basic_password ){
-              await api.deleteUserType( uuid );
-            }
-            res.write( JSON.stringify( { status: true } ) );
-            res.end();
-          }
-        });
-      }else{
+      if( id.toLowerCase() == 'default' ){
         res.status( 400 );
-        res.write( JSON.stringify( { status: false, error: 'room existed.' } ) );
+        res.write( JSON.stringify( { status: false, error: "default room can't be edited." } ) );
         res.end();
+      }else{
+        var r = await api.readRoom( id );
+        if( !r.status || r.room == null ){
+          //. 指定の room が存在していないことを確認できたので、作成
+          var uuid = req.body.uuid;
+          var basic_id = req.body.basic_id;
+          var basic_password = req.body.basic_password;
+          var enc_basic_password = getHash( basic_password );
+          var ts = ( new Date() ).getTime();
+
+          var sql = "insert into rooms( id, uuid, basic_id, basic_password, created, updated ) values( $1, $2, $3, $4, $5, $6 )";
+          var query = { text: sql, values: [ id, uuid, basic_id, enc_basic_password, ts, ts ] };
+          conn.query( query, async function( err, result ){
+            if( err ){
+              console.log( err );
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, error: err } ) );
+              res.end();
+            }else{
+              /* 作成時のみ権利を消費する */
+              if( basic_password ){
+                await api.deleteUserType( uuid );
+              }
+              res.write( JSON.stringify( { status: true } ) );
+              res.end();
+            }
+          });
+        }else{
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: 'room existed.' } ) );
+          res.end();
+        }
       }
     }else{
       res.status( 400 );
@@ -443,47 +449,53 @@ api.put( '/room/:id', async function( req, res ){
       conn = await pg.connect();
 
       var id = req.params.id;
-      var uuid = req.body.uuid;
-      var basic_id = req.body.basic_id;
-      var basic_password = req.body.basic_password;
-      var enc_basic_password = getHash( basic_password );
-      var r = await api.readRoom( id, basic_id, enc_basic_password  );
-      if( r.status && r.room ){
-        var new_basic_id = req.body.new_basic_id;
-        var new_basic_password = req.body.new_basic_password;
-        var enc_new_basic_password = getHash( new_basic_password );
-        var ts = ( new Date() ).getTime();
+      if( id.toLowerCase() == 'default' ){
+        res.status( 400 );
+        res.write( JSON.stringify( { status: false, error: "default room can't be edited." } ) );
+        res.end();
+      }else{
+        var uuid = req.body.uuid;
+        var basic_id = req.body.basic_id;
+        var basic_password = req.body.basic_password;
+        var enc_basic_password = getHash( basic_password );
+        var r = await api.readRoom( id, basic_id, enc_basic_password  );
+        if( r.status && r.room ){
+          var new_basic_id = req.body.new_basic_id;
+          var new_basic_password = req.body.new_basic_password;
+          var enc_new_basic_password = getHash( new_basic_password );
+          var ts = ( new Date() ).getTime();
 
-        var sql = "update rooms set basic_id = $1, basic_password = $2, updated = $3 where id = $4";
-        var query = { text: sql, values: [ new_basic_id, enc_new_basic_password, ts, id ] };
-        conn.query( query, async function( err, result ){
-          if( err ){
-            console.log( err );
+          var sql = "update rooms set basic_id = $1, basic_password = $2, updated = $3 where id = $4";
+          var query = { text: sql, values: [ new_basic_id, enc_new_basic_password, ts, id ] };
+          conn.query( query, async function( err, result ){
+            if( err ){
+              console.log( err );
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, error: err } ) );
+              res.end();
+            }else{
+              /* 更新時は権利を消費しない
+              //. でもこれだと作成時にパスワード無し＆更新時にパスワード有りが無料でできてしまう
+              //. パスワード無しからパスワード有りへの変更は認めないルールが必要
+              if( new_basic_password ){
+                await api.deleteUserType( uuid );
+              }
+              */
+              res.write( JSON.stringify( { status: true } ) );
+              res.end();
+            }
+          });
+        }else{
+          if( r.error ){
             res.status( 400 );
-            res.write( JSON.stringify( { status: false, error: err } ) );
+            res.write( JSON.stringify( { status: false, error: r.error } ) );
             res.end();
           }else{
-            /* 更新時は権利を消費しない
-            //. でもこれだと作成時にパスワード無し＆更新時にパスワード有りが無料でできてしまう
-            //. パスワード無しからパスワード有りへの変更は認めないルールが必要
-            if( new_basic_password ){
-              await api.deleteUserType( uuid );
-            }
-            */
-            res.write( JSON.stringify( { status: true } ) );
+            //. まだ存在していない
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, error: "not existed." } ) );
             res.end();
           }
-        });
-      }else{
-        if( r.error ){
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, error: r.error } ) );
-          res.end();
-        }else{
-          //. まだ存在していない
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, error: "not existed." } ) );
-          res.end();
         }
       }
     }else{

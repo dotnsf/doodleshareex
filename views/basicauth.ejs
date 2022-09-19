@@ -148,37 +148,41 @@ function toNewBasicIDPW( room ){
 function newBasicIDPW(){
   var room = $('#room_name_1').html();
   if( room ){
-    var id = $('#basic_id').val();
-    var pw = $('#basic_password').val();
-    var data = {
-      basic_id: id,
-      basic_password: pw,
-      uuid: uuid
-    };
+    if( room.toLowerCase() == 'default' ){
+      alert( 'default ルームの設定は作成できません。' );
+    }else{
+      var id = $('#basic_id').val();
+      var pw = $('#basic_password').val();
+      var data = {
+        basic_id: id,
+        basic_password: pw,
+        uuid: uuid
+      };
 
-    $.ajax({
-      type: 'POST',
-      url: '/db/room/' + room,
-      data: data,
-      success: function( result ){
-        if( result && result.status ){
-          console.log( result );
-          alert( '指定した room: ' + room  + ' を新規登録しました。' );
-          $('#room_name_1').html( '' );
-        /*
-        $('#div_0').css( 'display', 'block' );
-        $('#div_1').css( 'display', 'none' );
-        $('#div_2').css( 'display', 'none' );
-        $('#div_3').css( 'display', 'none' );
-        */
-          location.href = '/auth';
+      $.ajax({
+        type: 'POST',
+        url: '/db/room/' + room,
+        data: data,
+        success: function( result ){
+          if( result && result.status ){
+            console.log( result );
+            alert( '指定した room: ' + room  + ' を新規登録しました。' );
+            $('#room_name_1').html( '' );
+          /*
+          $('#div_0').css( 'display', 'block' );
+          $('#div_1').css( 'display', 'none' );
+          $('#div_2').css( 'display', 'none' );
+          $('#div_3').css( 'display', 'none' );
+          */
+            location.href = '/auth';
+          }
+        },
+        error: function( e0, e1, e2 ){
+          console.log( e0, e1, e2 );
+          alert( '指定した room: ' + room  + ' の作成に失敗しました(' + e2 + ')。' );
         }
-      },
-      error: function( e0, e1, e2 ){
-        console.log( e0, e1, e2 );
-        alert( '指定した room: ' + room  + ' の作成に失敗しました(' + e2 + ')。' );
-      }
-    });
+      });
+    }
   }else{
     alert( 'room の指定が空では作成できません。' );
   }
@@ -204,43 +208,47 @@ function toUpdateBasicIDPW( room ){
 function updateBasicIDPW(){
   var room = $('#room_name_2').html();
   if( room ){
-    var id = $('#old_basic_id').val();
-    var old_pw = $('#old_basic_password').val();
-    var new_pw = $('#new_basic_password').val();
-    if( !old_pw && new_pw ){
-      alert( 'パスワード無しからパスワード有りへの変更はできません。一度削除してから作りなおしてください。' );
+    if( room.toLowerCase() == 'default' ){
+      alert( 'default ルームの設定は変更できません。' );
     }else{
-      var data = {
-        basic_id: id,
-        basic_password: old_pw,
-        new_basic_id: id,
-        new_basic_password: new_pw,
-        uuid: uuid
-      };
-
-      $.ajax({
-        type: 'PUT',
-        url: '/db/room/' + room,
-        data: data,
-        success: function( result ){
-          if( result && result.status ){
-            console.log( result );
-            alert( '指定した room: ' + room  + ' を更新しました。' );
-            $('#room_name_2').html( '' );
-            /*
-            $('#div_0').css( 'display', 'block' );
-            $('#div_1').css( 'display', 'none' );
-            $('#div_2').css( 'display', 'none' );
-            $('#div_3').css( 'display', 'none' );
-            */
-            location.href = '/auth';
+      var id = $('#old_basic_id').val();
+      var old_pw = $('#old_basic_password').val();
+      var new_pw = $('#new_basic_password').val();
+      if( !old_pw && new_pw ){
+        alert( 'パスワード無しからパスワード有りへの変更はできません。一度削除してから作りなおしてください。' );
+      }else{
+        var data = {
+          basic_id: id,
+          basic_password: old_pw,
+          new_basic_id: id,
+          new_basic_password: new_pw,
+          uuid: uuid
+        };
+  
+        $.ajax({
+          type: 'PUT',
+          url: '/db/room/' + room,
+          data: data,
+          success: function( result ){
+            if( result && result.status ){
+              console.log( result );
+              alert( '指定した room: ' + room  + ' を更新しました。' );
+              $('#room_name_2').html( '' );
+              /*
+              $('#div_0').css( 'display', 'block' );
+              $('#div_1').css( 'display', 'none' );
+              $('#div_2').css( 'display', 'none' );
+              $('#div_3').css( 'display', 'none' );
+              */
+              location.href = '/auth';
+            }
+          },
+          error: function( e0, e1, e2 ){
+            console.log( e0, e1, e2 );
+            alert( '指定した room: ' + room  + ' の更新に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
           }
-        },
-        error: function( e0, e1, e2 ){
-          console.log( e0, e1, e2 );
-          alert( '指定した room: ' + room  + ' の更新に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
-        }
-      });
+        });
+      }
     }
   }else{
     alert( 'room の指定が空では更新できません。' );
