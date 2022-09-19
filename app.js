@@ -217,8 +217,8 @@ app.use( '/view', async function( req, res, next ){
       }
     }
   }else{
-    //. 指定の id を持つ room は存在していない
-    res.status( 400 ).send( 'Wrong room id' );
+    //. 指定の id を持つ room は存在していない（=そのまま使う）
+    return next();
   }
 });
 
@@ -252,8 +252,8 @@ app.use( '/admin', async function( req, res, next ){
       }
     }
   }else{
-    //. 指定の id を持つ room は存在していない
-    res.status( 400 ).send( 'Wrong room id' );
+    //. 指定の id を持つ room は存在していない（=そのまま使う）
+    return next();
   }
 });
 
@@ -261,7 +261,7 @@ app.use( '/', async function( req, res, next ){
   var originalUrl = req.originalUrl;
   var tmp = originalUrl.split( '?' );
   var path = tmp[0];
-  if( path == '/' ){
+  if( path == '/' || path == '/screen' ){
     var id = req.query.room;
     if( !id ){ id = 'default'; }
 
@@ -297,8 +297,8 @@ app.use( '/', async function( req, res, next ){
         }
       }
     }else{
-      //. 指定の id を持つ room は存在していない
-      res.status( 400 ).send( 'Wrong room id' );
+      //. 指定の id を持つ room は存在していない（=そのまま使う）
+      return next();
     }
   }else{
     return next();
