@@ -536,25 +536,34 @@ app.use( '/pay/reserve', function( req, res ){
   options.confirmUrl = process.env.LINE_PAY_CONFIRM_URL;
 
   //. トランザクション ID をキーに購入内容をいったん記録して支払いページへ
-  pay.reserve( options ).then( ( response ) => {
+  pay.reserve( options ).then( async ( response ) => {
     var reservation = options;
     reservation.transactionId = response.info.transactionId;
     console.log( `Reservation was made. Detail is following.` );
     console.log( reservation );
 
-    cache.put( reservation.transactionId, reservation );
+    if( redis ){
+      await redis.set( reservation.transactionId, reservation );
+    }else{
+      cache.put( reservation.transactionId, reservation );
+    }
     res.redirect( response.info.paymentUrl.web );
   });
 });
 
 //. 支払い画面
-app.use( '/pay/confirm', function( req, res ){
+app.use( '/pay/confirm', async function( req, res ){
   if( !req.query.transactionId ){
     throw new Error( 'Transaction Id not found' );
   }
 
   //. 購入内容を取り出す
-  var reservation = cache.get( req.query.transactionId );
+  var reservation = null;
+  if( redis ){
+    reservation = await redis.get( req.query.transactionId );
+  }else{
+    reservation = cache.get( req.query.transactionId );
+  }
   if( !reservation ){
     throw new Error( 'Reservation not found' );
   }
