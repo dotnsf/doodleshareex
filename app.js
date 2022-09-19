@@ -542,6 +542,7 @@ app.use( '/pay/reserve', function( req, res ){
     console.log( `Reservation was made. Detail is following.` );
     console.log( reservation );
 
+    //. #35
     if( redis ){
       await redis.set( reservation.transactionId, reservation );
     }else{
@@ -557,13 +558,17 @@ app.use( '/pay/confirm', async function( req, res ){
     throw new Error( 'Transaction Id not found' );
   }
 
-  //. 購入内容を取り出す
+  //. 購入内容を取り出す #35
   var reservation = null;
   if( redis ){
     reservation = await redis.get( req.query.transactionId );
+    if( typeof reservation == 'string' ){
+      reservation = JSON.parse( reservation );
+    }
   }else{
     reservation = cache.get( req.query.transactionId );
   }
+
   if( !reservation ){
     throw new Error( 'Reservation not found' );
   }
