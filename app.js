@@ -544,7 +544,7 @@ app.use( '/pay/reserve', function( req, res ){
 
     //. #35
     if( redis ){
-      await redis.set( reservation.transactionId, reservation );
+      await redis.set( reservation.transactionId, JSON.stringify( reservation ) );
     }else{
       cache.put( reservation.transactionId, reservation );
     }
