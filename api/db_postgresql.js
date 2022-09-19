@@ -492,8 +492,6 @@ api.put( '/room/:id', async function( req, res ){
         var basic_id = req.body.basic_id;
         var basic_password = req.body.basic_password;
         var enc_basic_password = getHash( basic_password );
-        var room_password = req.body.room_password;
-        var enc_room_password = getHash( room_password );
         var r = await api.readRoom( id, basic_id, enc_basic_password );
         if( r.status ){
           if( r.room ){
@@ -572,8 +570,6 @@ api.delete( '/room/:id', async function( req, res ){
       var basic_id = req.body.basic_id;
       var basic_password = req.body.basic_password;
       var enc_basic_password = getHash( basic_password );
-      var room_password = req.body.room_password;
-      var enc_room_password = getHash( room_password );
       var r = await api.readRoom( id, basic_id, enc_basic_password );
       if( r.status ){
         if( r.room ){

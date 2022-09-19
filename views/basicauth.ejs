@@ -60,12 +60,12 @@ $(function(){
 <% if( user && user.type > 0 ){ %>
       var tr = '<tr>'
         + '<td><input type="text" style="width: 200px;" id="room"/></td>'
-        + '<td><button class="btn btn-xs btn-success" onClick="toNewBasicIDPW();">作成</button></td>'
+        + '<td><button class="btn btn-xs btn-success" onClick="toNewBasicIDPW();">' + "<%= __('basicauth.button.create') %>" + '</button></td>'
         + '</tr>';
       $('#rooms-table-body').append( tr );
 <% } %>
       var tr0 = '<tr>'
-        + '<td colspan="2"><a class="btn btn-xs btn-success" href="#" onClick="myPurchase();">プライベートルーム利用権<%= user && user.type > 0 ? "追加" : "購入" %></a></td>'
+        + '<td colspan="2"><a class="btn btn-xs btn-success" href="#" onClick="myPurchase();">' + "<%= __('basicauth.button.title.room') %>" + "<%= user && user.type > 0 ? __('basicauth.button.title.room_to_buy') : __('basicauth.button.title.room_to_add') %>" + '</a></td>'
         + '</tr>';
       $('#rooms-table-body').append( tr0 );
     },
@@ -85,7 +85,7 @@ $(function(){
           if( result ){
             if( result.status ){
               //. room が存在している
-              alert( '指定したルーム: ' + room + ' は登録済でした。')
+              alert( "<%= __('basicauth.alert.room_registered1') %>" + room + "<%= __('basicauth.alert.room_registered2') %>" );
               /*
               $('#room').val( '' );
               $('#room_name_2').html( room );
@@ -95,7 +95,7 @@ $(function(){
               */
             }else{
               //. room が存在していない
-              alert( '指定したルーム: ' + room + ' は未登録でした。認証情報を指定して新規作成が可能です。')
+              alert( "<%= __('basicauth.alert.room_not_registered1') %>" + room + "<%= __('basicauth.alert.room_not_registered2') %>" );
               $('#room').val( '' );
               $('#basic_id').val( uuid );
               $('#basic_password').val( '' );
@@ -111,7 +111,7 @@ $(function(){
         error: function( e0, e1, e2 ){
           console.log( e0, e1, e2 );
           //. room が存在していない
-          alert( '指定したルーム: ' + room + ' は未登録でした。認証情報を指定して新規作成が可能です。')
+          alert( "<%= __('basicauth.alert.room_not_registered1') %>" + room + "<%= __('basicauth.alert.room_not_registered2') %>" );
           $('#room').val( '' );
           $('#basic_id').val( uuid );
           $('#basic_password').val( '' );
@@ -144,7 +144,7 @@ function toNewBasicIDPW( room ){
     $('#div_2').css( 'display', 'none' );
     $('#div_3').css( 'display', 'none' );
   }else{
-    alert( 'room の指定が空では作成／更新できません。' );
+    alert( "<%= __('basicauth.alert.room_cant_be_blank') %>" );
   }
 }
 
@@ -152,7 +152,7 @@ function newBasicIDPW(){
   var room = $('#room_name_1').html();
   if( room ){
     if( room.toLowerCase() == 'default' ){
-      alert( 'default ルームの設定は作成できません。' );
+      alert( "<%= __('basicauth.alert.default_room_cant_be_created') %>" );
     }else{
       var id = $('#basic_id').val();
       var pw = $('#basic_password').val();
@@ -171,7 +171,7 @@ function newBasicIDPW(){
         success: function( result ){
           if( result && result.status ){
             console.log( result );
-            alert( '指定した room: ' + room  + ' を新規登録しました。' );
+            alert( "<%= __('basicauth.alert.room_created1') %>" + room  + "<%= __('basicauth.alert.room_created2') %>" );
             $('#room_name_1').html( '' );
           /*
           $('#div_0').css( 'display', 'block' );
@@ -184,12 +184,12 @@ function newBasicIDPW(){
         },
         error: function( e0, e1, e2 ){
           console.log( e0, e1, e2 );
-          alert( '指定した room: ' + room  + ' の作成に失敗しました(' + e2 + ')。' );
+          alert( "<%= __('basicauth.alert.room_create_failed1') %>" + room  + "<%= __('basicauth.alert.room_create_failed2') %>" + e2 + "<%= __('basicauth.alert.room_create_failed3') %>" );
         }
       });
     }
   }else{
-    alert( 'room の指定が空では作成できません。' );
+    alert( "<%= __('basicauth.alert.room_cant_be_blank') %>" );
   }
 }
 
@@ -197,10 +197,8 @@ function toUpdateBasicIDPW( room ){
   if( room ){
     $('#room_name_2').html( room );
     $('#old_basic_id').val( uuid );
-    console.log( '#old_basic_id: ' + uuid );
     $('#old_basic_password').val( '' );
     $('#new_basic_password').val( '' );
-    $('#old_room_password').val( '' );
     $('#new_room_password').val( '' );
 
     $('#div_0').css( 'display', 'none' );
@@ -208,7 +206,7 @@ function toUpdateBasicIDPW( room ){
     $('#div_2').css( 'display', 'block' );
     $('#div_3').css( 'display', 'none' );
   }else{
-    alert( 'room の指定が空では作成／更新できません。' );
+    alert( "<%= __('basicauth.alert.room_cant_be_blank') %>" );
   }
 }
 
@@ -216,20 +214,18 @@ function updateBasicIDPW(){
   var room = $('#room_name_2').html();
   if( room ){
     if( room.toLowerCase() == 'default' ){
-      alert( 'default ルームの設定は変更できません。' );
+      alert( "<%= __('basicauth.alert.default_room_cant_be_edited') %>" );
     }else{
       var id = $('#old_basic_id').val();
       var old_pw = $('#old_basic_password').val();
       var new_pw = $('#new_basic_password').val();
-      var old_rpw = $('#old_room_password').val();
       var new_rpw = $('#new_room_password').val();
-      if( !old_pw && new_pw || !old_rpw && new_rpw ){
-        alert( 'パスワード無しからパスワード有りへの変更はできません。一度削除してから作りなおしてください。' );
+      if( !old_pw && new_pw ){
+        alert( "<%= __('basicauth.alert.cant_newly_set_password' ) %>" );
       }else{
         var data = {
           basic_id: id,
           basic_password: old_pw,
-          room_password: old_rpw,
           new_basic_id: id,
           new_basic_password: new_pw,
           new_room_password: new_rpw,
@@ -242,8 +238,8 @@ function updateBasicIDPW(){
           data: data,
           success: function( result ){
             if( result && result.status ){
-              console.log( result );
-              alert( '指定した room: ' + room  + ' を更新しました。' );
+              //console.log( result );
+              alert( "<%= __('basicauth.alert.room_edited1' ) %>" + room  + "<%= __('basicauth.alert.room_edited2' ) %>" );
               $('#room_name_2').html( '' );
               /*
               $('#div_0').css( 'display', 'block' );
@@ -256,13 +252,13 @@ function updateBasicIDPW(){
           },
           error: function( e0, e1, e2 ){
             console.log( e0, e1, e2 );
-            alert( '指定した room: ' + room  + ' の更新に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
+            alert( "<%= __('basicauth.alert.room_edit_failed1') %>" + room  + "<%= __('basicauth.alert.room_edit_failed2') %>" + e2 + "<%= __('basicauth.alert.room_edit_failed3') %>" );
           }
         });
       }
     }
   }else{
-    alert( 'room の指定が空では更新できません。' );
+    alert( "<%= __('basicauth.alert.room_cant_be_blank') %>" );
   }
 }
 
@@ -270,7 +266,6 @@ function toDeleteBasicIDPW( room ){
   $('#room_name_3').html( room );
   $('#del_basic_id').val( uuid );
   $('#del_basic_password').val( '' );
-  $('#del_room_password').val( '' );
 
   $('#div_0').css( 'display', 'none' );
   $('#div_1').css( 'display', 'none' );
@@ -280,14 +275,12 @@ function toDeleteBasicIDPW( room ){
 
 function deleteBasicIDPW(){
   var room = $('#room_name_3').html();
-  if( confirm( '鍵付き部屋「' + room + '」と、その利用権を削除しますか（新しい鍵付き部屋を作る場合は新しい権利が必要です）？' ) ){
+  if( confirm( "<%= __('basicauth.confirm.room_delete1') %>" + room + "<%= __('basicauth.confirm.room_delete2') %>" ) ){
     var id = $('#del_basic_id').val();
     var pw = $('#del_basic_password').val();
-    var rpw = $('#del_room_password').val();
     var data = {
       basic_id: id,
       basic_password: pw,
-      room_password: rpw,
       uuid: uuid
     };
 
@@ -298,7 +291,7 @@ function deleteBasicIDPW(){
       success: function( result ){
         if( result && result.status ){
           console.log( result );
-          alert( '指定した room: ' + room  + ' を削除しました。' );
+          alert( "<%= __('basicauth.alert.room_deleted1' ) %>" + room  + "<%= __('basicauth.alert.room_deleted2' ) %>" );
           $('#room_name_3').html( '' );
           /*
           $('#div_0').css( 'display', 'block' );
@@ -311,7 +304,7 @@ function deleteBasicIDPW(){
       },
       error: function( e0, e1, e2 ){
         console.log( e0, e1, e2 );
-        alert( '指定した room: ' + room  + ' の削除に失敗しました(' + e2 + ')。ID & PW が間違っている可能性があります。' );
+        alert( "<%= __('basicauth.alert.room_delete_failed1') %>" + room  + "<%= __('basicauth.alert.room_delete_failed2') %>" + e2 + "<%= __('basicauth.alert.room_delete_failed3') %>" );
       }
     });
   }
@@ -326,14 +319,14 @@ function cancelProcess(){
 }
 
 function myLogout(){
-  if( confirm( 'ログアウトしますか？' ) ){
+  if( confirm( "<%= __('basicauth.confirm.logout') %>" ) ){
     //. #28
     location.href = '/auth0/logout?returnTo=' + location.protocol + '//' + location.host + '/auth';
   }
 }
 
 function myPurchase(){
-  if( confirm( 'プライベートルーム購入手続きに移動しますか？' ) ){
+  if( confirm( "<%= __('basicauth.confirm.move_to_buy_private_room') %>" ) ){
     location.href = '/pay/reserve';
   }
 }
@@ -351,15 +344,15 @@ html, body{
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <a class="navbar-brand" href="#">お絵描きライブ - ルーム管理</a>
+  <a class="navbar-brand" href="#"><%= __('common.appname') %> - <%= __('basicauth.body.room_management') %></a>
   <ul class="navbar-nav mr-auto">
   </ul>
   <ul class="navbar-nav ml-auto">
 <% if( user ){ %>
     <!-- #28 -->
     <li class="nav-item">
-      <a class="btn btn-warning" href="#" onClick="myLogout();" title="<%= user.displayName %>\n（プライベートルーム利用可能回数:<%= user.type %>）"><i class="fas fa-user"></i></a>
-      <a class="btn btn-success" href="#" onClick="myPurchase();" title="プライベートルーム利用権購入"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
+      <a class="btn btn-warning" href="#" onClick="myLogout();" title="<%= user.displayName %>\n<%= __('basicauth.button.title.room_count1') %>:<%= user.type %><%= __('basicauth.button.title.room_count2') %>"><i class="fas fa-user"></i></a>
+      <a class="btn btn-success" href="#" onClick="myPurchase();" title="<%= __('basicauth.button.title.to_buy_room') %>"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
     </li>
 <% } %>
   </ul>
@@ -403,8 +396,8 @@ html, body{
         /></td>
     </tr>
   </table>
-  <button class="btn btn-xs btn-primary" onClick="newBasicIDPW();">作成</button>
-  <button class="btn btn-xs btn-secondary" onClick="cancelProcess();">キャンセル</button>
+  <button class="btn btn-xs btn-primary" onClick="newBasicIDPW();"><%= __('basicauth.button.create') %></button>
+  <button class="btn btn-xs btn-secondary" onClick="cancelProcess();"><%= __('basicauth.button.cancel') %></button>
 </div>
 
 <div class="container" id="div_2" style="display:none;">
@@ -423,16 +416,12 @@ html, body{
       <td><input type="password" class="form-control" id="new_basic_password" /></td>
     </tr>
     <tr>
-      <td>Current Room Password</td>
-      <td><input type="password" class="form-control" id="old_room_password"/></td>
-    </tr>
-    <tr>
       <td>New Room Password</td>
       <td><input type="password" class="form-control" id="new_room_password" /></td>
     </tr>
   </table>
-  <button class="btn btn-xs btn-primary" onClick="updateBasicIDPW();">更新</button>
-  <button class="btn btn-xs btn-secondary" onClick="cancelProcess();">キャンセル</button>
+  <button class="btn btn-xs btn-primary" onClick="updateBasicIDPW();"><%= __('basicauth.button.update') %></button>
+  <button class="btn btn-xs btn-secondary" onClick="cancelProcess();"><%= __('basicauth.button.cancel') %></button>
 </div>
 
 <div class="container" id="div_3" style="display:none;">
@@ -446,13 +435,9 @@ html, body{
       <td>Password</td>
       <td><input type="password" class="form-control" id="del_basic_password"/></td>
     </tr>
-    <tr>
-      <td>Room Password</td>
-      <td><input type="password" class="form-control" id="del_room_password"/></td>
-    </tr>
   </table>
-  <button class="btn btn-xs btn-danger" onClick="deleteBasicIDPW();">削除</button>
-  <button class="btn btn-xs btn-secondary" onClick="cancelProcess();">キャンセル</button>
+  <button class="btn btn-xs btn-danger" onClick="deleteBasicIDPW();"><%= __('basicauth.button.delete') %></button>
+  <button class="btn btn-xs btn-secondary" onClick="cancelProcess();"><%= __('basicauth.button.cancel') %></button>
 </div>
 
 </body>
