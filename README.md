@@ -121,9 +121,11 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
 - You can run WebSocket container image(`dotnsf/doodleshareex-client`) to simulate clients, or to use load tester.
 
-  - `$ docker run -d -e ROOM=dotnsf -e INTERVAL_MS=3000 SERVER_URL=wss://doodleshareex.yellowmix.net dotnsf/doodleshareex-client`
+  - `$ docker run -d -e UUID=user1 -e ROOM=dotnsf -e INTERVAL_MS=3000 SERVER_URL=wss://doodleshareex.yellowmix.net dotnsf/doodleshareex-client`
 
 - You can specify options as environment variables:
+
+  - `UUID` : UUID( and name ) of client(default: auto generated string)
 
   - `ROOM` : room name(default: 'default')
 
