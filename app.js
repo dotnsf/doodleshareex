@@ -562,6 +562,7 @@ app.use( '/pay/confirm', async function( req, res ){
   var reservation = null;
   if( redis ){
     reservation = await redis.get( req.query.transactionId );
+    console.log( reservation );
     if( typeof reservation == 'string' ){
       reservation = JSON.parse( reservation );
     }
