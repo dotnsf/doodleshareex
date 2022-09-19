@@ -198,9 +198,15 @@ definitions:
       basic_password:
         type: string
         description: Basic パスワード
+      room_password:
+        type: string
+        description: Room パスワード
       new_basic_id:
         type: string
         description: New Basic ID
       new_basic_password:
         type: string
         description: New Basic パスワード
+      new_room_password:
+        type: string
+        description: New Room パスワード

@@ -188,52 +188,119 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
 
 //. Basic Auth
 app.use( '/view', async function( req, res, next ){
-  var id = req.query.room;   //. req?
+  var id = req.query.room;
   if( !id ){ id = 'default'; }
 
   var r = await dbapi.readRoom( id );
   if( r && r.status ){
-    //. ID&PWなし (or ID&PWが正しい) or 指定のIDを持つroomなし
-    return next();
-  }else{
-    //. 指定のIDを持つroomは存在しているが ID&PW 間違い
-    if( req.headers.authorization ){
-      var b64auth = req.headers.authorization.split( ' ' )[1] || '';
-      var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
-      var enc_pass = crypto.createHash( 'sha1' ).update( pass ).digest( 'hex' );
-      var r = await dbapi.readRoom( id, user, enc_pass );
-      if( r && r.status ){
-        //. ID&PWが正しい
-        return next();
+    //. 指定の id を持つ room は存在している
+    if( r.room ){
+      //. 認証不要
+      return next();
+    }else{
+      //. 指定のIDを持つroomは存在しているが認証が必要
+      if( req.headers.authorization ){
+        var b64auth = req.headers.authorization.split( ' ' )[1] || '';
+        var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
+        var enc_pass = crypto.createHash( 'sha1' ).update( pass ).digest( 'hex' );
+        var r = await dbapi.readRoom( id, user, enc_pass );
+        if( r && r.status && r.room ){
+          //. ID&PWが正しい
+          return next();
+        }else{
+          res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+          res.status( 401 ).send( 'Authentication required.' );
+        }
       }else{
         res.set( 'WWW-Authenticate', 'Basic realm="401"' );
         res.status( 401 ).send( 'Authentication required.' );
       }
-    }else{
-      res.set( 'WWW-Authenticate', 'Basic realm="401"' );
-      res.status( 401 ).send( 'Authentication required.' );
     }
+  }else{
+    //. 指定の id を持つ room は存在していない
+    res.status( 400 ).send( 'Wrong room id' );
   }
 });
 
 app.use( '/admin', async function( req, res, next ){
-  if( req.headers.authorization ){
-    console.log( settings_admin_id, settings_admin_pw );
-    if( settings_admin_id && settings_admin_pw ){
-      var b64auth = req.headers.authorization.split( ' ' )[1] || '';
-      var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
-      if( user == settings_admin_id && pass == settings_admin_pw ){
-        return next();
+  var id = req.query.room;
+  if( !id ){ id = 'default'; }
+
+  var r = await dbapi.readRoom( id );
+  if( r && r.status ){
+    //. 指定の id を持つ room は存在している
+    if( r.room ){
+      //. 認証不要
+      return next();
+    }else{
+      //. 指定のIDを持つroomは存在しているが認証が必要
+      if( req.headers.authorization ){
+        var b64auth = req.headers.authorization.split( ' ' )[1] || '';
+        var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
+        var enc_pass = crypto.createHash( 'sha1' ).update( pass ).digest( 'hex' );
+        var r = await dbapi.readRoom( id, user, enc_pass );
+        if( r && r.status && r.room ){
+          //. ID&PWが正しい
+          return next();
+        }else{
+          res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+          res.status( 401 ).send( 'Authentication required.' );
+        }
       }else{
         res.set( 'WWW-Authenticate', 'Basic realm="401"' );
         res.status( 401 ).send( 'Authentication required.' );
       }
-    }else{
-      return next();
     }
   }else{
-    //res.set( 'WWW-Authenticate', 'Basic realm="401"' );
-    //res.status( 401 ).send( 'Authentication required.' );
+    //. 指定の id を持つ room は存在していない
+    res.status( 400 ).send( 'Wrong room id' );
+  }
+});
+
+app.use( '/', async function( req, res, next ){
+  var originalUrl = req.originalUrl;
+  var tmp = originalUrl.split( '?' );
+  var path = tmp[0];
+  if( path == '/' ){
+    var id = req.query.room;
+    if( !id ){ id = 'default'; }
+
+    var r = await dbapi.readRoom( id );
+    if( r && r.status ){
+      //. 指定の id を持つ room は存在している
+      if( r.room ){
+        //. 認証不要
+        return next();
+      }else{
+        //. 指定のIDを持つroomは存在しているが認証が必要
+        if( req.headers.authorization ){
+          var b64auth = req.headers.authorization.split( ' ' )[1] || '';
+          var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
+          var enc_pass = crypto.createHash( 'sha1' ).update( pass ).digest( 'hex' );
+          var r = await dbapi.readRoom( id, user, enc_pass );
+          if( r && r.status && r.room ){
+            //. ID&PWが正しい
+            return next();
+          }else{
+            var r = await dbapi.readRoom( id, id, enc_pass );
+            if( r && r.status && r.room ){
+              //. ID&PWが正しい
+              return next();
+            }else{
+              res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+              res.status( 401 ).send( 'Authentication required.' );
+            }
+          }
+        }else{
+          res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+          res.status( 401 ).send( 'Authentication required.' );
+        }
+      }
+    }else{
+      //. 指定の id を持つ room は存在していない
+      res.status( 400 ).send( 'Wrong room id' );
+    }
+  }else{
     return next();
   }
 });

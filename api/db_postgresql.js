@@ -281,6 +281,10 @@ api.get( '/images', async function( req, res ){
 
 //. #11
 api.readRoom = async function( id, basic_id, basic_password ){
+  //. resolve( { status: true, room: room, error: '' } );
+  //.   status: true=roomは存在している, false=roomは存在していない
+  //.   room:   null=roomが存在していない、またはアクセス権がない, not null=roomそのもの
+  //.   error:  status=false, または room=null の理由
   return new Promise( async ( resolve, reject ) => {
     var conn = null;
     try{
@@ -292,7 +296,7 @@ api.readRoom = async function( id, basic_id, basic_password ){
         conn.query( query, function( err, result ){
           if( err ){
             console.log( err );
-            resolve( { status: false, error: err } );
+            resolve( { status: false, room: null, error: err } );
           }else{
             var room = null;
             if( result.rows.length > 0 && result.rows[0].id ){
@@ -304,12 +308,36 @@ api.readRoom = async function( id, basic_id, basic_password ){
     
             if( room ){
               if( !room.basic_id && !room.basic_password ){
-                resolve( { status: true, room: room } );
-              }else{
-                if( room.basic_id == basic_id && room.basic_password == basic_password ){
+                if( !room.room_password ){
+                  //. 認証不要
                   resolve( { status: true, room: room } );
                 }else{
-                  resolve( { status: false, error: 'wrong credentials' } );
+                  if( ( room.id == basic_id && room.room_password == basic_password ) ){
+                    //. クライアント向け認証が必要で、認証 OK
+                    resolve( { status: true, room: room } );
+                  }else{
+                    //. クライアント向け認証が必要で、認証 NG
+                    resolve( { status: true, room: null, error: 'wrong credentials.' } );
+                  }
+                }
+              }else{
+                if( room.basic_id == basic_id && room.basic_password == basic_password ){
+                  //. 管理者向け認証が必要で、認証 OK
+                  resolve( { status: true, room: room } );
+                }else{
+                  //. 管理者向け認証が必要で、認証 NG
+                  if( !room.room_password ){
+                    //. でもクライアント向け認証は不要なので OK
+                    resolve( { status: true, room: room } );
+                  }else{
+                    if( ( room.id == basic_id && room.room_password == basic_password ) ){
+                      //. クライアント向け認証が必要で、認証 OK
+                      resolve( { status: true, room: room } );
+                    }else{
+                      //. クライアント向け認証が必要で、認証 NG
+                      resolve( { status: true, room: null, error: 'wrong credentials.' } );
+                    }
+                  }
                 }
               }
             }else{
@@ -320,7 +348,7 @@ api.readRoom = async function( id, basic_id, basic_password ){
               //room = ...
               //resolve( { status: true, room: room } );
               //.   - [ ] room は作成しないが、アクセス（利用）を認める？
-              resolve( { status: true, room: null } );
+              resolve( { status: false, room: null } );
               //.   - [ ] room を作る前のアクセスは認めない？
               //resolve( { status: false, error: "not found." } );
             }
@@ -355,16 +383,18 @@ api.post( '/room/:id', async function( req, res ){
         res.end();
       }else{
         var r = await api.readRoom( id );
-        if( !r.status || r.room == null ){
+        if( !r.status ){
           //. 指定の room が存在していないことを確認できたので、作成
           var uuid = req.body.uuid;
           var basic_id = req.body.basic_id;
           var basic_password = req.body.basic_password;
           var enc_basic_password = getHash( basic_password );
+          var room_password = req.body.room_password;
+          var enc_room_password = getHash( room_password );
           var ts = ( new Date() ).getTime();
 
-          var sql = "insert into rooms( id, uuid, basic_id, basic_password, created, updated ) values( $1, $2, $3, $4, $5, $6 )";
-          var query = { text: sql, values: [ id, uuid, basic_id, enc_basic_password, ts, ts ] };
+          var sql = "insert into rooms( id, uuid, basic_id, basic_password, room_password, created, updated ) values( $1, $2, $3, $4, $5, $6, $7 )";
+          var query = { text: sql, values: [ id, uuid, basic_id, enc_basic_password, enc_room_password, ts, ts ] };
           conn.query( query, async function( err, result ){
             if( err ){
               console.log( err );
@@ -412,26 +442,30 @@ api.get( '/room/:id', async function( req, res ){
     var basic_id = req.body.basic_id;
     var basic_password = req.body.basic_password;
     var enc_basic_password = getHash( basic_password );
-    var r = await api.readRoom( id, basic_id, enc_basic_password  );
-    if( r.status && r.room ){
-      res.write( JSON.stringify( { status: true, room: r.room } ) );
-      res.end();
-    }else{
-      if( r.error ){
-        if( r.error == 'wrong credentials' ){
-          res.write( JSON.stringify( { status: true, room: null, error: r.error } ) );
+    var room_password = req.body.room_password;
+    var enc_room_password = getHash( room_password );
+    var r = await api.readRoom( id, basic_id, enc_basic_password );
+    if( r.status ){
+      if( r.room ){
+        res.write( JSON.stringify( { status: true, room: r.room } ) );
+        res.end();
+      }else{
+        //. 存在しているが権限が足りない
+        var r = await api.readRoom( id, id, enc_room_password );
+        if( r.status && r.room ){
+          res.write( JSON.stringify( { status: true, room: r.room } ) );
           res.end();
         }else{
           res.status( 400 );
           res.write( JSON.stringify( { status: false, error: r.error } ) );
           res.end();
         }
-      }else{
-        //. まだ存在していない
-        res.status( 400 );
-        res.write( JSON.stringify( { status: false, error: "not existed." } ) );
-        res.end();
       }
+    }else{
+      //. 存在していない
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, error: "not existed." } ) );
+      res.end();
     }
   }else{
     res.status( 400 );
@@ -458,33 +492,43 @@ api.put( '/room/:id', async function( req, res ){
         var basic_id = req.body.basic_id;
         var basic_password = req.body.basic_password;
         var enc_basic_password = getHash( basic_password );
-        var r = await api.readRoom( id, basic_id, enc_basic_password  );
-        if( r.status && r.room ){
-          var new_basic_id = req.body.new_basic_id;
-          var new_basic_password = req.body.new_basic_password;
-          var enc_new_basic_password = getHash( new_basic_password );
-          var ts = ( new Date() ).getTime();
+        var room_password = req.body.room_password;
+        var enc_room_password = getHash( room_password );
+        var r = await api.readRoom( id, basic_id, enc_basic_password );
+        if( r.status ){
+          if( r.room ){
+            var new_basic_id = req.body.new_basic_id;
+            var new_basic_password = req.body.new_basic_password;
+            var enc_new_basic_password = getHash( new_basic_password );
+            var new_room_password = req.body.new_room_password;
+            var enc_new_room_password = getHash( new_room_password );
+            var ts = ( new Date() ).getTime();
 
-          var sql = "update rooms set basic_id = $1, basic_password = $2, updated = $3 where id = $4";
-          var query = { text: sql, values: [ new_basic_id, enc_new_basic_password, ts, id ] };
-          conn.query( query, async function( err, result ){
-            if( err ){
-              console.log( err );
-              res.status( 400 );
-              res.write( JSON.stringify( { status: false, error: err } ) );
-              res.end();
-            }else{
-              /* 更新時は権利を消費しない
-              //. でもこれだと作成時にパスワード無し＆更新時にパスワード有りが無料でできてしまう
-              //. パスワード無しからパスワード有りへの変更は認めないルールが必要
-              if( new_basic_password ){
-                await api.deleteUserType( uuid );
+            var sql = "update rooms set basic_id = $1, basic_password = $2, room_password = $3, updated = $4 where id = $5";
+            var query = { text: sql, values: [ new_basic_id, enc_new_basic_password, enc_new_room_password, ts, id ] };
+            conn.query( query, async function( err, result ){
+              if( err ){
+                console.log( err );
+                res.status( 400 );
+                res.write( JSON.stringify( { status: false, error: err } ) );
+                res.end();
+              }else{
+                /* 更新時は権利を消費しない
+                //. でもこれだと作成時にパスワード無し＆更新時にパスワード有りが無料でできてしまう
+                //. パスワード無しからパスワード有りへの変更は認めないルールが必要
+                if( new_basic_password ){
+                  await api.deleteUserType( uuid );
+                }
+                */
+                res.write( JSON.stringify( { status: true } ) );
+                res.end();
               }
-              */
-              res.write( JSON.stringify( { status: true } ) );
-              res.end();
-            }
-          });
+            });
+          }else{
+            res.status( 400 );
+            res.write( JSON.stringify( { status: false, error: r.error } ) );
+            res.end();
+          }
         }else{
           if( r.error ){
             res.status( 400 );
@@ -528,21 +572,30 @@ api.delete( '/room/:id', async function( req, res ){
       var basic_id = req.body.basic_id;
       var basic_password = req.body.basic_password;
       var enc_basic_password = getHash( basic_password );
-      var r = await api.readRoom( id, basic_id, enc_basic_password  );
-      if( r.status && r.room ){
-        var sql = "delete from rooms where id = $1";
-        var query = { text: sql, values: [ id ] };
-        conn.query( query, function( err, result ){
-          if( err ){
-            console.log( err );
-            res.status( 400 );
-            res.write( JSON.stringify( { status: false, error: err } ) );
-            res.end();
-          }else{
-            res.write( JSON.stringify( { status: true } ) );
-            res.end();
-          }
-        });
+      var room_password = req.body.room_password;
+      var enc_room_password = getHash( room_password );
+      var r = await api.readRoom( id, basic_id, enc_basic_password );
+      if( r.status ){
+        if( r.room ){
+          var sql = "delete from rooms where id = $1";
+          var query = { text: sql, values: [ id ] };
+          conn.query( query, function( err, result ){
+            if( err ){
+              console.log( err );
+              res.status( 400 );
+              res.write( JSON.stringify( { status: false, error: err } ) );
+              res.end();
+            }else{
+              res.write( JSON.stringify( { status: true } ) );
+              res.end();
+            }
+          });
+        }else{
+          //. 存在しているが権限が足りない
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: r.error } ) );
+          res.end();
+        }
       }else{
         if( r.error ){
           res.status( 400 );

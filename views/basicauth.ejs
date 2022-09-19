@@ -99,6 +99,7 @@ $(function(){
               $('#room').val( '' );
               $('#basic_id').val( uuid );
               $('#basic_password').val( '' );
+              $('#room_password').val( '' );
               $('#room_name_1').html( room );
               $('#div_0').css( 'display', 'none' );
               $('#div_1').css( 'display', 'block' );
@@ -114,6 +115,7 @@ $(function(){
           $('#room').val( '' );
           $('#basic_id').val( uuid );
           $('#basic_password').val( '' );
+          $('#room_password').val( '' );
           $('#room_name_1').html( room );
           $('#div_0').css( 'display', 'none' );
           $('#div_1').css( 'display', 'block' );
@@ -135,6 +137,7 @@ function toNewBasicIDPW( room ){
     $('#room_name_1').html( room );
     $('#basic_id').val( uuid );
     $('#basic_password').val( '' );
+    $('#room_password').val( '' );
 
     $('#div_0').css( 'display', 'none' );
     $('#div_1').css( 'display', 'block' );
@@ -153,9 +156,11 @@ function newBasicIDPW(){
     }else{
       var id = $('#basic_id').val();
       var pw = $('#basic_password').val();
+      var rpw = $('#room_password').val();
       var data = {
         basic_id: id,
         basic_password: pw,
+        room_password: rpw,
         uuid: uuid
       };
 
@@ -195,6 +200,8 @@ function toUpdateBasicIDPW( room ){
     console.log( '#old_basic_id: ' + uuid );
     $('#old_basic_password').val( '' );
     $('#new_basic_password').val( '' );
+    $('#old_room_password').val( '' );
+    $('#new_room_password').val( '' );
 
     $('#div_0').css( 'display', 'none' );
     $('#div_1').css( 'display', 'none' );
@@ -214,14 +221,18 @@ function updateBasicIDPW(){
       var id = $('#old_basic_id').val();
       var old_pw = $('#old_basic_password').val();
       var new_pw = $('#new_basic_password').val();
-      if( !old_pw && new_pw ){
+      var old_rpw = $('#old_room_password').val();
+      var new_rpw = $('#new_room_password').val();
+      if( !old_pw && new_pw || !old_rpw && new_rpw ){
         alert( 'パスワード無しからパスワード有りへの変更はできません。一度削除してから作りなおしてください。' );
       }else{
         var data = {
           basic_id: id,
           basic_password: old_pw,
+          room_password: old_rpw,
           new_basic_id: id,
           new_basic_password: new_pw,
+          new_room_password: new_rpw,
           uuid: uuid
         };
   
@@ -259,6 +270,7 @@ function toDeleteBasicIDPW( room ){
   $('#room_name_3').html( room );
   $('#del_basic_id').val( uuid );
   $('#del_basic_password').val( '' );
+  $('#del_room_password').val( '' );
 
   $('#div_0').css( 'display', 'none' );
   $('#div_1').css( 'display', 'none' );
@@ -271,9 +283,11 @@ function deleteBasicIDPW(){
   if( confirm( '鍵付き部屋「' + room + '」と、その利用権を削除しますか（新しい鍵付き部屋を作る場合は新しい権利が必要です）？' ) ){
     var id = $('#del_basic_id').val();
     var pw = $('#del_basic_password').val();
+    var rpw = $('#del_room_password').val();
     var data = {
       basic_id: id,
       basic_password: pw,
+      room_password: rpw,
       uuid: uuid
     };
 
@@ -379,6 +393,15 @@ html, body{
 <% } %>
         /></td>
     </tr>
+    <tr>
+      <td>Room Password</td>
+      <td><input type="password" class="form-control" id="room_password"
+<% if( user && user.type > 0 ){ %>
+<% }else{ %>
+        readonly="readonly"
+<% } %>
+        /></td>
+    </tr>
   </table>
   <button class="btn btn-xs btn-primary" onClick="newBasicIDPW();">作成</button>
   <button class="btn btn-xs btn-secondary" onClick="cancelProcess();">キャンセル</button>
@@ -399,6 +422,14 @@ html, body{
       <td>New Password</td>
       <td><input type="password" class="form-control" id="new_basic_password" /></td>
     </tr>
+    <tr>
+      <td>Current Room Password</td>
+      <td><input type="password" class="form-control" id="old_room_password"/></td>
+    </tr>
+    <tr>
+      <td>New Room Password</td>
+      <td><input type="password" class="form-control" id="new_room_password" /></td>
+    </tr>
   </table>
   <button class="btn btn-xs btn-primary" onClick="updateBasicIDPW();">更新</button>
   <button class="btn btn-xs btn-secondary" onClick="cancelProcess();">キャンセル</button>
@@ -414,6 +445,10 @@ html, body{
     <tr>
       <td>Password</td>
       <td><input type="password" class="form-control" id="del_basic_password"/></td>
+    </tr>
+    <tr>
+      <td>Room Password</td>
+      <td><input type="password" class="form-control" id="del_room_password"/></td>
     </tr>
   </table>
   <button class="btn btn-xs btn-danger" onClick="deleteBasicIDPW();">削除</button>
