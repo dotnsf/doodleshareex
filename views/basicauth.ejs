@@ -326,7 +326,7 @@ function myLogout(){
 }
 
 function myPurchase(){
-  if( confirm( "<%= __('basicauth.confirm.move_to_buy_private_room') %>" ) ){
+  if( confirm( "<%= __('basicauth.confirm.move_to_buy_protected_room') %>" ) ){
     location.href = '/pay/reserve';
   }
 }
