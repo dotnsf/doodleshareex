@@ -65,8 +65,9 @@ ws.on( 'connect', function( connection ){
     }
   }
 
+  var count = 0;
   function do_request(){
-    var idx = Math.floor( Math.random() * fileList.length );
+    var idx = ( count ++ ) % fileList.length;
     var comment = fileList[idx].name;
     var image_data = fileList[idx].data;
 
