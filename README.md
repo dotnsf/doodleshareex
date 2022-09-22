@@ -145,15 +145,13 @@ spec:
         image: dotnsf/doodleshareex-client
         env:
         - name: UUID
-          value: "user0"
+          value: "username"
         - name: ROOM
-          value: "dotnsf"
-        - name: IMAGES_FOLDER
-          value: "sample_images/he"
+          value: "roomname"
         - name: INTERVAL_MS
           value: "3000"
         - name: SERVER_URL
-          value: "wss://doodleshareex.yellowmix.net"
+          value: "ws://localhost:8080"
 ```
 
 - You can specify options as environment variables:
