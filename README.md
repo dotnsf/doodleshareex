@@ -123,6 +123,39 @@ Trial application, which tries to use WebSocket with Redis so that application c
 
   - `$ docker run -d -e UUID=user1 -e ROOM=dotnsf -e IMAGES_FOLDER=sample_images/a -e INTERVAL_MS=3000 SERVER_URL=wss://doodleshareex.yellowmix.net dotnsf/doodleshareex-client`
 
+  - `$ kubectl apply -f yaml/client.yaml`
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doodleshareex-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: doodleshareex-client
+  template:
+    metadata:
+      labels:
+        app: doodleshareex-client
+    spec:
+      containers:
+      - name: doodleshareex-client
+        image: dotnsf/doodleshareex-client
+        env:
+        - name: UUID
+          value: "user0"
+        - name: ROOM
+          value: "dotnsf"
+        - name: IMAGES_FOLDER
+          value: "sample_images/he"
+        - name: INTERVAL_MS
+          value: "3000"
+        - name: SERVER_URL
+          value: "wss://doodleshareex.yellowmix.net"
+```
+
 - You can specify options as environment variables:
 
   - `UUID` : UUID( and name ) of client(default: auto generated string)
