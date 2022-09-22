@@ -17,7 +17,7 @@ spec:
         image: dotnsf/doodleshareex-client
         env:
         - name: UUID
-          value: "user0"
+          value: "user"
         - name: ROOM
           value: "dotnsf"
         - name: IMAGES_FOLDER
