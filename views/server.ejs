@@ -194,10 +194,13 @@ function zoomImage( socket_id ){
 
 
 function addCardGroups( num ){
+  //. num: ソケットに接続しているクライアント数
 <% if( columns > 0 ){ %>
-  var setRow = Math.ceil( num / <%= columns %> );
+  //. columns: 明示的に指定された列数
+  var setRow = Math.ceil( num / <%= columns %> ); //. 行数
   var m = num % <%= columns %>;
   if( m == 1 ){
+    //. 新しい行が必要になったので追加
     $('#card-groups').append( '<div class="card-group" id="cards-' + setRow + '"></div>' );
   }
 <% }else{ %>
@@ -205,14 +208,17 @@ function addCardGroups( num ){
   var setRows = [ 0, 1, 1, 2, 2, 1, 2, 3, 3, 3, 1, 2, 3, 4, 4, 4, 4, 1, 2, 3, 4, 5, 5, 5, 5, 5, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6, 6, 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 8, 8, 8, 8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9 ];
   var setRow = -1;
   if( num > 91 ){
+    //. 92 クライアント以上の場合は 10 列で固定
     setRow = Math.ceil( num / 10 );
     var m = num % 10;
     if( m == 1 ){
+      //. 新しい行が必要になったので追加
       $('#card-groups').append( '<div class="card-group" id="cards-' + setRow + '"></div>' );
     }
   }else{
-    setRow = setRows[num];
+    setRow = setRows[num];  //. 列数を setRows 配列から取得
     if( newRows.indexOf( num ) > -1 ){
+      //. newRows 配列内にあるデータ数値のタイミングで行を追加
       $('#card-groups').append( '<div class="card-group" id="cards-' + setRow + '"></div>' );
     }
   }
