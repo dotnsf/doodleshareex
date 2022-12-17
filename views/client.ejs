@@ -482,10 +482,32 @@ function saveImage(){
     contentType: false,
     processData: false,
     success: function( data, dataType ){
+      console.log( data );
       //$('#comment').val( '' );
+
+      /* Toast はやめる 
       $('#qrcode_toast').toast( { delay: 1000 } );
       $('#qrcode_toast').toast( 'show' );
-      console.log( data );
+      */
+
+      /* その画像をダウンロードさせる */
+      var filename = ( $('#name').text() ) + '.png';
+      if( window.navigator.msSaveBlob ){
+        window.navigator.msSaveBlob( blob, filename );
+        window.navigator.msSaveOrOpenBlob( blob, filename );
+      }else{
+        try{
+          var image_url = window.URL.createObjectURL( blob );
+          var link = document.createElement( 'a' );
+          link.href = image_url;
+          link.download = filename;
+          document.body.appendChild( link );
+          link.click();
+          document.body.removeChild( link );
+        }catch( e ){
+          throw new Error( `${e}` );
+        }
+      }
     },
     error: function( jqXHR, textStatus, errorThrown ){
       console.log( textStatus + ': ' + errorThrown );
