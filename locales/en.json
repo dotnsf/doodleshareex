@@ -19,6 +19,8 @@
   "client.color.pink": "Pink",
   "client.color.beige": "Beige",
   "client.color.brown": "Brown",
+  "client.color.custom": "Custom",
+	"client.button.select_custom": "Select",
   "client.button.background": "BG",
   "client.button.reset": "Reset",
   "client.button.save": "Save",

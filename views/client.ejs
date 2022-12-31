@@ -101,6 +101,25 @@ html, body{
   </div>
 </div>
 
+<div class="modal bd-example-modal-lg fade" id="colorModal" tabindex="-1" role="dialog" aria-labbelledby="colorModal" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="colorModalLabel"><%= __('client.color.custom') %></h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="editmodal-body">
+        <input type="color" id="color-picker" value="#000000"/>
+      </div>
+      <div class="modal-footer btn-center">
+        <button type="button" class="btn" data-toggle="modal" onClick="closeColorModal();"><%= __('client.button.select_custom') %></button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="qrcode_toast" role="alert" aria-live="assertive" aria-atomic="true">
   <div id="toast-body" class="toast-body" style="font-size: 14px;">
@@ -116,6 +135,8 @@ var undos = [];
 var redos = [];
 var stroke = null; //. { color: color, width: width, xys: [] }
 var backgroundcolor = null;
+
+var custom_color = '#000000';
 
 var ws = null;
 
@@ -168,6 +189,9 @@ function init(){
     //. isDrawがtrueのとき描画
     if( mouse.isDrawing ){
       var color = $('#select_color').val();
+      if( color == 'custom' ){
+        color = custom_color;
+      }
       if( color == 'transparent' ){
         ctx.globalCompositeOperation = 'destination-out';
       }else{
@@ -199,6 +223,9 @@ function init(){
 
     stroke = {};
     stroke.color = $('#select_color').val();
+    if( stroke.color == 'custom' ){
+      stroke.color = custom_color;
+    }
     stroke.width = parseInt( $('#select_linewidth').val() );
     stroke.xys = [ [ mouse.x, mouse.y ] ];
   });
@@ -237,6 +264,9 @@ function init(){
     //. isDrawがtrueのとき描画
     if( mouse.isDrawing ){
       var color = $('#select_color').val();
+      if( color == 'custom' ){
+        color = custom_color;
+      }
       if( color == 'transparent' ){
         ctx.globalCompositeOperation = 'destination-out';
       }else{
@@ -270,6 +300,9 @@ function init(){
 
     stroke = {};
     stroke.color = $('#select_color').val();
+    if( stroke.color == 'custom' ){
+      stroke.color = custom_color;
+    }
     stroke.width = parseInt( $('#select_linewidth').val() );
     stroke.xys = [ [ mouse.startX, mouse.startY ] ];
   });
@@ -310,6 +343,9 @@ function init(){
     //. isDrawがtrueのとき描画
     if( mouse.isDrawing ){
       var color = $('#select_color').val();
+      if( color == 'custom' ){
+        color = custom_color;
+      }
       if( color == 'transparent' ){
         ctx.globalCompositeOperation = 'destination-out';
       }else{
@@ -343,6 +379,9 @@ function init(){
 
     stroke = {};
     stroke.color = $('#select_color').val();
+    if( stroke.color == 'custom' ){
+      stroke.color = custom_color;
+    }
     stroke.width = parseInt( $('#select_linewidth').val() );
     stroke.xys = [ [ mouse.startX, mouse.startY ] ];
   });
@@ -362,14 +401,18 @@ function init(){
 
   $('#select_color').change( function(){
     var color = $(this).val();
-    if( color == 'white' ){
-      color = 'lightgray';
-    }else if( color == 'transparent' ){
-      color = 'black';
+    if( color == 'custom' ){
+      openColorModal();
+    }else{
+      if( color == 'white' ){
+        color = 'lightgray';
+      }else if( color == 'transparent' ){
+        color = 'black';
+      }
+      $(this).css( { 'color': color } );
+      $('#select_linewidth').css( { 'color': color } );
+      $('#setbg_btn').css( { 'background': color } );
     }
-    $(this).css( { 'color': color } );
-    $('#select_linewidth').css( { 'color': color } );
-    $('#setbg_btn').css( { 'background': color } );
   });
 
   //. リサイズ時に Canvas サイズを変更する
@@ -544,6 +587,9 @@ function redo(){
 function setBG(){
   var color = $('#select_color').val();
   if( color ){
+    if( color == 'custom' ){
+      color = custom_color;
+    }
     if( color != 'transparent' ){
       backgroundcolor = color;
     }else{
@@ -629,6 +675,25 @@ function sendImage(){
   };
   //socketio.json.emit( 'image_client', msg );
   ws.send( '<%= room %>:' + JSON.stringify( msg ) );
+}
+
+function changeColor( c ){
+  $('#select_color').css( 'color', c );
+  $('#select_color').val( 'custom' );
+  custom_color = c;
+
+  $('#select_linewidth').css( { 'color': c } );
+  $('#setbg_btn').css( { 'background': c } );
+}
+
+function openColorModal(){
+  $('#colorModal').modal( 'show' );
+}
+
+function closeColorModal(){
+  $('#colorModal').modal( 'hide' );
+  var c = $('#color-picker').val();
+  changeColor( c );
 }
 </script>
 </body>

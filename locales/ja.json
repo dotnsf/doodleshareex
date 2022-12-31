@@ -19,6 +19,8 @@
   "client.color.pink": "ピンク",
   "client.color.beige": "肌",
   "client.color.brown": "茶",
+  "client.color.custom": "カスタム",
+	"client.button.select_custom": "選択",
   "client.button.background": "背景色",
   "client.button.reset": "リセット",
   "client.button.save": "保存",
