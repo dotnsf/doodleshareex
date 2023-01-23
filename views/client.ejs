@@ -8,6 +8,7 @@
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.min.js"></script>
 <link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet"/>
 <script src="/common.js"></script>
+<script src="//dotnsf.github.io/djs/djs.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 
 <link rel="shortcut icon" href="/icon.png" type="image/png"/>
@@ -26,9 +27,6 @@ html, body{
   font-size: 20px;
   color: #333;
 }
-#mycanvas{
-  border: 1px solid #333;
-}
 #comment{
   width: 100%;
 }
@@ -37,85 +35,23 @@ html, body{
 <body>
 <h3 id="name"><%= name %></h3>
 
-<select id="select_color" name="select_color">
-  <option style="color:black;" value="transparent"><%= __('client.color.transparent') %></option>
-  <option style="color:black;" value="black" selected="selected"><%= __('client.color.black') %></option>
-  <option style="color:lightgray;" value="white"><%= __('client.color.white') %></option>
-  <option style="color:red;" value="red"><%= __('client.color.red') %></option>
-  <option style="color:blue;" value="blue"><%= __('client.color.blue') %></option>
-  <option style="color:green;" value="green"><%= __('client.color.green') %></option>
-  <option style="color:yellow;" value="yellow"><%= __('client.color.yellow') %></option>
-  <option style="color:#FFA500;" value="#FFA500"><%= __('client.color.orange') %></option>
-  <option style="color:cyan;" value="cyan"><%= __('client.color.cyan') %></option>
-  <option style="color:magenta;" value="magenta"><%= __('client.color.magenta') %></option>
-  <option style="color:gray;" value="gray"><%= __('client.color.gray') %></option>
-  <option style="color:#ef8f9c;" value="#ef8f9c"><%= __('client.color.pink') %></option>
-  <option style="color:#ead2ad;" value="#ead2ad"><%= __('client.color.beige') %></option>
-  <option style="color:#7c6035;" value="#7c6035"><%= __('client.color.brown') %></option>
-  <option style="color:black;" value="custom"><%= __('client.color.custom') %></option>
-</select>
-
-<select id="select_linewidth" name="select_linewidth">
-  <option value="1">1</option>
-  <option value="2">2</option>
-  <option value="3">3</option>
-  <option value="4">4</option>
-  <option value="5" selected="selected">5</option>
-  <option value="6">6</option>
-  <option value="7">7</option>
-  <option value="8">8</option>
-  <option value="9">9</option>
-  <option value="10">10</option>
-  <option value="11">11</option>
-  <option value="12">12</option>
-  <option value="13">13</option>
-  <option value="14">14</option>
-  <option value="15">15</option>
-</select>
-
-<input type="button" class="btn btn-xs btn-secondary p-0" id="setbg_btn" value="<%= __('client.button.background') %>" onClick="setBG();"/>
-<a href="#" class="btn btn-xs btn-secondary p-0" data-toggle="modal" data-target="#commentModal" id="comment_btn"><i class="fas fa-comment-dots"></i></a>
-
-<div id="canvas_div">
-  <div id="cdiv"></div>
-
-  <br/>
-  <input type="button" class="btn btn-xs" id="undo_btn" value="<" onClick="undo();" disabled="disabled"/>
-  <input type="button" class="btn btn-xs btn-warning" value="<%= __('client.button.reset') %>" onClick="resetCanvas();"/>
-  <input type="button" class="btn btn-xs btn-primary" value="<%= __('client.button.save') %>" onClick="saveImage();"/>
-  <input type="button" class="btn btn-xs" id="redo_btn" value=">" onClick="redo();" disabled="disabled"/>
+<div class="container" id="djs_main" style="position: relative; top: 20px;">
 </div>
 
-<div class="modal bd-example-modal-lg fade" id="commentModal" tabindex="-1" role="dialog" aria-labbelledby="commentModal" aria-hidden="true">
+<div class="modal bd-example-modal-lg fade" id="__extraModal" tabindex="-1" role="dialog" aria-labbelledby="extraModal" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title" id="commentModalLabel"><%= __('client.modal.label') %></h4>
-      </div>
-      <div class="modal-body" id="commentmodal-body">
-        <textarea id="comment"></textarea>
-      </div>
-      <div class="modal-footer btn-center">
-        <button type="button" class="btn btn-primary modal_button" data-dismiss="modal">OK</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal bd-example-modal-lg fade" id="colorModal" tabindex="-1" role="dialog" aria-labbelledby="colorModal" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="colorModalLabel"><%= __('client.color.custom') %></h4>
+        <h4 class="modal-title" id="__extraModalLabel"><%= __('client.modal.label') %></h4>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="modal-body" id="editmodal-body">
-        <input type="color" id="color-picker" value="#000000"/>
+      <div class="modal-body" id="__extramodal-body">
+        <textarea class="form-control" id="comment" value=""></textarea>
       </div>
       <div class="modal-footer btn-center">
-        <button type="button" class="btn" data-toggle="modal" onClick="closeColorModal();"><%= __('client.button.select_custom') %></button>
+        <button type="button" class="btn btn-primary modal_button" data-dismiss="modal">OK</button>
       </div>
     </div>
   </div>
@@ -131,14 +67,7 @@ html, body{
 <script>
 var uuid = generateUUID();
 
-var base_url = location.origin + '/';
-var undos = [];
-var redos = [];
-var stroke = null; //. { color: color, width: width, xys: [] }
-var backgroundcolor = null;
-
-var custom_color = '#000000';
-
+var djs = null;
 var ws = null;
 
 //. 参考: https://gist.github.com/Cartman0/436459b9b85cfdd1ca9c
@@ -154,8 +83,12 @@ $(function(){
     });
   }
 
+  djs = $('#djs_main').doodlejs({ extra: 'comment' });
+  djs.__proto__.__sendImage = sendImage;        //. sendImage を上書き
+  djs.__proto__.__submitCanvas = saveImage;     //. submitCanvas を上書き
+
   //. モーダル終了時
-  $('#commentModal').on( 'hidden.bs.modal', function(){
+  $('#__extraModal').on( 'hidden.bs.modal', function(){
     sendImage();
   });
 
@@ -163,274 +96,13 @@ $(function(){
 });
 
 function init(){
-  $('#comment').html( '' );
-  $('#cdiv').html( '<canvas width="80%" height="50%" id="mycanvas"></canvas>' );
-
-  var canvas = document.getElementById( 'mycanvas' );
-  if( !canvas || !canvas.getContext ){
-    return false;
+  var browserWidth = window.innerWidth;
+  var browserHeight = window.innerHeight;
+  var canvas = document.getElementById( '__mycanvas' );
+  if( canvas && canvas.getContext ){
+    canvas.width = browserWidth * 0.8;
+    canvas.height = browserHeight * 0.6;
   }
-  var ctx = canvas.getContext( '2d' );
-  //. マウスの座標を取得
-  var mouse = {
-    startX: 0,
-    startY: 0,
-    x: 0,
-    y: 0,
-    color: "black",
-    isDrawing: false
-  };
-  var borderWidth = 1;
-  canvas.addEventListener( "mousemove", function( e ){
-    //. マウスが動いたら座標値を取得
-    var rect = e.target.getBoundingClientRect();
-    mouse.x = e.clientX - rect.left - borderWidth;
-    mouse.y = e.clientY - rect.top - borderWidth;
-
-    //. isDrawがtrueのとき描画
-    if( mouse.isDrawing ){
-      var color = $('#select_color').val();
-      if( color == 'custom' ){
-        color = custom_color;
-      }
-      if( color == 'transparent' ){
-        ctx.globalCompositeOperation = 'destination-out';
-      }else{
-        ctx.globalCompositeOperation = 'source-over';
-      }
-
-      ctx.beginPath();
-      ctx.lineWidth = parseInt( $('#select_linewidth').val() );
-      ctx.lineCap = 'round';
-      ctx.moveTo( mouse.startX, mouse.startY );
-      ctx.lineTo( mouse.x, mouse.y );
-      if( color != 'transparent' ){
-        ctx.strokeStyle = color;
-      }
-      ctx.stroke();
-      mouse.startX = mouse.x;
-      mouse.startY = mouse.y;
-
-      if( stroke ){
-        stroke.xys.push( [ mouse.x, mouse.y ] );
-      }
-    }
-  });
-  //. マウスを押したら、描画OK(myDrawをtrue)
-  canvas.addEventListener( "mousedown", function( e ){
-    mouse.isDrawing = true;
-    mouse.startX = mouse.x;
-    mouse.startY = mouse.y;
-
-    stroke = {};
-    stroke.color = $('#select_color').val();
-    if( stroke.color == 'custom' ){
-      stroke.color = custom_color;
-    }
-    stroke.width = parseInt( $('#select_linewidth').val() );
-    stroke.xys = [ [ mouse.x, mouse.y ] ];
-  });
-  //. マウスを上げたら、描画禁止(myDrawをfalse)
-  canvas.addEventListener( "mouseup", function( e ){
-    mouse.isDrawing = false;
-    sendImage();
-
-    if( stroke ){
-      undos.push( stroke );
-      $('#undo_btn').prop( 'disabled', false );
-      stroke = null;
-      redos = [];
-      $('#redo_btn').prop( 'disabled', true );
-    }
-  });
-  canvas.addEventListener( 'mouseleave', function( e ){
-    mouse.isDrawing = false;
-
-    if( stroke ){
-      undos.push( stroke );
-      $('#undo_btn').prop( 'disabled', false );
-      stroke = null;
-      redos = [];
-      $('#redo_btn').prop( 'disabled', true );
-    }
-  });
-
-  canvas.addEventListener( "touchmove", function( e ){
-    //. タッチが動いたら座標値を取得
-    var t = e.changedTouches[0];
-    var rect = e.target.getBoundingClientRect();
-    mouse.x = ( isAndroid() ? t.pageX : e.pageX ) - rect.left - borderWidth;
-    mouse.y = ( isAndroid() ? t.pageY : e.pageY ) - rect.top - borderWidth;
-
-    //. isDrawがtrueのとき描画
-    if( mouse.isDrawing ){
-      var color = $('#select_color').val();
-      if( color == 'custom' ){
-        color = custom_color;
-      }
-      if( color == 'transparent' ){
-        ctx.globalCompositeOperation = 'destination-out';
-      }else{
-        ctx.globalCompositeOperation = 'source-over';
-      }
-
-      ctx.beginPath();
-      ctx.lineWidth = parseInt( $('#select_linewidth').val() );
-      ctx.lineCap = 'round';
-      ctx.moveTo( mouse.startX, mouse.startY );
-      ctx.lineTo( mouse.x, mouse.y );
-      if( color != 'transparent' ){
-        ctx.strokeStyle = color;
-      }
-      ctx.stroke();
-      mouse.startX = mouse.x;
-      mouse.startY = mouse.y;
-
-      if( stroke ){
-        stroke.xys.push( [ mouse.x, mouse.y ] );
-      }
-    }
-  });
-  //. タッチしたら、描画OK(myDrawをtrue)
-  canvas.addEventListener( "touchstart", function( e ){
-    var t = e.changedTouches[0];
-    var rect = t.target.getBoundingClientRect();
-    mouse.isDrawing = true;
-    mouse.startX = t.pageX - rect.left - borderWidth;
-    mouse.startY = t.pageY - rect.top - borderWidth;
-
-    stroke = {};
-    stroke.color = $('#select_color').val();
-    if( stroke.color == 'custom' ){
-      stroke.color = custom_color;
-    }
-    stroke.width = parseInt( $('#select_linewidth').val() );
-    stroke.xys = [ [ mouse.startX, mouse.startY ] ];
-  });
-  //. タッチを上げたら、描画禁止(myDrawをfalse)
-  canvas.addEventListener( "touchend", function( e ){
-    mouse.isDrawing = false;
-    sendImage();
-
-    if( stroke ){
-      undos.push( stroke );
-      $('#undo_btn').prop( 'disabled', false );
-      stroke = null;
-      redos = [];
-      $('#redo_btn').prop( 'disabled', true );
-    }
-  });
-  canvas.addEventListener( 'touchcancel', function( e ){
-    mouse.isDrawing = false;
-    sendImage();
-
-    if( stroke ){
-      undos.push( stroke );
-      $('#undo_btn').prop( 'disabled', false );
-      stroke = null;
-      redos = [];
-      $('#redo_btn').prop( 'display', true );
-    }
-  });
-
-  //. Pointer Events
-  canvas.addEventListener( "pointermove", function( e ){
-    //. ポインターが動いたら座標値を取得
-    var t = e; //e.changedTouches[0];
-    var rect = e.target.getBoundingClientRect();
-    mouse.x = ( isAndroid() ? t.pageX : e.pageX ) - rect.left - borderWidth;
-    mouse.y = ( isAndroid() ? t.pageY : e.pageY ) - rect.top - borderWidth;
-
-    //. isDrawがtrueのとき描画
-    if( mouse.isDrawing ){
-      var color = $('#select_color').val();
-      if( color == 'custom' ){
-        color = custom_color;
-      }
-      if( color == 'transparent' ){
-        ctx.globalCompositeOperation = 'destination-out';
-      }else{
-        ctx.globalCompositeOperation = 'source-over';
-      }
-
-      ctx.beginPath();
-      ctx.lineWidth = parseInt( $('#select_linewidth').val() );
-      ctx.lineCap = 'round';
-      ctx.moveTo( mouse.startX, mouse.startY );
-      ctx.lineTo( mouse.x, mouse.y );
-      if( color != 'transparent' ){
-        ctx.strokeStyle = color;
-      }
-      ctx.stroke();
-      mouse.startX = mouse.x;
-      mouse.startY = mouse.y;
-
-      if( stroke ){
-        stroke.xys.push( [ mouse.x, mouse.y ] );
-      }
-    }
-  });
-  //. ポインターにタッチしたら、描画OK(myDrawをtrue)
-  canvas.addEventListener( "pointerdown", function( e ){
-    var t = e; //e.changedTouches[0];
-    var rect = t.target.getBoundingClientRect();
-    mouse.isDrawing = true;
-    mouse.startX = t.pageX - rect.left - borderWidth;
-    mouse.startY = t.pageY - rect.top - borderWidth;
-
-    stroke = {};
-    stroke.color = $('#select_color').val();
-    if( stroke.color == 'custom' ){
-      stroke.color = custom_color;
-    }
-    stroke.width = parseInt( $('#select_linewidth').val() );
-    stroke.xys = [ [ mouse.startX, mouse.startY ] ];
-  });
-  //. ポインターを上げたら、描画禁止(myDrawをfalse)
-  canvas.addEventListener( "pointerup", function( e ){
-    mouse.isDrawing = false;
-    sendImage();
-
-    if( stroke ){
-      undos.push( stroke );
-      $('#undo_btn').prop( 'disabled', false );
-      stroke = null;
-      redos = [];
-      $('#redo_btn').prop( 'disabled', true );
-    }
-  });
-
-  $('#select_color').change( function(){
-    var color = $(this).val();
-    if( color == 'custom' ){
-      openColorModal();
-    }else{
-      if( color == 'white' ){
-        color = 'lightgray';
-      }else if( color == 'transparent' ){
-        color = 'black';
-      }
-      $(this).css( { 'color': color } );
-      $('#select_linewidth').css( { 'color': color } );
-      $('#setbg_btn').css( { 'background': color } );
-    }
-  });
-
-  //. リサイズ時に Canvas サイズを変更する
-  $(window).on( 'load resize', function(){
-    resized();
-  });
-
-  //. スクロール禁止
-  /*
-  $(window).on('touchmove.noScroll', function( e ){
-    e.preventDefault();
-  });
-  */
-  var movefun = function( event ){
-    event.preventDefault();
-  }
-  window.addEventListener( 'touchmove', movefun, { passive: false } );
 
   //. Redis 対応
   ws = location.protocol.indexOf( 'https' ) > -1 ? ( new WebSocket( `wss://${location.host}` ) ) : ( new WebSocket( `ws://${location.host}` ) );
@@ -449,48 +121,8 @@ function init(){
   };
 }
 
-function resized(){
-  var browserWidth = window.innerWidth;
-  var browserHeight = window.innerHeight;
-  var canvas = document.getElementById( 'mycanvas' );
-  if( canvas && canvas.getContext ){
-    canvas.width = browserWidth * 0.8;
-    canvas.height = browserHeight * 0.6;
-
-    //. 初期化を通知
-    var name = $('#name').text();
-    var msg = {
-      uuid: uuid,
-      room: '<%= room %>',
-      name: name,
-      timestamp: ( new Date() ).getTime(),
-      width: canvas.width,
-      height: canvas.height
-    };
-    //socketio.json.emit( 'init_client', msg );
-  }
-}
-
-function resetCanvas( no_reset_unredo ){
-  //init();
-  resized();
-
-  if( !no_reset_unredo ){
-    undos = [];
-    redos = [];
-    backgroundcolor = null;
-
-    //. リセットを通知
-    sendImage();
-  }
-}
-
-function isAndroid(){
-  return ( navigator.userAgent.indexOf( 'Android' ) > 0 );
-}
-
 function saveImage(){
-  var canvas = document.getElementById( 'mycanvas' );
+  var canvas = document.getElementById( '__mycanvas' );
   if( !canvas || !canvas.getContext ){
     return false;
   }
@@ -526,14 +158,6 @@ function saveImage(){
     contentType: false,
     processData: false,
     success: function( data, dataType ){
-      console.log( data );
-      //$('#comment').val( '' );
-
-      /* Toast はやめる 
-      $('#qrcode_toast').toast( { delay: 1000 } );
-      $('#qrcode_toast').toast( 'show' );
-      */
-
       /* その画像をダウンロードさせる */
       var filename = ( $('#name').text() ) + '.png';
       if( window.navigator.msSaveBlob ){
@@ -559,101 +183,9 @@ function saveImage(){
   });
 }
 
-function undo(){
-  if( undos && undos.length > 0 ){
-    var last_stroke = undos.pop();
-    if( undos.length == 0 ){
-      $('#undo_btn').prop( 'disabled', true );
-    }
-    redos.push( last_stroke );
-    $('#redo_btn').prop( 'disabled', false );
-
-    redrawCanvas();
-  }
-}
-
-function redo(){
-  if( redos && redos.length > 0 ){
-    var last_stroke = redos.pop();
-    if( redos.length == 0 ){
-      $('#redo_btn').prop( 'disabled', true );
-    }
-    undos.push( last_stroke );
-    $('#undo_btn').prop( 'disabled', false );
-
-    redrawCanvas();
-  }
-}
-
-function setBG(){
-  var color = $('#select_color').val();
-  if( color ){
-    if( color == 'custom' ){
-      color = custom_color;
-    }
-    if( color != 'transparent' ){
-      backgroundcolor = color;
-    }else{
-      backgroundcolor = null;
-    }
-    redrawCanvas();
-  }
-}
-
-function redrawCanvas(){
-  if( undos && undos.length >= 0 ){
-    resetCanvas( true );
-
-    if( backgroundcolor ){
-      var canvas = document.getElementById( 'mycanvas' );
-      if( !canvas || !canvas.getContext ){
-        return false;
-      }
-      var ctx = canvas.getContext( '2d' );
-
-      //. 全体をベタ塗り
-      ctx.beginPath();
-      ctx.fillStyle = backgroundcolor; //"rgb( 255, 255, 255 )";
-      ctx.fillRect( 0, 0, canvas.width, canvas.height );
-      ctx.stroke();
-    }
-
-    for( var i = 0; i < undos.length; i ++ ){
-      var stroke = undos[i];
-
-      for( var j = 1; j < stroke.xys.length; j ++ ){
-        var canvas = document.getElementById( 'mycanvas' );
-        if( !canvas || !canvas.getContext ){
-          return false;
-        }
-        var ctx = canvas.getContext( '2d' );
-
-        var color = stroke.color;
-        if( color == 'transparent' ){
-          ctx.globalCompositeOperation = 'destination-out';
-        }else{
-          ctx.globalCompositeOperation = 'source-over';
-        }
-
-        ctx.beginPath();
-        ctx.lineWidth = stroke.width;
-        ctx.lineCap = 'round';
-        ctx.moveTo( stroke.xys[j-1][0], stroke.xys[j-1][1] );
-        ctx.lineTo( stroke.xys[j][0], stroke.xys[j][1] );
-        if( color != 'transparent' ){
-          ctx.strokeStyle = color;
-        }
-        ctx.stroke();
-      }
-    }
-  }
-
-  sendImage();
-}
-
 function sendImage(){
   //. キャンバスを取得
-  var canvas = document.getElementById( 'mycanvas' );
+  var canvas = document.getElementById( '__mycanvas' );
   if( !canvas || !canvas.getContext ){
     return false;
   }
@@ -676,25 +208,6 @@ function sendImage(){
   };
   //socketio.json.emit( 'image_client', msg );
   ws.send( '<%= room %>:' + JSON.stringify( msg ) );
-}
-
-function changeColor( c ){
-  $('#select_color').css( 'color', c );
-  $('#select_color').val( 'custom' );
-  custom_color = c;
-
-  $('#select_linewidth').css( { 'color': c } );
-  $('#setbg_btn').css( { 'background': c } );
-}
-
-function openColorModal(){
-  $('#colorModal').modal( 'show' );
-}
-
-function closeColorModal(){
-  $('#colorModal').modal( 'hide' );
-  var c = $('#color-picker').val();
-  changeColor( c );
 }
 </script>
 </body>
