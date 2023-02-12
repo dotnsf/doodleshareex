@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doodleshareex-client1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: doodleshareex-client1
+  template:
+    metadata:
+      labels:
+        app: doodleshareex-client1
+    spec:
+      containers:
+      - name: doodleshareex-client1
+        image: dotnsf/doodleshareex-client
+        env:
+        - name: UUID
+          value: "user1"
+        - name: ROOM
+          value: "dotnsf"
+        - name: IMAGES_FOLDER
+          value: "sample_images/ka"
+        - name: INTERVAL_MS
+          value: "3000"
+        - name: SERVER_URL
+          value: "wss://doodleshareex.yellowmix.net"

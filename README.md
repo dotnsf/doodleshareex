@@ -178,5 +178,5 @@ https://qiita.com/n0bisuke/items/cb6216dbb9c3c13a10a8
 
 ## Copyright
 
-2021-2022 [K.Kimura @ Juge.Me](https://github.com/dotnsf) all rights reserved.
+2021-2023 [K.Kimura @ Juge.Me](https://github.com/dotnsf) all rights reserved.
 
