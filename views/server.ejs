@@ -51,10 +51,12 @@ html, body{
 </a>
 
 <div id="card-groups">
-  <!--
+  <!-- 
   <div class="card-group" id="cards-1">
   </div>
   -->
+  <div class="row" id="cards-0">
+  </div>
 </div>
 
 <div style="display:none;">
@@ -100,8 +102,9 @@ $(function(){
         socket_ids.push( socket_id );
 
         var color = generateColor( msg.uuid /* msg.name */ );
-        var row = addCardGroups( socket_ids.length );
-        if( row > 0 ){
+        //var row = addCardGroups( socket_ids.length );
+        var cols = countCardCols( socket_ids.length );  //. #9
+        if( cols > 0 ){
           var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
             + '<div class="card-body text-' + color + '">'
             + '<h4 class="card-title">' + msg.name + '</h4>'
@@ -110,7 +113,14 @@ $(function(){
             + '<img class="card-img-bottom" id="image_' + socket_id + '" alt="(image of ' + msg.name + ')" ts="' + msg.timestamp + '"/>'
             + '</a>'
             + '</div>';
-          $('#cards-' + row).append( card );
+          $('#cards-0').append( card );
+
+          //. カラム数を指定(#9)
+          $('.card').removeClass( 'col-1' );
+          $('.card').removeClass( 'col-2' );
+          $('.card').removeClass( 'col-3' );
+          $('.card').removeClass( 'col-4' );
+          $('.card').addClass( 'col-' + cols );
 
           //. クラスでまとめて ColorBox の指定
           $('.card').colorbox({ href: '#box_content', inline: true, transition: 'none', width: '90%', onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 5 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html( '' ); } });
@@ -226,6 +236,22 @@ function addCardGroups( num ){
 
   return setRow;
 }
+
+function countCardCols( num ){
+  var cols = 4;
+  if( num > 6 ){
+    cols = 3;
+  }
+  if( num > 12 ){
+    cols = 2;
+  }
+  if( num > 30 ){
+    cols = 1;
+  }
+
+  return cols;
+}
+
 
 //. num 個の要素をなるべく正方形に近い表形式の card-group 化する
 function appendCardGroups( cardgroups_selector, num ){
