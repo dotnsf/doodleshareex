@@ -23,6 +23,27 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
 <meta name="apple-mobile-web-app-title" content="<%= ('common.appname') %>"/>
 
+<!-- // OGP tags -->
+<meta property="og:title" content="<%= __('screen.head.title') %>"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://doodleshareex.yellowmix.net/"/>
+<meta property="og:image" content="https://doodleshareex.yellowmix.net/icon.png"/>
+<meta property="og:site_name" content="<%= __('common.appname') %>"/>
+<meta property="og:description" content="<%= __('screen.head.title') %>"/>
+<!-- OGP tags // -->
+
+<!-- // Twitter Card -->
+<meta name="robots" content="max-image-preview:large" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@dotnsf"/>
+<meta name="twitter:creator" content="@dotnsf"/>
+<meta name="twitter:url" content="https://doodleshareex.yellowmix.net/"/>
+<meta name="twitter:image:src" content="https://doodleshareex.yellowmix.net/icon.png"/>
+<meta name="twitter:title" content="<%= __('common.appname') %>"/>
+<meta name="twitter:description" content="<%= __('screen.head.title') %>"/>
+<link rel="alternate" media="handheld" type="application/xhtml+xml" href="https://doodleshareex.yellowmix.net/" />
+<!-- Twitter Card // -->
+
 <script>
 <% if( user ){ %>
 var uuid = '<%= user.displayName %>';
