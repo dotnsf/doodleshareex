@@ -74,5 +74,8 @@
   "basicauth.confirm.move_to_buy_protected_room": "Do you want to by protected room ticket?",
   "admin.head.images": "Images",
   "admin.button.delete": "Delete",
+  "admin.head.title": "Images",
+  "apikey.title": "API Key configuration",
+  "apikey.body.apikey_management": "API Key management",
   "dummy": "Dummy"
 }

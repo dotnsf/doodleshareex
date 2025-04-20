@@ -92,27 +92,51 @@ api.post( '/image', async function( req, res ){
 
       var sql = "insert into images( id, body, contenttype, timestamp, name, comment, room, uuid, created, updated ) values( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 )";
       var query = { text: sql, values: [ image_id, img, imgtype, timestamp, name, comment, room, uuid, ts, ts ] };
-      conn.query( query, function( err, result ){
+      conn.query( query, async function( err, result ){
         fs.unlink( imgpath, function( err ){} );
         if( err ){
           console.log( err );
           res.status( 400 );
-          res.write( JSON.stringify( { status: false, error: err } ) );
+          res.write( JSON.stringify( { status: false, error: err }, null, 2 ) );
           res.end();
         }else{
-          res.write( JSON.stringify( { status: true, id: image_id } ) );
+          var r = { status: true, id: image_id };
+
+          //. #56
+          var sql0 = "select * from rooms where id = $1";
+          var query0 = { text: sql0, values: [ room ] };
+          var r0 = await conn.query( query0 );
+          var apikey = null;
+          if( r0.rows.length > 0 && result.rows[0].apikey ){
+            try{
+              apikey = result.rows[0].apikey;
+            }catch( e ){
+              console.log( {e} );
+            }
+          }
+
+          if( apikey ){
+            var image_url = 'https://doodleshareex.yellowmix.net/db/image?id=' + image_id;
+            var r1 = await api.aiOCR( image_url, apikey );
+            console.log( {r1} );
+            if( r1 && r1.status && r1.content ){
+              r.content = r1.content;
+            }
+          }
+
+          res.write( JSON.stringify( r, null, 2 ) );
           res.end();
         }
       });
     }else{
       res.status( 400 );
-      res.write( JSON.stringify( { status: false, error: 'db is not initialized.' } ) );
+      res.write( JSON.stringify( { status: false, error: 'db is not initialized.' }, null, 2 ) );
       res.end();
     }
   }catch( e ){
     console.log( e );
     res.status( 400 );
-    res.write( JSON.stringify( { status: false, error: e } ) );
+    res.write( JSON.stringify( { status: false, error: e }, null, 2 ) );
     res.end();
   }finally{
     if( conn ){
@@ -368,6 +392,90 @@ api.readRoom = async function( id, basic_id, basic_password ){
   });
 }
 
+//. #56
+api.setRoomApikey = async function( id, apikey, basic_id, enc_basic_password ){
+  return new Promise( async ( resolve, reject ) => {
+    var conn = null;
+    try{
+      if( pg ){
+        conn = await pg.connect();  //. no pg_hba.conf entry for host "xx.xx.xx.xx", user "xxxx", database "xxxx", no encryption
+
+        var r = await api.readRoom( id, basic_id, enc_basic_password );
+        if( !r.status ){
+          //. 指定の room が存在していない
+          resolve( { status: false, error: "no room found for id = " + id + "." } );
+        }else{
+          var room = r.room;
+          var ts = ( new Date() ).getTime();
+
+          var sql = "update rooms set apikey = $1, updated = $2 where id = $3";
+          var query = { text: sql, values: [ apikey, ts, id ] };
+          conn.query( query, async function( err, result ){
+            if( err ){
+              console.log( err );
+              resolve( { status: false, error: err } );
+            }else{
+              resolve( { status: true, id: id, apikey: apikey } );
+            }
+          });
+        }
+      }else{
+        resolve( { status: false, error: "db is not initialized." } );
+      }
+    }catch( e ){
+      console.log( e );
+      resolve( { status: false, error: e } );
+    }finally{
+      if( conn ){
+        conn.release();
+      }
+    }
+  });
+}
+
+//. #56
+var OpenAI = require( 'openai' );
+var DEFAULT_MODEL = 'DEFAULT_MODEL' in process.env && process.env.DEFAULT_MODEL ? process.env.DEFAULT_MODEL : 'gpt-4o-mini';
+api.aiOCR = async function( image_url, apikey, model, prompt ){
+  return new Promise( async ( resolve, reject ) => {
+    try{
+      if( apikey ){
+        var openai = new OpenAI( { apiKey: apikey } );
+        if( !model ){ model = DEFAULT_MODEL; }
+        if( !prompt ){ prompt = '画像にどんな文字が書かれていますか？書かれている文字を教えてください。'; }
+
+        var completion = await openai.chat.completions.create({
+          model: model,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: image_url
+                }
+              }
+            ]
+          }]
+        });
+        console.log( {completion} );
+
+        if( completion && completion.choices && completion.choices[0] && completion.choices[0].message ){
+          resolve( { status: true, content: completion.choices[0].message.content } );
+        }else{
+          resolve( { status: false, error: 'no content found.', completion: completion } );
+        }
+      }else{
+        resolve( { status: false, error: 'no apikey specified.' } );
+      }
+    }catch( e ){
+      console.log( e );
+      resolve( { status: false, error: e } );
+    }
+  });
+}
+
 api.post( '/room/:id', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
@@ -553,6 +661,36 @@ api.put( '/room/:id', async function( req, res ){
   }finally{
     if( conn ){
       conn.release();
+    }
+  }
+});
+
+//. #56
+api.put( '/roomapikey/:id', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var room = req.params.id;
+  if( room.toLowerCase() == 'default' ){
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, error: "default room can't be edited." } ) );
+    res.end();
+  }else{
+    var current_apikey = req.body.current_apikey;
+    var new_apikey = req.body.new_apikey;
+    var basic_id = req.body.basic_id;
+    var basic_password = req.body.basic_password;
+    var enc_basic_password = getHash( basic_password );
+
+    var r0 = await api.readRoom( room, basic_id, enc_basic_password );
+    if( r0.status && r0.room && r0.room.id && r0.room.id == room && r0.room.apikey == current_apikey ){
+      var r1 = await api.setRoomApikey( room, new_apikey, basic_id, enc_basic_password );
+
+      res.write( JSON.stringify( r1 ) );
+      res.end();
+    }else{
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, error: "failed to update room apikey for " + room + "." } ) );
+      res.end();
     }
   }
 });

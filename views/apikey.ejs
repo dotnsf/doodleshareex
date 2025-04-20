@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<title><%= __('common.appname') %> - <%= __('apikey.title') %></title>
+<script type="text/javascript" src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.min.js"></script>
+<link href="//use.fontawesome.com/releases/v5.8.1/css/all.css" rel="stylesheet"/>
+<link rel="stylesheet" href="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css"/> 
+<script src="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+
+<link href="/colorbox.css" rel="stylesheet"/>
+<script src="/jquery.colorbox-min.js"></script>
+<script src="/common.js"></script>
+
+<link rel="shortcut icon" href="/icon.png" type="image/png"/>
+<link rel="icon" href="/icon.png" type="image/png"/>
+<link rel="apple-touch-icon" href="/icon.png"/>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="<%= ('common.appname') %>"/>
+
+<!-- // OGP tags -->
+<meta property="og:title" content="<%= __('screen.head.title') %>"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://doodleshareex.yellowmix.net/"/>
+<meta property="og:image" content="https://doodleshareex.yellowmix.net/icon.png"/>
+<meta property="og:site_name" content="<%= __('common.appname') %>"/>
+<meta property="og:description" content="<%= __('screen.head.title') %>"/>
+<!-- OGP tags // -->
+
+<!-- // Twitter Card -->
+<meta name="robots" content="max-image-preview:large" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:site" content="@dotnsf"/>
+<meta name="twitter:creator" content="@dotnsf"/>
+<meta name="twitter:url" content="https://doodleshareex.yellowmix.net/"/>
+<meta name="twitter:image:src" content="https://doodleshareex.yellowmix.net/icon.png"/>
+<meta name="twitter:title" content="<%= __('common.appname') %>"/>
+<meta name="twitter:description" content="<%= __('screen.head.title') %>"/>
+<link rel="alternate" media="handheld" type="application/xhtml+xml" href="https://doodleshareex.yellowmix.net/" />
+<!-- Twitter Card // -->
+
+<script>
+var room = '<%= room %>';
+<% if( user ){ %>
+var uuid = '<%= user.displayName %>';
+<% }else{ %>
+var uuid = generateUUID();
+<% } %>
+console.log( 'uuid = ' + uuid );
+
+$(function(){
+  $.extend( $.fn.dataTable.defaults, {
+    language: {
+      url: '//cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Japanese.json'
+    }
+  });
+});
+
+function updateApiKey(){
+  if( room ){
+    if( room.toLowerCase() == 'default' ){
+      alert( "<%= __('basicauth.alert.default_room_cant_be_created') %>" );
+    }else{
+      var current_apikey = $('#current_apikey').val();
+      var new_apikey = $('#new_apikey').val();
+      var basic_id = $('#basic_id').val();
+      var basic_password = $('#basic_password').val();
+
+      var data = {
+        current_apikey: current_apikey,
+        new_apikey: new_apikey,
+        basic_id: basic_id,
+        basic_password: basic_password
+      };
+      console.log( {data} );
+
+      /*
+      $.ajax({
+        type: 'PUT',
+        url: '/db/roomapikey/' + room,
+        data: data,
+        success: function( result ){
+          if( result && result.status ){
+            console.log( {result} );
+            location.href = '/apikey';
+          }
+        },
+        error: function( e0, e1, e2 ){
+          console.log( e0, e1, e2 );
+        }
+      });
+      */
+    }
+  }else{
+    alert( "<%= __('basicauth.alert.room_cant_be_blank') %>" );
+  }
+}
+</script>
+
+<style type="text/css">
+html, body{
+  text-align: center;
+  background-color: #fafafa;
+  font-size: 20px;
+  color: #333;
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="#"><%= __('common.appname') %> - <%= __('apikey.body.apikey_management') %></a>
+  <ul class="navbar-nav mr-auto">
+  </ul>
+  <ul class="navbar-nav ml-auto">
+  </ul>
+</nav>
+
+<div class="container" id="div_0">
+  <div>
+    <table style="width: 100%;" class="table table-bordered">
+      <tbody>
+        <tr>
+          <td>ROOM</td>
+          <td><b><%= room %></b></td>
+        </tr>
+        <tr>
+          <td>ID</td>
+          <td><input type="text" class="form-control" id="basic_id" value=""/></td>
+        </tr>
+        <tr>
+          <td>PASSWORD</td>
+          <td><input type="password" class="form-control" id="basic_password" value=""/></td>
+        </tr>
+        <tr>
+          <td>Current API Key</td>
+          <td><input type="text" class="form-control" id="current_apikey" value=""/></td>
+        </tr>
+        <tr>
+          <td>New API Key</td>
+          <td><input type="text" class="form-control" id="new_apikey" value=""/></td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <input type="button" class="btn btn-warning" onClick="updateApiKey();" value="Set API Key"/>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

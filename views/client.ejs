@@ -179,6 +179,8 @@ function saveImage(){
     contentType: false,
     processData: false,
     success: function( data, dataType ){
+      //. #56
+
       /* その画像をダウンロードさせる */
       var filename = ( $('#name').text() ) + '.png';
       if( window.navigator.msSaveBlob ){

@@ -185,6 +185,30 @@ paths:
           description: 成功
         '400':
           description: エラー
+  /roomapikey/{id}:
+    put:
+      tags:
+        - room
+      summary: room apikey 更新
+      description: room apikey 更新
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          type: string
+          in: path
+          description: room id
+          required: true
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/RoomApikeyRequest'
+      responses:
+        '200':
+          description: 成功
+        '400':
+          description: エラー
+    delete:
 definitions:
   RoomRequest:
     type: object
@@ -210,3 +234,15 @@ definitions:
       new_room_password:
         type: string
         description: New Room パスワード
+  RoomApikeyRequest:
+    type: object
+    properties:
+      basic_id:
+        type: string
+        description: Basic ID
+      basic_password:
+        type: string
+        description: Basic パスワード
+      apikey:
+        type: string
+        description: API Key

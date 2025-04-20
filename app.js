@@ -110,6 +110,8 @@ var session_params = {
   secret: 'doodleshareex',
   resave: false,
   cookie: {
+    httpOnly: true,
+    //secure: true,
     path: '/',
     maxAge: ( 365 * 24 * 60 * 60 * 1000 )
   },
@@ -150,7 +152,9 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
   app.get( '/auth0/login', passport.authenticate( 'auth0', {
     scope: 'openid profile email'
   }, function( req, res ){
-    res.redirect( '/auth' );
+    //. ここへ来た形跡無し
+    //res.redirect( '/auth' );
+    res.redirect( '/' );
   }));
 
   //. logout
@@ -171,7 +175,16 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
 
       req.logIn( user, function( err ){
         if( err ) return next( err );
-        res.redirect( '/auth' );
+        //res.redirect( '/auth' );
+        //res.redirect( '/auth0/login?original_url=' + original_url );
+        //res.redirect( '/' );
+        ///res.redirect( 'back' );
+        var original_url = req.session.returnTo;
+        if( original_url ){
+          res.redirect( original_url );
+        }else{
+          res.redirect( '/' );
+        }
       });
     })( req, res, next );
   });
@@ -179,6 +192,8 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
   //. access restriction
   app.all( '/auth*', function( req, res, next ){
     if( !req.user || !req.user.displayName ){
+      var original_url = req.originalUrl;
+      req.session.returnTo = original_url;
       res.redirect( '/auth0/login' );
     }else{
       next();
@@ -394,6 +409,8 @@ app.get( '/auth', async function( req, res ){
     res.render( 'basicauth', { user: user } );
   }else{
     //. ログインが確認できない場合はログインページへ
+    var original_url = req.originalUrl;
+    req.session.returnTo = original_url;
     res.redirect( '/auth0/login' );
   }
 });
@@ -419,6 +436,25 @@ app.get( '/admin', async function( req, res ){
     images = r.images;
   }
   res.render( 'admin', { limit: limit, offset: offset, images: images } );
+});
+
+//. #56
+app.get( '/apikey/:room', async function( req, res ){
+  var user = null;
+  if( req.user ){ 
+    //. ログインが確認できた場合はそのユーザー属性を持ってメインページへ
+    user = req.user;
+    var user_id = user.displayName; //user.emails[0].value;
+    var room = req.params.room;
+
+    res.render( 'apikey', { user: user, room: room } );
+  }else{
+    //. ログインが確認できない場合はログインページへ
+    var original_url = req.originalUrl;
+    req.session.returnTo = original_url;
+
+    res.redirect( '/auth0/login' );
+  }
 });
 
 server.on( 'upgrade', function( request, socket, head ){
