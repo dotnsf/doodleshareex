@@ -71,8 +71,11 @@ $(function(){
           var room = result.rooms[i];
           var tr = '<tr>'
             + '<td><a target="_blank" href="/view?room=' + room.id + '">' + room.id + '</a></td>'
-            + '<td><button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.update') %>" + '</button>'
-            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.delete') %>" + '</button></td>'
+            + '<td>'
+            + '<button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.update') %>" + '</button>'
+            + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.delete') %>" + '</button>'
+            + '<a class="btn btn-xs btn-secondary" href="/apikey/' + room.id + '">' + "API Key" + '</a>'
+            + '</td>'
             + '</tr>';
           $('#rooms-table-body').append( tr );
         }
@@ -86,7 +89,7 @@ $(function(){
       $('#rooms-table-body').append( tr );
 <% } %>
       var tr0 = '<tr>'
-        + '<td colspan="2"><a class="btn btn-xs btn-success" href="#" onClick="myPurchase();">' + "<%= __('basicauth.button.title.room') %>" + "<%= user && user.type > 0 ? __('basicauth.button.title.room_to_buy') : __('basicauth.button.title.room_to_add') %>" + '</a></td>'
+        + '<td colspan="2"><a class="btn btn-xs btn-success" href="#" onClick="createQRCode();">' + "<%= __('basicauth.button.title.room') %>" + "<%= user && user.type > 0 ? __('basicauth.button.title.room_to_buy') : __('basicauth.button.title.room_to_add') %>" + '</a></td>'
         + '</tr>';
       $('#rooms-table-body').append( tr0 );
     },
@@ -353,6 +356,8 @@ function myPurchase(){
 }
 </script>
 
+<%- include('./paypay', {}) %>
+
 <style type="text/css">
 html, body{
   text-align: center;
@@ -373,7 +378,10 @@ html, body{
     <!-- #28 -->
     <li class="nav-item">
       <a class="btn btn-warning" href="#" onClick="myLogout();" title="<%= user.displayName %>\n<%= __('basicauth.button.title.room_count1') %>:<%= user.type %><%= __('basicauth.button.title.room_count2') %>"><i class="fas fa-user"></i></a>
+      <!--
       <a class="btn btn-success" href="#" onClick="myPurchase();" title="<%= __('basicauth.button.title.to_buy_room') %>"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
+      -->
+      <a class="btn btn-success" href="#" onClick="createQRCode('');" title="<%= __('basicauth.button.title.to_buy_room') %>"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
     </li>
 <% } %>
   </ul>

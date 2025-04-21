@@ -77,5 +77,6 @@
   "admin.head.title": "Images",
   "apikey.title": "API Key configuration",
   "apikey.body.apikey_management": "API Key management",
+  "paypay.input_roomname": "Input room name which you want to reserve",
   "dummy": "Dummy"
 }

@@ -77,5 +77,6 @@
 	"admin.head.title": "画像一覧",
     "apikey.title": "API キー設定",
     "apikey.body.apikey_management": "API キー管理",
+    "paypay.input_roomname": "予約したいルーム名を入力してください",
 	"dummy": "ダミーデータ"
 }

@@ -153,8 +153,7 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
     scope: 'openid profile email'
   }, function( req, res ){
     //. ここへ来た形跡無し
-    //res.redirect( '/auth' );
-    res.redirect( '/' );
+    res.redirect( '/auth' );
   }));
 
   //. logout
@@ -183,7 +182,7 @@ if( settings_redirect_uri && settings_client_id && settings_client_secret && set
         if( original_url ){
           res.redirect( original_url );
         }else{
-          res.redirect( '/' );
+          res.redirect( '/auth' );
         }
       });
     })( req, res, next );
@@ -636,6 +635,238 @@ app.use( '/pay/confirm', async function( req, res ){
     //. 元の画面にリダイレクト
     res.redirect( '/auth' );
   });
+});
+
+
+//. #50 PayPay
+var PAYPAY = require( "@paypayopa/paypayopa-sdk-node" );
+var PAYPAY_API_KEY = ( 'PAYPAY_API_KEY' in process.env && process.env.PAYPAY_API_KEY ? process.env.PAYPAY_API_KEY : '' );
+var PAYPAY_API_SECRET = ( 'PAYPAY_API_SECRET' in process.env && process.env.PAYPAY_API_SECRET ? process.env.PAYPAY_API_SECRET : '' );
+var PAYPAY_MERCHANT_ID = ( 'PAYPAY_MERCHANT_ID' in process.env && process.env.PAYPAY_MERCHANT_ID ? process.env.PAYPAY_MERCHANT_ID : '' );
+var PAYPAY_REDIRECT_URL = ( 'PAYPAY_REDIRECT_URL' in process.env && process.env.PAYPAY_REDIRECT_URL ? process.env.PAYPAY_REDIRECT_URL : '' );
+
+PAYPAY.Configure({
+  clientId: PAYPAY_API_KEY,
+  clientSecret: PAYPAY_API_SECRET,
+  merchantId: PAYPAY_MERCHANT_ID,
+  productionMode: false
+});
+
+app.get( '/paypay/uaid', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+  //PAYPAY.GetUserAuthorizationStatus()
+
+  //. https://github.com/paypay/paypayopa-sdk-node?tab=readme-ov-file#integrating-native-integration
+  var payload ={
+    scopes: [ "direct_debit" ],
+    nonce: "abc",
+    redirectType: "WEB_LINK",
+    redirectUrl: PAYPAY_REDIRECT_URL,
+    //phoneNumber: "000-0000-0000",
+    //deviceId: "device_id",
+    referenceId: "reference_id"
+  };
+  var response = await PAYPAY.AccountLinkQRCodeCreate( payload );
+  var body = response.BODY;
+  console.log( {body} );
+
+  res.write( JSON.stringify( { status: true } ) );
+  res.end();
+});
+
+app.post( '/paypay/qrcode', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  //. 購入内容
+  var options = JSON.parse( fs.readFileSync( './item.json' ) ); //. { productName: "xx", amount: 100, currency: "JPY" }
+
+  var amount = options.amount;
+  if( amount && typeof amount == 'string' ){
+    amount = parseInt( amount );
+  }
+
+  if( amount ){
+    var payload = {
+      merchantPaymentId: 'doodleshareex-paypay-' + uuidv4(),
+      amount: { amount: amount, currency: options.currency },
+      codeType: "ORDER_QR",
+      orderDescription: options.productName,
+      isAuthorization: false,
+      redirectUrl: PAYPAY_REDIRECT_URL, //"https://paypay.ne.jp/",
+      redirectType: "WEB_LINK",
+      userAgent: 'My PayPay App/1.1'
+    };
+    PAYPAY.QRCodeCreate( payload, function( response ){
+      /*
+      response.BODY = {
+        resultInfo: {
+          code: 'SUCCESS',
+          message: 'Success',
+          codeId: 'nnnnnnnn'
+        },
+        data: {
+          codeId: 'xxxx',
+          url: 'https://qr-stg.sandbox.paypay.ne.jp/xxxxxxxxx',
+          expireDate: nnnnnnn,
+          merchantPaymentId: 'doodleshareex-paypay-xxxxxxxxxxxxxxxxxxx',,
+          amount: {
+            amount: 100,
+            currency: 'JPY'
+          },
+          orderDescription: 'ｘｘｘ利用料',
+          codeType: 'ORDER_QR',
+          requestedAt: nnnnnnn,
+          redirectUrl: 'http://localhost:8080/paypay/redirect',
+          redirectType: 'WEB_LINK',
+          isAuthorization: false,
+          deeplink: 'paypay://payment?link_key=（data.url をエンコードした文字列）'
+        }
+      };
+      response.BODY.data を記憶させて、リダイレクト後に処理するべき？
+      */
+      if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
+        var qr_data = response.BODY.data;
+        qr_data.user = req.user;
+        req.session.qr_data = qr_data;
+        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.end();
+      }else{
+        res.status( response.STATUS );
+        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.end();
+      }
+    });
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: 400, error: 'no amount info found.' } ) );
+    res.end();
+  }
+});
+
+app.get( '/paypay/payment/confirm/:merchantPaymentId', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  if( req.params.merchantPaymentId ){
+    PAYPAY.GetCodePaymentDetails( Array( req.params.merchantPaymentId ), function( response ){
+      //console.log( response );
+      if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
+        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.end();
+      }else{
+        res.status( response.STATUS );
+        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.end();
+      }
+    });
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: 400, error: 'no merchantPaymentId info found.' } ) );
+    res.end();
+  }
+});
+
+app.post( '/paypay/payment/cancel/:merchantPaymentId', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  if( req.params.merchantPaymentId ){
+    PAYPAY.PaymentCancel( Array( req.params.merchantPaymentId ), function( response ){
+      //console.log( response );
+      if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
+        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.end();
+      }else{
+        res.status( response.STATUS );
+        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.end();
+      }
+    });
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: 400, error: 'no merchantPaymentId info found.' } ) );
+    res.end();
+  }
+});
+
+app.post( '/paypay/payment/refund/:merchantPaymentId', function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  if( req.params.merchantPaymentId ){
+    var payload = {
+      merchantPaymentId: req.params.merchantPaymentId,
+      paymentId: req.body.paymentId,
+      amount: { amount: req.body.amount, currency: "JPY" },
+      reason: req.body.reason
+    };
+    PAYPAY.PaymentRefund( payload, function( response ){
+      //console.log( response );
+      if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
+        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.end();
+      }else{
+        res.status( response.STATUS );
+        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.end();
+      }
+    });
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: 400, error: 'no merchantPaymentId info found.' } ) );
+    res.end();
+  }
+});
+
+//. 単に戻るだけ
+app.get( '/paypay/redirect', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  //console.log( 'req.query', req.query );  //. {}
+  var data = req.session.qr_data;
+  var user = data.user;
+  delete req.session.qr_data;
+  var options = JSON.parse( fs.readFileSync( './item.json' ) );
+
+  //. user に一部屋分の権利を追加する
+  var user_id = user.displayName;
+  if( user_id ){
+    await dbapi.addUserType( user_id );
+    //await dbapi.createTransaction( confirmation.transactionId, user_id, reservation.orderId, confirmation.amount, confirmation.currency );
+
+    /*
+    var r = await dbapi.readRoom( room );
+    if( !r.status ){
+      //. 指定の room が存在していないことを確認できたので、作成
+      var ts = ( new Date() ).getTime();
+      var sql = "insert into rooms( id, uuid, basic_id, basic_password, room_password, created, updated ) values( $1, $2, $3, $4, $5, $6, $7 )";
+      var query = { text: sql, values: [ room, user_id, '', '', '', ts, ts ] };
+      conn.query( query, async function( err, result ){
+        if( err ){
+          console.log( err );
+          res.status( 400 );
+          res.write( JSON.stringify( { status: false, error: err } ) );
+          res.end();
+        }else{
+          // 作成時のみ権利を消費する
+          if( basic_password ){
+            await dbapi.deleteUserType( user_id );
+          }
+          res.write( JSON.stringify( { status: true } ) );
+          res.end();
+        }
+      });
+    }else{
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, error: 'room existed.' } ) );
+      res.end();
+    }
+    */
+  }else{
+  }
+
+  res.redirect( '/auth' );
+  /*
+  res.write( JSON.stringify( { status: true } ) );
+  res.end();
+  */
 });
 
 const port = process.env.PORT || 8080;
