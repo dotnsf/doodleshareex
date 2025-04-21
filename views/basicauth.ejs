@@ -74,7 +74,7 @@ $(function(){
             + '<td>'
             + '<button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.update') %>" + '</button>'
             + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.delete') %>" + '</button>'
-            + '<a class="btn btn-xs btn-secondary" href="/apikey/' + room.id + '">' + "API Key" + '</a>'
+            + '<a class="btn btn-xs btn-secondary" href="/apikey/' + room.id + '">' + "<%= __('basicauth.button.title.apikey') %>" + '</a>'
             + '</td>'
             + '</tr>';
           $('#rooms-table-body').append( tr );

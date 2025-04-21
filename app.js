@@ -555,89 +555,6 @@ wss.on( 'connection', function( ws, request ){
 var { v4: uuidv4 } = require( 'uuid' );
 var cache = require( 'memory-cache' );
 
-var line_pay = require( 'line-pay' );
-var pay = new line_pay({
-  channelId: process.env.LINE_PAY_CHANNEL_ID,
-  channelSecret: process.env.LINE_PAY_CHANNEL_SECRET,
-  hostname: process.env.LINE_PAY_HOSTNAME,
-  isSandbox: true
-});
-
-//. 購入画面
-app.use( '/pay/reserve', function( req, res ){
-  //. 購入内容
-  var options = JSON.parse( fs.readFileSync( './item.json' ) );
-  options.orderId = uuidv4();
-  options.confirmUrl = process.env.LINE_PAY_CONFIRM_URL;
-
-  //. トランザクション ID をキーに購入内容をいったん記録して支払いページへ
-  pay.reserve( options ).then( async ( response ) => {
-    var reservation = options;
-    reservation.transactionId = response.info.transactionId;
-    console.log( `Reservation was made. Detail is following.` );
-    console.log( reservation );
-
-    //. #35
-    if( redis ){
-      await redis.set( reservation.transactionId, JSON.stringify( reservation ) );
-    }else{
-      cache.put( reservation.transactionId, reservation );
-    }
-    res.redirect( response.info.paymentUrl.web );
-  });
-});
-
-//. 支払い画面
-app.use( '/pay/confirm', async function( req, res ){
-  if( !req.query.transactionId ){
-    throw new Error( 'Transaction Id not found' );
-  }
-
-  //. 購入内容を取り出す #35
-  var reservation = null;
-  if( redis ){
-    reservation = await redis.get( req.query.transactionId );
-    if( typeof reservation == 'string' ){
-      reservation = JSON.parse( reservation );
-    }
-  }else{
-    reservation = cache.get( req.query.transactionId );
-  }
-
-  if( !reservation ){
-    throw new Error( 'Reservation not found' );
-  }
-
-  console.log( `Retrieved following reservation.` );
-  console.log( reservation );
-
-  //. 確認内容
-  var confirmation = {
-    transactionId: req.query.transactionId,
-    amount: reservation.amount,
-    currency: reservation.currency
-  };
-
-  console.log( `Going to confirm payment with following options` );
-  console.log( confirmation );
-
-  //. 支払い処理を実行
-  pay.confirm( confirmation ).then( async function( response ){
-    //. confirmation の内容（とreservation.orderId）をユーザー ID に紐づけて記録すればよい
-    //. LINE Pay の取引内訳に transactionId が記録されているはず
-    //.            売上結果にも transactionId と orderId が記録されているはず
-    var user_id = ( req.user ? req.user.displayName : null );
-    if( user_id ){
-      await dbapi.addUserType( user_id );
-      await dbapi.createTransaction( confirmation.transactionId, user_id, reservation.orderId, confirmation.amount, confirmation.currency );
-    }
-
-    //. 元の画面にリダイレクト
-    res.redirect( '/auth' );
-  });
-});
-
-
 //. #50 PayPay
 var PAYPAY = require( "@paypayopa/paypayopa-sdk-node" );
 var PAYPAY_API_KEY = ( 'PAYPAY_API_KEY' in process.env && process.env.PAYPAY_API_KEY ? process.env.PAYPAY_API_KEY : '' );
@@ -770,7 +687,6 @@ app.post( '/paypay/payment/cancel/:merchantPaymentId', function( req, res ){
 
   if( req.params.merchantPaymentId ){
     PAYPAY.PaymentCancel( Array( req.params.merchantPaymentId ), function( response ){
-      //console.log( response );
       if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
         res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
         res.end();
@@ -798,7 +714,6 @@ app.post( '/paypay/payment/refund/:merchantPaymentId', function( req, res ){
       reason: req.body.reason
     };
     PAYPAY.PaymentRefund( payload, function( response ){
-      //console.log( response );
       if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
         res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
         res.end();
@@ -815,11 +730,12 @@ app.post( '/paypay/payment/refund/:merchantPaymentId', function( req, res ){
   }
 });
 
-//. 単に戻るだけ
 app.get( '/paypay/redirect', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
+  //. 単に戻るだけ
   //console.log( 'req.query', req.query );  //. {}
+
   var data = req.session.qr_data;
   var user = data.user;
   delete req.session.qr_data;
@@ -830,43 +746,10 @@ app.get( '/paypay/redirect', async function( req, res ){
   if( user_id ){
     await dbapi.addUserType( user_id );
     //await dbapi.createTransaction( confirmation.transactionId, user_id, reservation.orderId, confirmation.amount, confirmation.currency );
-
-    /*
-    var r = await dbapi.readRoom( room );
-    if( !r.status ){
-      //. 指定の room が存在していないことを確認できたので、作成
-      var ts = ( new Date() ).getTime();
-      var sql = "insert into rooms( id, uuid, basic_id, basic_password, room_password, created, updated ) values( $1, $2, $3, $4, $5, $6, $7 )";
-      var query = { text: sql, values: [ room, user_id, '', '', '', ts, ts ] };
-      conn.query( query, async function( err, result ){
-        if( err ){
-          console.log( err );
-          res.status( 400 );
-          res.write( JSON.stringify( { status: false, error: err } ) );
-          res.end();
-        }else{
-          // 作成時のみ権利を消費する
-          if( basic_password ){
-            await dbapi.deleteUserType( user_id );
-          }
-          res.write( JSON.stringify( { status: true } ) );
-          res.end();
-        }
-      });
-    }else{
-      res.status( 400 );
-      res.write( JSON.stringify( { status: false, error: 'room existed.' } ) );
-      res.end();
-    }
-    */
   }else{
   }
 
   res.redirect( '/auth' );
-  /*
-  res.write( JSON.stringify( { status: true } ) );
-  res.end();
-  */
 });
 
 const port = process.env.PORT || 8080;

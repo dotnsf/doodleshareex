@@ -45,6 +45,7 @@
   "basicauth.button.title.room_to_buy": "Buy",
   "basicauth.button.title.room_to_add": "Add",
   "basicauth.button.title.to_buy_room": "Buy protected room ticket",
+  "basicauth.button.title.apikey": "API Key management",
   "basicauth.alert.room_registered1": "Specified room: ",
   "basicauth.alert.room_registered2": " was already registered.",
   "basicauth.alert.room_not_registered1": "Specified room: ",

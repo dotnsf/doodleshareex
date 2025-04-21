@@ -45,6 +45,7 @@
 	"basicauth.button.title.room_to_buy": "購入",
 	"basicauth.button.title.room_to_add": "追加",
 	"basicauth.button.title.to_buy_room": "プライベートルーム利用権購入",
+    "basicauth.button.title.apikey": "API キー管理",
 	"basicauth.alert.room_registered1": "指定したルーム: ",
 	"basicauth.alert.room_registered2": " は登録済でした。",
 	"basicauth.alert.room_not_registered1": "指定したルーム: ",
