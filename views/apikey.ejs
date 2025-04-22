@@ -79,7 +79,6 @@ function updateApiKey(){
       };
       console.log( {data} );
 
-      /*
       $.ajax({
         type: 'PUT',
         url: '/db/roomapikey/' + room,
@@ -94,7 +93,6 @@ function updateApiKey(){
           console.log( e0, e1, e2 );
         }
       });
-      */
     }
   }else{
     alert( "<%= __('basicauth.alert.room_cant_be_blank') %>" );
