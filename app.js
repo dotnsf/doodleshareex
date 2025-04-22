@@ -736,18 +736,46 @@ app.get( '/paypay/redirect', async function( req, res ){
   //. 単に戻るだけ
   //console.log( 'req.query', req.query );  //. {}
 
-  var data = req.session.qr_data;
-  var user = data.user;
-  delete req.session.qr_data;
+  var qr_data = req.session.qr_data;
+  var user = qr_data.user;
   var options = JSON.parse( fs.readFileSync( './item.json' ) );
 
   //. user に一部屋分の権利を追加する
   var user_id = user.displayName;
-  if( user_id ){
+  if( user_id && req.user.displayName == user_id ){
     await dbapi.addUserType( user_id );
-    //await dbapi.createTransaction( confirmation.transactionId, user_id, reservation.orderId, confirmation.amount, confirmation.currency );
+    await dbapi.createTransaction( qr_data.merchantPaymentId, user_id, qr_data.codeId, qr_data.amount.amount, qr_data.amount.currency );
+      /*
+      response.BODY = {
+        resultInfo: {
+          code: 'SUCCESS',
+          message: 'Success',
+          codeId: 'nnnnnnnn'
+        },
+        data: {
+          codeId: 'xxxx',
+          url: 'https://qr-stg.sandbox.paypay.ne.jp/xxxxxxxxx',
+          expireDate: nnnnnnn,
+          merchantPaymentId: 'doodleshareex-paypay-xxxxxxxxxxxxxxxxxxx',,
+          amount: {
+            amount: 100,
+            currency: 'JPY'
+          },
+          orderDescription: 'ｘｘｘ利用料',
+          codeType: 'ORDER_QR',
+          requestedAt: nnnnnnn,
+          redirectUrl: 'http://localhost:8080/paypay/redirect',
+          redirectType: 'WEB_LINK',
+          isAuthorization: false,
+          deeplink: 'paypay://payment?link_key=（data.url をエンコードした文字列）'
+        }
+      };
+      response.BODY.data を記憶させて、リダイレクト後に処理するべき？
+      */
   }else{
   }
+
+  delete req.session.qr_data;
 
   res.redirect( '/auth' );
 });

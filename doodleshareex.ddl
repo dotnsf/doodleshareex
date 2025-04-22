@@ -14,4 +14,4 @@ create table if not exists users ( id varchar(50) not null primary key, type int
 
 /* transactions */
 drop table transactions;
-create table if not exists transactions ( id varchar(50) not null primary key, user_id varchar(50) not null, order_id varchar(50) not null, amount int default 0, currency varchar(10) default '', created bigint default 0, updated bigint default 0 );
+create table if not exists transactions ( id varchar(100) not null primary key, user_id varchar(50) not null, order_id varchar(50) not null, amount int default 0, currency varchar(10) default '', created bigint default 0, updated bigint default 0 );
