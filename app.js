@@ -780,6 +780,11 @@ app.get( '/paypay/redirect', async function( req, res ){
   res.redirect( '/auth' );
 });
 
+//. Official page
+app.get( '/about', function( req, res ){
+  res.render( 'about', {} );
+});
+
 const port = process.env.PORT || 8080;
 server.listen( port, function (){
   console.log( 'Server start on port ' + port + ' ...' );
