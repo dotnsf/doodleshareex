@@ -319,8 +319,18 @@ app.use( '/', async function( req, res, next ){
   }
 });
 
-//. Page for guest
+//. Service top page(#58)
 app.get( '/', function( req, res ){
+  res.render( 'top', {} );
+});
+
+//. SCT(Specified Commercial Transactions) page(#59)
+app.get( '/sct', function( req, res ){
+  res.render( 'sct', {} );
+});
+
+//. Page for guest(#58)
+app.get( '/index', function( req, res ){
   res.render( 'index', {} );
 });
 

@@ -102,7 +102,7 @@ var client = '<%= client %>';
 $(function(){
   init();
 
-  QRCode.toCanvas( document.getElementById( 'qrcode' ), base_url + '?room=' + room + '&client=' + client, function( err ){
+  QRCode.toCanvas( document.getElementById( 'qrcode' ), base_url + 'index?room=' + room + '&client=' + client, function( err ){
     if( err ){ console.log( err ); }
   });
 
