@@ -275,7 +275,7 @@ app.use( '/', async function( req, res, next ){
   var originalUrl = req.originalUrl;
   var tmp = originalUrl.split( '?' );
   var path = tmp[0];
-  if( path == '/' || path == '/screen' ){
+  if( path == '/index' || path == '/client' || path == '/screen' || path == '/view' ){
     var id = req.query.room;
     if( !id ){ id = 'default'; }
 
@@ -291,19 +291,14 @@ app.use( '/', async function( req, res, next ){
           var b64auth = req.headers.authorization.split( ' ' )[1] || '';
           var [ user, pass ] = Buffer.from( b64auth, 'base64' ).toString().split( ':' );
           var enc_pass = crypto.createHash( 'sha1' ).update( pass ).digest( 'hex' );
-          var r = await dbapi.readRoom( id, user, enc_pass );
+
+          var r = ( path == '/view' ? await dbapi.readRoom( id, user, enc_pass ) : await dbapi.readRoom( id, null, null, enc_pass ) );
           if( r && r.status && r.room ){
-            //. ID&PWが正しい
+            //. Basic ID&PW または Room PW が正しい
             return next();
           }else{
-            var r = await dbapi.readRoom( id, id, enc_pass );
-            if( r && r.status && r.room ){
-              //. ID&PWが正しい
-              return next();
-            }else{
-              res.set( 'WWW-Authenticate', 'Basic realm="401"' );
-              res.status( 401 ).send( 'Authentication required.' );
-            }
+            res.set( 'WWW-Authenticate', 'Basic realm="401"' );
+            res.status( 401 ).send( 'Authentication required.' );
           }
         }else{
           res.set( 'WWW-Authenticate', 'Basic realm="401"' );
