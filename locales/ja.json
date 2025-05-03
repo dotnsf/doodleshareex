@@ -1,5 +1,9 @@
 {
 	"common.appname": "お絵描きライブ",
+    "top.nav.prime": "会員向け",
+    "top.nav.about": "解説",
+    "top.nav.sct": "特定商取引法",
+    "top.nav.launch": "Launch",
 	"index.client.client": "お絵描き",
 	"index.client.screen": "PC画面シェア（Chromeのみ）",
 	"index.placeholder.room": "Room",

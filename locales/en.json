@@ -1,5 +1,9 @@
 {
   "common.appname": "Doodle Live",
+  "top.nav.prime": "Prime",
+  "top.nav.about": "About",
+  "top.nav.sct": "SCT",
+  "top.nav.launch": "Launch",
   "index.client.client": "Doodle",
   "index.client.screen": "Share PC Screen(Chrome only)",
   "index.placeholder.room": "Room",

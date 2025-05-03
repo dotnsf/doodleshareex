@@ -40,7 +40,72 @@
 
 <script>
 $(function(){
+  var images = [];
+  $.ajax({
+    type: 'GET',
+    url: '/db/publicimages?limit=10',
+    success: function( result ){
+      if( result && result.status ){
+        for( var i = 0; i < result.images.length; i ++ ){
+          images.push( result.images[i] );
+        }
+        redrawImages( images );
+      }
+    },
+    error: function( e0, e1, e2 ){
+      console.log( e0, e1, e2 );
+    }
+  });
 });
+
+function redrawImages( images ){
+  if( images && images.length > 0 ){
+    for( var i = 0; i < images.length; i ++ ){
+      var image = images[i];
+
+      var tbl = '<table>'
+      + '<tr>' 
+      + '<td width="60%" style="virtical-align: top;">'
+      + '<b>' + image.name + '</b><br/>'
+      + '<img class="image-border" src="/db/image?id=' + image.id + '" title="' + image.room + '" width="80%"/>'
+      + '<div style="text-align: right">'
+      + timestamp2datetime( image.created )
+      + '</div>'
+      + '</td>'
+      + '</tr>' 
+      + '</table>';
+      $('#image-tables').append( tbl );
+    }
+  }
+}
+
+function launchView(){
+  var room = $('#roomname').val();
+  if( room ){
+    var url = 'https://doodleshareex.yellowmix.net/view?room=' + room;
+    window.open( url );
+  }
+}
+
+function timestamp2datetime( ts ){
+  if( ts ){
+    if( typeof ts == 'string' ){
+      ts = parseInt( ts );
+    }
+    var dt = new Date( ts );
+    var yyyy = dt.getFullYear();
+    var mm = dt.getMonth() + 1;
+    var dd = dt.getDate();
+    var hh = dt.getHours();
+    var nn = dt.getMinutes();
+    var ss = dt.getSeconds();
+    var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
+      + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
+    return datetime;
+  }else{
+    return "";
+  }
+}
 </script>
 
 <style type="text/css">
@@ -51,13 +116,10 @@ html, body{
   color: #333;
 }
 
-.about{
-  margin-bottom: 20px;
-}
-
-.about-image{
-  width: 80%;
-  margin-bottom: 20px;
+.image-border{
+  padding: 2px;
+  border: 5px solid #e8bf85;
+  box-shadow: 1px 1px 3px #999;
 }
 
 .under-construction{
@@ -68,46 +130,44 @@ html, body{
 </head>
 <body>
 
-<h1 style="text-align: center"><%= __('common.appname') %></h1>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
 
+    <a class="navbar-brand" href="#"><%= __('common.appname') %></a>
+    <ul class="navbar-nav mr-auto">
+    </ul>
+
+    <!-- 右に寄ってほしい・・・ -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="/auth"><%= __('top.nav.prime') %></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/about"><%= __('top.nav.about') %></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/sct"><%= __('top.nav.sct') %></a>
+      </li>
+      <li class="nav-item">
+        <form class="form-inline">
+          <input class="form-control mr-sm-2" id="roomname" type="text" placeholder="room" aria-label="room"/>
+          <button class="btn btn-warning" onClick="launchView();"><%= __('top.nav.launch') %></button>
+        </form>
+      </li>
+    </ul>
+  </div>
+
+  </div>
+</nav>
+  
 <div class="container">
-  <div class="about">
-    お絵描きライブはユーザーのスマートフォンをお絵描きボードとして使い、複数のユーザーが手描きしたお絵描きをリアルタイムに共有するサービスです：
-  </div>
-  <div style="text-align: center">
-    <img src="imgs/doodlelive01.png" class="about-image"/>
-  </div>
-  <div class="about">
-    参加するユーザーはお絵描き共有画面に表示されている QR コードから参加できます。特定の場所に集まる必要がなく、LINE や Webex、Teams などの各種ウェブ共有画面を併用することでリモートに参加することもできます。
-  </div>
-  <div class="about">
-    お絵描きライブを開催するには <b>「部屋」</b> の名前を指定して、お絵描き共有画面を作成していただく必要があります。お絵描きライブに参加するユーザーは開催者が指定した URL の共有画面に表示されている QR コードにスマートフォンからアクセスするだけです。
-  </div>
-  <div class="about">
-    例えば以下の URL は最後に "room=test" というパラメータが付与されています。この "test" が部屋の名前です。以下の URL にアクセスすると "test" 部屋でお絵描きライブを開催することになります（クリックすると新しいタブで開きます）：<br/>
-    <a target="_blank" href="https://doodleshareex.yellowmix.net/view?room=test">https://doodleshareex.yellowmix.net/view?room=test</a>
-  </div>
-  <div class="about">
-    お絵描きライブに参加するユーザーは原則無料です（開催側が参加者に別途参加料を徴収する場合は例外ですが、その徴収方法は提供していません。別途ご用意いただく必要があります）。
-  </div>
-  <div style="height: 30px;">
-  </div>
-  <div class="about">
-    <h2 class="under-construction">（以下の機能は今後実装予定です）</h2>
-  </div>
-  <div class="about">
-    お絵描きライブを開催する場合、開催部屋にパスワードなどを設定しなくてもよい場合（＝誰でも参加可能な場合、誰が参加してもいい場合）は無料でご利用いただけます。
-    開催部屋にパスワードを設定して、特定のユーザーだけが参加できるようにする場合、部屋ごとに利用料がかかり、PayPay で支払う必要があります。
-  </div>
-  <div class="about">
-    無料の部屋で開催した場合、部屋の名称がシンプルだと他の開催者と被ってしまう可能性が高まります。
-    そのような状況を防ぎたい場合は有料の、パスワードで守られた部屋を予約することを推奨します。
-    なお既に誰かが予約した部屋の名前を別の人が予約することはできません。「早いもの勝ち」です。
-    また誰かが既に開催済みの無料部屋の名前を、別の人が有料部屋として予約することが可能です。その場合、それまで使っていた無料部屋は（パスワードが設定されてしまう可能性が高いので）実質的には使えなくなってしまいます。
-    確実に使える部屋（の名前）をあらかじめ登録しておきたい場合は有料部屋の利用を検討ください。
-  </div>
-  <div class="about">
-    <h2 class="under-construction">（以上の機能は今後実装予定です）</h2>
+  <div class="row">
+    <div class="col-md-2">
+    </div>
+    <div class="col-sm-12 col-md-8" id="image-tables">
+    </div>
+    <div class="col-md-2">
+    </div>
   </div>
 </div>
 

@@ -84,14 +84,20 @@ api.post( '/image', async function( req, res ){
       //var img64 = new Buffer( img ).toString( 'base64' );
 
       var room = req.body.room;
+
+      var r = await api.readRoom( room );
+  //.   status: true=roomは存在している, false=roomは存在していない
+  //.   room:   null=roomが存在していない、またはアクセス権がない, not null=roomそのもの
+
+      var is_private = ( r.status && !r.room ) ? 1 : 0;
       var uuid = req.body.uuid;
       var comment = req.body.comment;
       var timestamp = req.body.timestamp;
       var name = req.body.name;
       var ts = ( new Date() ).getTime();
 
-      var sql = "insert into images( id, body, contenttype, timestamp, name, comment, room, uuid, created, updated ) values( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10 )";
-      var query = { text: sql, values: [ image_id, img, imgtype, timestamp, name, comment, room, uuid, ts, ts ] };
+      var sql = "insert into images( id, body, contenttype, timestamp, name, comment, room, is_private, uuid, created, updated ) values( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 )";
+      var query = { text: sql, values: [ image_id, img, imgtype, timestamp, name, comment, room, is_private, uuid, ts, ts ] };
       conn.query( query, async function( err, result ){
         fs.unlink( imgpath, function( err ){} );
         if( err ){
@@ -285,6 +291,52 @@ api.readImages = async function( limit, offset, room ){
   });
 }
 
+api.readPublicImages = async function( limit, offset ){
+  return new Promise( async ( resolve, reject ) => {
+    var conn = null;
+    try{
+      if( pg ){
+        conn = await pg.connect();
+
+        var sql = "select * from images where is_private = 0 order by timestamp desc";
+        if( limit ){
+          sql += " limit " + limit;
+        }
+        if( offset ){
+          sql += " start " + offset;
+        }
+        var query = { text: sql, values: [] };
+        conn.query( query, function( err, result ){
+          if( err ){
+            console.log( err );
+            resolve( { status: false, error: err } );
+          }else{
+            var images = [];
+            if( result.rows.length > 0 ){
+              try{
+                images = result.rows;
+              }catch( e ){
+              }
+            }
+  
+            resolve( { status: true, images: images } );
+          }
+        });
+      }else{
+        resolve( { status: false, error: 'db is not initialized.' } );
+      }
+    }catch( e ){
+      console.log( e );
+      resolve( { status: false, error: e } );
+    }finally{
+      if( conn ){
+        conn.release();
+      }
+    }
+  });
+}
+
+
 api.get( '/images', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
@@ -293,6 +345,24 @@ api.get( '/images', async function( req, res ){
   var room = req.query.room ? req.query.room : ''; //'default';
 
   var r = await api.readImages( limit, offset, room );
+  if( !r.status ){
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, error: r.error } ) );
+    res.end();
+  }else{
+    res.write( JSON.stringify( { status: true, limit: limit, offset: offset, images: r.images } ) );
+    res.end();
+  }
+});
+
+
+api.get( '/publicimages', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var limit = req.query.limit ? parseInt( req.query.limit ) : 0;
+  var offset = req.query.offset ? parseInt( req.query.offset ) : 0;
+
+  var r = await api.readPublicImages( limit, offset );
   if( !r.status ){
     res.status( 400 );
     res.write( JSON.stringify( { status: false, error: r.error } ) );
