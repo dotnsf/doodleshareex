@@ -304,7 +304,7 @@ api.get( '/images', async function( req, res ){
 });
 
 //. #11
-api.readRoom = async function( id, basic_id, basic_password ){
+api.readRoom = async function( id, basic_id, enc_basic_password, enc_room_password ){
   //. resolve( { status: true, room: room, error: '' } );
   //.   status: true=roomは存在している, false=roomは存在していない
   //.   room:   null=roomが存在していない、またはアクセス権がない, not null=roomそのもの
@@ -336,7 +336,7 @@ api.readRoom = async function( id, basic_id, basic_password ){
                   //. 認証不要
                   resolve( { status: true, room: room } );
                 }else{
-                  if( ( room.id == basic_id && room.room_password == basic_password ) ){
+                  if( ( /* room.id == basic_id && */ room.room_password == enc_basic_password ) ){
                     //. クライアント向け認証が必要で、認証 OK
                     resolve( { status: true, room: room } );
                   }else{
@@ -345,7 +345,7 @@ api.readRoom = async function( id, basic_id, basic_password ){
                   }
                 }
               }else{
-                if( room.basic_id == basic_id && room.basic_password == basic_password ){
+                if( room.basic_id == basic_id && room.basic_password == enc_basic_password ){
                   //. 管理者向け認証が必要で、認証 OK
                   resolve( { status: true, room: room } );
                 }else{
@@ -354,7 +354,7 @@ api.readRoom = async function( id, basic_id, basic_password ){
                     //. でもクライアント向け認証は不要なので OK
                     resolve( { status: true, room: room } );
                   }else{
-                    if( ( room.id == basic_id && room.room_password == basic_password ) ){
+                    if( ( /* room.id == basic_id && */ room.room_password == enc_room_password ) ){
                       //. クライアント向け認証が必要で、認証 OK
                       resolve( { status: true, room: room } );
                     }else{
@@ -552,14 +552,14 @@ api.get( '/room/:id', async function( req, res ){
     var enc_basic_password = getHash( basic_password );
     var room_password = req.body.room_password;
     var enc_room_password = getHash( room_password );
-    var r = await api.readRoom( id, basic_id, enc_basic_password );
+    var r = await api.readRoom( id, basic_id, enc_basic_password, enc_room_password );
     if( r.status ){
       if( r.room ){
         res.write( JSON.stringify( { status: true, room: r.room } ) );
         res.end();
       }else{
         //. 存在しているが権限が足りない
-        var r = await api.readRoom( id, id, enc_room_password );
+        var r = await api.readRoom( id, null, null, enc_room_password );
         if( r.status && r.room ){
           res.write( JSON.stringify( { status: true, room: r.room } ) );
           res.end();

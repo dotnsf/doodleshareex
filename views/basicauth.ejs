@@ -244,9 +244,12 @@ function updateBasicIDPW(){
       var old_pw = $('#old_basic_password').val();
       var new_pw = $('#new_basic_password').val();
       var new_rpw = $('#new_room_password').val();
+
+      /* なぜこれを NG にしたんだっけ？
       if( !old_pw && new_pw ){
         alert( "<%= __('basicauth.alert.cant_newly_set_password' ) %>" );
       }else{
+      */
         var data = {
           basic_id: id,
           basic_password: old_pw,
@@ -279,7 +282,9 @@ function updateBasicIDPW(){
             alert( "<%= __('basicauth.alert.room_edit_failed1') %>" + room  + "<%= __('basicauth.alert.room_edit_failed2') %>" + e2 + "<%= __('basicauth.alert.room_edit_failed3') %>" );
           }
         });
+      /*
       }
+      */
     }
   }else{
     alert( "<%= __('basicauth.alert.room_cant_be_blank') %>" );
