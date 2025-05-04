@@ -418,7 +418,7 @@ html, body{
 <% if( user ){ %>
       <!-- #28 -->
       <li class="nav-item">
-        <a class="btn btn-warning" href="#" onClick="myLogout();" title="<%= user.displayName %>\n<%= __('basicauth.button.title.room_count1') %>:<%= user.type %><%= __('basicauth.button.title.room_count2') %>"><i class="fas fa-user"></i></a>
+        <a class="btn btn-warning" href="#" onClick="myLogout();" title="<%= user.displayName %> <%= __('basicauth.button.title.room_count1') %>:<%= user.type %><%= __('basicauth.button.title.room_count2') %>"><i class="fas fa-user"></i></a>
         <!--
         <a class="btn btn-success" href="#" onClick="myPurchase();" title="<%= __('basicauth.button.title.to_buy_room') %>"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
         -->

@@ -88,5 +88,7 @@
 	"apikey.title": "API キー設定",
 	"apikey.body.apikey_management": "API キー管理",
 	"paypay.input_roomname": "予約したいルーム名を入力してください",
+    "paypay.confirm.create": "30日間利用可能なプライベートルームを１つ有料契約しようとしています。続けますか？",
+    "paypay.alert.underconstruction": "この機能はまだ未実装です。利用可能になるまで今しばらくお待ちください。",
 	"dummy": "ダミーデータ"
 }

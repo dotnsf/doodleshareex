@@ -88,5 +88,7 @@
   "apikey.title": "API Key configuration",
   "apikey.body.apikey_management": "API Key management",
   "paypay.input_roomname": "Input room name which you want to reserve",
+  "paypay.confirm.create": "You are going to pay for a private(non public) room which you can use for 30 days. OK?",
+  "paypay.alert.underconstruction": "This feature is under-construction. We appreciate your patient.",
   "dummy": "Dummy"
 }

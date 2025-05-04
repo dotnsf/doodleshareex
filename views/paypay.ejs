@@ -3,30 +3,36 @@ $(function(){
 });
 
 function createQRCode(){
-  //. １部屋分の権利をユーザーに追加する
-  $.ajax({
-    type: 'post',
-    url: '/paypay/qrcode',
-    data: {},
-    json: true,
-    success: function( result ){
-      console.log( result );
-      if( result && result.status && result.status == 201 && result.body && result.body.data ){
-        var merchantPaymentId = result.body.data.merchantPaymentId; //. 支払いID(キャンセル時に必要）
-        var codeId = result.body.data.codeId; //. QRコードID（QRコード削除時に必要）
-        var url = result.body.data.url;  //. QRコードが表示されるページの URL
+  if( confirm( "<%= __('paypay.confirm.create') %>" ) ){
+    alert( "<%= __('paypay.alert.underconstruction') %>" );
+
+    /*
+    //. １部屋分の権利をユーザーに追加する
+    $.ajax({
+      type: 'post',
+      url: '/paypay/qrcode',
+      data: {},
+      json: true,
+      success: function( result ){
+        console.log( result );
+        if( result && result.status && result.status == 201 && result.body && result.body.data ){
+          var merchantPaymentId = result.body.data.merchantPaymentId; //. 支払いID(キャンセル時に必要）
+          var codeId = result.body.data.codeId; //. QRコードID（QRコード削除時に必要）
+          var url = result.body.data.url;  //. QRコードが表示されるページの URL
   
-        if( url ){
-          //. QRコードが表示されるページを別ウィンドウで開く
-          //window.open( url, 'PayPayWindow' );
-          location.href = url;
+          if( url ){
+            //. QRコードが表示されるページを別ウィンドウで開く
+            //window.open( url, 'PayPayWindow' );
+            location.href = url;
+          }
         }
+      },
+      error: function( e0, e1, e2 ){
+        console.log( e0, e1, e2 );
+        location.href = '/auth';
       }
-    },
-    error: function( e0, e1, e2 ){
-      console.log( e0, e1, e2 );
-      location.href = '/auth';
-    }
-  });
+    });
+    */
+  }
 }
 </script>

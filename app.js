@@ -406,6 +406,7 @@ app.get( '/auth', async function( req, res ){
     var user_id = user.displayName; //user.emails[0].value;
     var r = await dbapi.getUser( user_id );
     if( r && r.status && r.user ){
+      //console.log( r.user );
       user.type = r.user.type;
     }else{
       user.type = 0;
