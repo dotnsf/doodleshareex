@@ -97,6 +97,31 @@ Trial application, which tries to use WebSocket with Redis so that application c
   - Confirm each message would be sent to all client
 
 
+## How to maintenance rooms
+
+0. Prepare `/var/backup_sh/pg_deleteexpiredrooms.sh`
+
+```
+#!/bin/bash
+
+curl -X DELETE "https://doodleshareex.yellowmix.net/db/expiredrooms"
+```
+
+1. Set crontab
+
+```
+$ crontab -e
+```
+
+```
+SHELL=/bin/sh
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+# every one hour
+0 * * * * /var/backup_sh/pg_deleteexpiredrooms.sh > /dev/null 2>&1
+```
+
+
 ## WebSocket client tool
 
 - You can run WebSocket client(`ws_client.js`) to simulate clients, or to use load tester.

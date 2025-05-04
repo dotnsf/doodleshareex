@@ -68,7 +68,26 @@ html, body{
 </head>
 <body>
 
-<h1 style="text-align: center"><%= __('common.appname') %></h1>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/"><%= __('common.appname') %></a>
+    <ul class="navbar-nav mr-auto">
+    </ul>
+
+    <!-- 右寄 -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="/auth"><%= __('top.nav.prime') %></a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="/about"><%= __('top.nav.about') %></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/sct"><%= __('top.nav.sct') %></a>
+      </li>
+    </ul>
+  </div>
+</nav>
 
 <div class="container">
   <div class="about">
@@ -78,7 +97,7 @@ html, body{
     <img src="imgs/doodlelive01.png" class="about-image"/>
   </div>
   <div class="about">
-    参加するユーザーはお絵描き共有画面に表示されている QR コードから参加できます。特定の場所に集まる必要がなく、LINE や Webex、Teams などの各種ウェブ共有画面を併用することでリモートに参加することもできます。
+    参加するユーザーはお絵描き共有画面に表示されている QR コードから参加できます。特定の場所に集まる必要がなく、LINE や Zoom、Webex、Teams などの各種ウェブ共有画面を併用することでリモートに参加することもできます。
   </div>
   <div class="about">
     お絵描きライブを開催するには <b>「部屋」</b> の名前を指定して、お絵描き共有画面を作成していただく必要があります。お絵描きライブに参加するユーザーは開催者が指定した URL の共有画面に表示されている QR コードにスマートフォンからアクセスするだけです。

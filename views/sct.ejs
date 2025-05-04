@@ -68,6 +68,27 @@ html, body{
 </head>
 <body>
 
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/"><%= __('common.appname') %></a>
+    <ul class="navbar-nav mr-auto">
+    </ul>
+
+    <!-- 右寄 -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="/auth"><%= __('top.nav.prime') %></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/about"><%= __('top.nav.about') %></a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="/sct"><%= __('top.nav.sct') %></a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
 <h1 style="text-align: center">特定商取引法に基づく表記</h1>
 
 <div class="container">

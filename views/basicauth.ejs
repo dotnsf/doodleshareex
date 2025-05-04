@@ -69,8 +69,11 @@ $(function(){
       if( result && result.status && result.rooms ){
         for( var i = 0; i < result.rooms.length; i ++ ){
           var room = result.rooms[i];
+          if( typeof room.created == 'string' ){ room.created = parseInt( room.created ); }
           var tr = '<tr>'
             + '<td><a target="_blank" href="/view?room=' + room.id + '">' + room.id + '</a></td>'
+            + '<td>' + timestamp2datetime( room.created ) + '</td>'
+            + '<td>' + timestamp2datetime( room.created + 60 * 60 * 24 * 30 * 1000 ) + '</td>'
             + '<td>'
             + '<button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.update') %>" + '</button>'
             + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.delete') %>" + '</button>'
@@ -84,12 +87,13 @@ $(function(){
 <% if( user && user.type > 0 ){ %>
       var tr = '<tr>'
         + '<td><input type="text" style="width: 200px;" id="room"/></td>'
+        + '<td> - </td><td> - </td>'
         + '<td><button class="btn btn-xs btn-success" onClick="toNewBasicIDPW();">' + "<%= __('basicauth.button.create') %>" + '</button></td>'
         + '</tr>';
       $('#rooms-table-body').append( tr );
 <% } %>
       var tr0 = '<tr>'
-        + '<td colspan="2"><a class="btn btn-xs btn-success" href="#" onClick="createQRCode();">' + "<%= __('basicauth.button.title.room') %>" + "<%= user && user.type > 0 ? __('basicauth.button.title.room_to_buy') : __('basicauth.button.title.room_to_add') %>" + '</a></td>'
+        + '<td colspan="4"><a class="btn btn-xs btn-success" href="#" onClick="createQRCode();">' + "<%= __('basicauth.button.title.room') %>" + "<%= user && user.type > 0 ? __('basicauth.button.title.room_to_buy') : __('basicauth.button.title.room_to_add') %>" + '</a></td>'
         + '</tr>';
       $('#rooms-table-body').append( tr0 );
     },
@@ -359,6 +363,26 @@ function myPurchase(){
     location.href = '/pay/reserve';
   }
 }
+
+function timestamp2datetime( ts ){
+  if( ts ){
+    if( typeof ts == 'string' ){
+      ts = parseInt( ts );
+    }
+    var dt = new Date( ts );
+    var yyyy = dt.getFullYear();
+    var mm = dt.getMonth() + 1;
+    var dd = dt.getDate();
+    var hh = dt.getHours();
+    var nn = dt.getMinutes();
+    var ss = dt.getSeconds();
+    var datetime = yyyy + '-' + ( mm < 10 ? '0' : '' ) + mm + '-' + ( dd < 10 ? '0' : '' ) + dd
+      + ' ' + ( hh < 10 ? '0' : '' ) + hh + ':' + ( nn < 10 ? '0' : '' ) + nn + ':' + ( ss < 10 ? '0' : '' ) + ss;
+    return datetime;
+  }else{
+    return "";
+  }
+}
 </script>
 
 <%- include('./paypay', {}) %>
@@ -375,28 +399,41 @@ html, body{
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <a class="navbar-brand" href="#"><%= __('common.appname') %> - <%= __('basicauth.body.room_management') %></a>
-  <ul class="navbar-nav mr-auto">
-  </ul>
-  <ul class="navbar-nav ml-auto">
+  <div class="container">
+    <a class="navbar-brand" href="/"><%= __('common.appname') %></a>
+    <ul class="navbar-nav mr-auto">
+    </ul>
+
+    <!-- 右寄 -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="/auth"><%= __('top.nav.prime') %></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/about"><%= __('top.nav.about') %></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/sct"><%= __('top.nav.sct') %></a>
+      </li>
 <% if( user ){ %>
-    <!-- #28 -->
-    <li class="nav-item">
-      <a class="btn btn-warning" href="#" onClick="myLogout();" title="<%= user.displayName %>\n<%= __('basicauth.button.title.room_count1') %>:<%= user.type %><%= __('basicauth.button.title.room_count2') %>"><i class="fas fa-user"></i></a>
-      <!--
-      <a class="btn btn-success" href="#" onClick="myPurchase();" title="<%= __('basicauth.button.title.to_buy_room') %>"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
-      -->
-      <a class="btn btn-success" href="#" onClick="createQRCode();" title="<%= __('basicauth.button.title.to_buy_room') %>"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
-    </li>
+      <!-- #28 -->
+      <li class="nav-item">
+        <a class="btn btn-warning" href="#" onClick="myLogout();" title="<%= user.displayName %>\n<%= __('basicauth.button.title.room_count1') %>:<%= user.type %><%= __('basicauth.button.title.room_count2') %>"><i class="fas fa-user"></i></a>
+        <!--
+        <a class="btn btn-success" href="#" onClick="myPurchase();" title="<%= __('basicauth.button.title.to_buy_room') %>"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
+        -->
+        <a class="btn btn-success" href="#" onClick="createQRCode();" title="<%= __('basicauth.button.title.to_buy_room') %>"><span class="badge badge-pill badge-light"><%= user.type %></span></a>
+      </li>
 <% } %>
-  </ul>
+    </ul>
+  </div>
 </nav>
 
 <div class="container" id="div_0">
   <div>
     <table style="width: 100%;" class="table table-bordered">
       <thead>
-        <tr><th>room</th><th>actions</th></tr>
+        <tr><th>room</th><th>created</th><th>expire</th><th>actions</th></tr>
       </thead>
       <tbody id="rooms-table-body">
       </tbody>

@@ -79,12 +79,31 @@ function redrawImages( images ){
   }
 }
 
+function participate(){
+  var room = $('#roomname').val();
+  if( room ){
+    var index_url = '/index?room=' + room;
+    //location.href = index_url;
+    window.open( index_url );
+  }else{
+    alert( "<%= __('top.alert.noroomtoparticipate') %>" );
+  }
+
+  return false;
+}
+
 function launchView(){
   var room = $('#roomname').val();
   if( room ){
-    var url = 'https://doodleshareex.yellowmix.net/view?room=' + room;
-    window.open( url );
+    if( confirm( "<%= __('top.confirm.hostroom1') %>" + room + "<%= __('top.confirm.hostroom2') %>" ) ){
+      var view_url = '/view?room=' + room;
+      window.open( view_url );
+    }
+  }else{
+    alert( "<%= __('top.alert.noroomtohost') %>" );
   }
+
+  return false;
 }
 
 function timestamp2datetime( ts ){
@@ -132,12 +151,11 @@ html, body{
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container">
-
     <a class="navbar-brand" href="#"><%= __('common.appname') %></a>
     <ul class="navbar-nav mr-auto">
     </ul>
 
-    <!-- 右に寄ってほしい・・・ -->
+    <!-- 右寄 -->
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
         <a class="nav-link" href="/auth"><%= __('top.nav.prime') %></a>
@@ -151,12 +169,11 @@ html, body{
       <li class="nav-item">
         <form class="form-inline">
           <input class="form-control mr-sm-2" id="roomname" type="text" placeholder="room" aria-label="room"/>
-          <button class="btn btn-warning" onClick="launchView();"><%= __('top.nav.launch') %></button>
+          <button class="btn btn-warning" type="submit" onClick="participate();"><%= __('top.nav.participate') %></button>
+          <button class="btn btn-danger" type="submit" onClick="launchView();"><%= __('top.nav.host') %></button>
         </form>
       </li>
     </ul>
-  </div>
-
   </div>
 </nav>
   

@@ -1085,6 +1085,53 @@ api.deleteUserType = async function( user_id ){
   });
 };
 
+//. deleteExpiredRooms
+api.deleteExpiredRooms = async function( days = 30 ){
+  return new Promise( async ( resolve, reject ) => {
+    if( pg ){
+      var conn = await pg.connect();
+      if( conn ){
+        try{
+          var sql = 'delete from users where created < $1';
+          var t = ( new Date() ).getTime() - 60 * 60 * 24 * 1000 * days;  //. days 日前のタイムスタンプ
+          var query = { text: sql, values: [ t ] };
+          conn.query( query, function( err, result ){
+            if( err ){
+              console.log( err );
+              resolve( { status: false, days: days, error: err } );
+            }else{
+              resolve( { status: true, days: days, result: result } );
+            }
+          });
+        }catch( e ){
+          console.log( e );
+          resolve( { status: false, days: days, error: e } );
+        }finally{
+          if( conn ){
+            conn.release();
+          }
+        }
+      }else{
+        resolve( { status: false, days: days, error: 'no connection.' } );
+      }
+    }else{
+      resolve( { status: false, days: days, error: 'db not ready.' } );
+    }
+  });
+};
+
+api.delete( '/expiredrooms', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  var days = ( req.query.days ? req.query.days : 30 );
+  if( typeof days == 'string' ){ days = parseInt( days ); }
+
+  var result = await api.deleteExpiredRooms( days );
+
+  res.write( JSON.stringify( result, null, 2 ) );
+  res.end();
+});
+
 //. createTransaction
 api.createTransaction = async function( transaction_id, user_id, order_id, amount, currency ){
   return new Promise( async function( resolve, reject ){
