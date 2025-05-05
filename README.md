@@ -64,7 +64,7 @@ Trial application, which tries to use WebSocket with Redis so that application c
   - `postgres=# create table if not exists users ( id varchar(50) not null primary key, type int default 0, created bigint default 0, updated bigint default 0 );`
     - `type` : Number of rooms which this user can create private rooms(already paid)
 
-  - `postgres=# create table if not exists transactions ( id varchar(50) not null primary key, user_id varchar(50) not null, order_id varchar(50) not null, amount int default 0, currency varchar(10) default '', created bigint default 0, updated bigint default 0 );`
+  - `postgres=# create table if not exists transactions ( id varchar(100) not null primary key, payment_id varchar(100) default '', user_id varchar(50) not null, order_id varchar(50) not null, amount int default 0, currency varchar(10) default '', created bigint default 0, updated bigint default 0 );`
 
   - `postgres=# \q`
 

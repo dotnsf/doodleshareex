@@ -314,6 +314,24 @@ app.use( '/', async function( req, res, next ){
   }
 });
 
+//. For Admin
+app.get( '/webadmin', async function( req, res ){
+  var transactions = [];
+  if( req.user ){ 
+    var user = req.user;
+    var user_id = user.displayName;
+    if( user_id == 'dotnsf@gmail.com' ){
+      var limit = 0;
+      var offset = 0;
+      var r = await dbapi.getTransactions( limit, offset );
+      if( r && r.status ){
+        transactions = r.result;
+      }
+    }
+  }
+  res.render( 'webadmin', { transactions: transactions } );
+});
+
 //. Service top page(#58)
 app.get( '/', function( req, res ){
   res.render( 'top', {} );
@@ -631,7 +649,7 @@ app.post( '/paypay/qrcode', function( req, res ){
           codeId: 'xxxx',
           url: 'https://qr-stg.sandbox.paypay.ne.jp/xxxxxxxxx',
           expireDate: nnnnnnn,
-          merchantPaymentId: 'doodleshareex-paypay-xxxxxxxxxxxxxxxxxxx',,
+          merchantPaymentId: 'doodleshareex-paypay-xxxxxxxxxxxxxxxxxxx',
           amount: {
             amount: 100,
             currency: 'JPY'
@@ -672,6 +690,20 @@ app.get( '/paypay/payment/confirm/:merchantPaymentId', function( req, res ){
   if( req.params.merchantPaymentId ){
     PAYPAY.GetCodePaymentDetails( Array( req.params.merchantPaymentId ), function( response ){
       //console.log( response );
+      /*
+      response = {
+        STATUS: 200,
+        BODY: {
+          resultInfo: { code: 'SUCCESS', message: 'Success', codeId: '08100001' },
+          data: {
+            paymentId: '04701142..',
+            merchantPaymentId: 'xxxxxxxxxxxx',
+            status: 'COMPLETED',
+               :
+          }
+        }
+      }
+      */
       if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
         res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
         res.end();
@@ -712,26 +744,39 @@ app.post( '/paypay/payment/cancel/:merchantPaymentId', function( req, res ){
 app.post( '/paypay/payment/refund/:merchantPaymentId', function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
-  if( req.params.merchantPaymentId ){
-    var payload = {
-      merchantPaymentId: req.params.merchantPaymentId,
-      paymentId: req.body.paymentId,
-      amount: { amount: req.body.amount, currency: "JPY" },
-      reason: req.body.reason
-    };
-    PAYPAY.PaymentRefund( payload, function( response ){
-      if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
-        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
-        res.end();
+  if( req.params.merchantPaymentId && req.body && req.body.reason ){
+    PAYPAY.GetCodePaymentDetails( Array( req.params.merchantPaymentId ), function( response0 ){
+      if( response0.STATUS && response0.STATUS >= 200 && response0.STATUS < 300 ){   //. 実際は 201
+        var payment_id = response0.BODY.data.paymentId;
+        var amount = {
+          amount: response0.BODY.data.amount.amount,
+          currency: response0.BODY.data.amount.currency
+        };
+        var payload = {
+          merchantRefundId: req.params.merchantPaymentId + '-refund',
+          paymentId: payment_id,
+          amount: amount,
+          reason: req.body.reason
+        };
+        PAYPAY.PaymentRefund( payload, function( response ){
+          if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
+            res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+            res.end();
+          }else{
+            res.status( response.STATUS );
+            res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+            res.end();
+          }
+        });
       }else{
-        res.status( response.STATUS );
-        res.write( JSON.stringify( { status: response.STATUS, body: JSON.parse( response.BODY ) } ) );
+        res.status( response0.STATUS );
+        res.write( JSON.stringify( { status: response0.STATUS, body: JSON.parse( response0.BODY ) } ) );
         res.end();
       }
     });
   }else{
     res.status( 400 );
-    res.write( JSON.stringify( { status: 400, error: 'no merchantPaymentId info found.' } ) );
+    res.write( JSON.stringify( { status: 400, error: 'no merchantPaymentId and/or reason found.' } ) );
     res.end();
   }
 });

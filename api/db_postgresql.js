@@ -1167,6 +1167,46 @@ api.createTransaction = async function( transaction_id, user_id, order_id, amoun
   });
 };
 
+//. getTransactions
+api.getTransactions = async function( limit, offset ){
+  return new Promise( async function( resolve, reject ){
+    if( pg ){
+      conn = await pg.connect();
+      if( conn ){
+        try{
+          var sql = "select * from transactions order by created desc";
+          if( limit ){
+            sql += " limit " + limit;
+          }
+          if( offset ){
+            sql += " start " + offset;
+          }
+          var query = { text: sql, values: [] };
+          conn.query( query, function( err, result ){
+            if( err ){
+              console.log( err );
+              resolve( { status: false, error: err } );
+            }else{
+              resolve( { status: true, result: result.rows } );
+            }
+          });
+        }catch( e ){
+          console.log( e );
+          resolve( { status: false, error: err } );
+        }finally{
+          if( conn ){
+            conn.release();
+          }
+        }
+      }else{
+        resolve( { status: false, error: 'no connection.' } );
+      }
+    }else{
+      resolve( { status: false, error: 'db not ready.' } );
+    }
+  });
+};
+
 api.get( '/delete_user_type', async function( req, res ){
   var user_id = req.query.user_id;
   if( user_id ){
