@@ -86,7 +86,7 @@ function updateApiKey(){
         success: function( result ){
           if( result && result.status ){
             console.log( {result} );
-            location.href = '/apikey';
+            location.href = '/apikey/' + room;
           }
         },
         error: function( e0, e1, e2 ){
