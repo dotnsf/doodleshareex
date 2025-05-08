@@ -342,9 +342,9 @@ app.post( '/extendroom/:id', async function( req, res ){
     
     var room = req.params.id;
     if( user_id && room ){
-      var result = await api.extendRoom( room );
+      var result = await dbapi.extendRoom( room );
       if( result && result.status ){
-        await api.deleteUserType( user_id );
+        await dbapi.deleteUserType( user_id );
 
         res.write( JSON.stringify( { status: true }, null, 2 ) );
         res.end();

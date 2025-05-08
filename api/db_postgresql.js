@@ -1138,9 +1138,10 @@ api.extendRoom = async function( room, days = 30 ){
       var conn = await pg.connect();
       if( conn ){
         try{
-          var sql = 'update rooms set expire = expire + ' + days + '*24*60*60*1000 where id = $1';
+          var extendms = days * 24 * 60 * 60 * 1000;
           var t = ( new Date() ).getTime();
-          var query = { text: sql, values: [ room ] };
+          var sql = 'update rooms set expire = expire + ' + extendms + ', updated = $1 where id = $2';
+          var query = { text: sql, values: [ t, room ] };
           conn.query( query, function( err, result ){
             if( err ){
               console.log( err );

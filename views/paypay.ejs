@@ -4,10 +4,11 @@ $(function(){
 
 function createQRCode(){
   if( confirm( "<%= __('paypay.confirm.create') %>" ) ){
+    /*
     alert( "<%= __('paypay.alert.underconstruction') %>" );
+    */
 
-    /* #50
-    //. １部屋分の権利をユーザーに追加する
+    //. #50 １部屋分の権利をユーザーに追加する
     $.ajax({
       type: 'post',
       url: '/paypay/qrcode',
@@ -21,7 +22,7 @@ function createQRCode(){
           var url = result.body.data.url;  //. QRコードが表示されるページの URL
   
           if( url ){
-            //. QRコードが表示されるページを別ウィンドウで開く
+            //. QRコードが表示されるページを開く
             //window.open( url, 'PayPayWindow' );
             location.href = url;
           }
@@ -32,7 +33,6 @@ function createQRCode(){
         location.href = '/auth';
       }
     });
-    */
   }
 }
 </script>
