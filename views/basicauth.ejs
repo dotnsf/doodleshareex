@@ -73,11 +73,14 @@ $(function(){
           var tr = '<tr>'
             + '<td><a target="_blank" href="/view?room=' + room.id + '">' + room.id + '</a></td>'
             + '<td>' + timestamp2datetime( room.created ) + '</td>'
-            + '<td>' + timestamp2datetime( room.created + 60 * 60 * 24 * 30 * 1000 ) + '</td>'
+            + '<td>' + ( room.type == 1 ? '-' : timestamp2datetime( room.expire ) ) + '</td>'
             + '<td>'
             + '<button class="btn btn-xs btn-primary" onClick="toUpdateBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.update') %>" + '</button>'
             + '<button class="btn btn-xs btn-danger" onClick="toDeleteBasicIDPW(\'' + room.id + '\');">' + "<%= __('basicauth.button.delete') %>" + '</button>'
             //+ '<a class="btn btn-xs btn-secondary" href="/apikey/' + room.id + '">' + "<%= __('basicauth.button.title.apikey') %>" + '</a>'  //. #56 の実現目途が立った時にコメントアウト
+<% if( user && user.type > 0 ){ %>
+            + ( room.type == 0 ? '<button class="btn btn-xs btn-warning" onClick="extendRoom(\'' + room.id + '\');">' + "<%= __('basicauth.button.extend') %>" + '</button>' : '' )
+<% } %>
             + '</td>'
             + '</tr>';
           $('#rooms-table-body').append( tr );
@@ -93,7 +96,8 @@ $(function(){
       $('#rooms-table-body').append( tr );
 <% } %>
       var tr0 = '<tr>'
-        + '<td colspan="4"><a class="btn btn-xs btn-success" href="#" onClick="createQRCode();">' + "<%= __('basicauth.button.title.room') %>" + "<%= user && user.type > 0 ? __('basicauth.button.title.room_to_buy') : __('basicauth.button.title.room_to_add') %>" + '</a></td>'
+        //+ '<td colspan="4"><a class="btn btn-xs btn-success" href="#" onClick="createQRCode();">' + "<%= __('basicauth.button.title.room') %>" + "<%= user && user.type > 0 ? __('basicauth.button.title.room_to_buy') : __('basicauth.button.title.room_to_add') %>" + '</a></td>'
+        + '<td colspan="4"><%= __("basicauth.button.title.to_buy_room") %><a href="#" onClick="createQRCode();">' + "<img src='/imgs/pay_A@2x.png' width='150px'/>" + '</a></td>'
         + '</tr>';
       $('#rooms-table-body').append( tr0 );
     },
@@ -381,6 +385,33 @@ function timestamp2datetime( ts ){
     return datetime;
   }else{
     return "";
+  }
+}
+
+function extendRoom( room ){
+  if( room ){
+    if( room.toLowerCase() == 'default' ){
+      alert( "<%= __('basicauth.alert.default_room_cant_be_extended') %>" );
+    }else{
+      if( confirm( "<%= __('basicauth.confirm.really_extend1') %>" + room + "<%= __('basicauth.confirm.really_extend2') %>" ) ){
+        $.ajax({
+          type: 'POST',
+          url: '/extendroom/' + room,
+          data: {},
+          success: function( result ){
+            if( result && result.status ){
+              console.log( result );
+              alert( "<%= __('basicauth.alert.room_extended1') %>" + room  + "<%= __('basicauth.alert.room_extended2') %>" );
+              location.href = '/auth';
+            }
+          },
+          error: function( e0, e1, e2 ){
+            console.log( e0, e1, e2 );
+            alert( "<%= __('basicauth.alert.room_extend_failed1') %>" + room  + "<%= __('basicauth.alert.room_extend_failed2') %>" + e2 + "<%= __('basicauth.alert.room_create_failed3') %>" );
+          }
+        });
+      }
+    }
   }
 }
 </script>

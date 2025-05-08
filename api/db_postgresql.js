@@ -571,8 +571,10 @@ api.post( '/room/:id', async function( req, res ){
           var enc_room_password = getHash( room_password );
           var ts = ( new Date() ).getTime();
 
-          var sql = "insert into rooms( id, uuid, basic_id, basic_password, room_password, created, updated ) values( $1, $2, $3, $4, $5, $6, $7 )";
-          var query = { text: sql, values: [ id, uuid, basic_id, enc_basic_password, enc_room_password, ts, ts ] };
+          var room_type = ( 'type' in req.body && req.body.type  ) ? 1 : 0;
+
+          var sql = "insert into rooms( id, uuid, basic_id, basic_password, room_password, type, created, updated, expire ) values( $1, $2, $3, $4, $5, $6, $7, $8, $9 )";
+          var query = { text: sql, values: [ id, uuid, basic_id, enc_basic_password, enc_room_password, room_type, ts, ts, ts+30*24*60*60*1000 ] };
           conn.query( query, async function( err, result ){
             if( err ){
               console.log( err );
@@ -1086,36 +1088,36 @@ api.deleteUserType = async function( user_id ){
 };
 
 //. deleteExpiredRooms
-api.deleteExpiredRooms = async function( days = 30 ){
+api.deleteExpiredRooms = async function(){
   return new Promise( async ( resolve, reject ) => {
     if( pg ){
       var conn = await pg.connect();
       if( conn ){
         try{
-          var sql = 'delete from users where created < $1';
-          var t = ( new Date() ).getTime() - 60 * 60 * 24 * 1000 * days;  //. days 日前のタイムスタンプ
+          var sql = 'delete from rooms where type = 0 and expire < $1';
+          var t = ( new Date() ).getTime();
           var query = { text: sql, values: [ t ] };
           conn.query( query, function( err, result ){
             if( err ){
               console.log( err );
-              resolve( { status: false, days: days, error: err } );
+              resolve( { status: false, error: err } );
             }else{
-              resolve( { status: true, days: days, result: result } );
+              resolve( { status: true, result: result } );
             }
           });
         }catch( e ){
           console.log( e );
-          resolve( { status: false, days: days, error: e } );
+          resolve( { status: false, error: e } );
         }finally{
           if( conn ){
             conn.release();
           }
         }
       }else{
-        resolve( { status: false, days: days, error: 'no connection.' } );
+        resolve( { status: false, error: 'no connection.' } );
       }
     }else{
-      resolve( { status: false, days: days, error: 'db not ready.' } );
+      resolve( { status: false, error: 'db not ready.' } );
     }
   });
 };
@@ -1123,14 +1125,46 @@ api.deleteExpiredRooms = async function( days = 30 ){
 api.delete( '/expiredrooms', async function( req, res ){
   res.contentType( 'application/json; charset=utf-8' );
 
-  var days = ( req.query.days ? req.query.days : 30 );
-  if( typeof days == 'string' ){ days = parseInt( days ); }
-
-  var result = await api.deleteExpiredRooms( days );
+  var result = await api.deleteExpiredRooms();
 
   res.write( JSON.stringify( result, null, 2 ) );
   res.end();
 });
+
+//. #62 extendRoom
+api.extendRoom = async function( room, days = 30 ){
+  return new Promise( async ( resolve, reject ) => {
+    if( pg ){
+      var conn = await pg.connect();
+      if( conn ){
+        try{
+          var sql = 'update rooms set expire = expire + ' + days + '*24*60*60*1000 where id = $1';
+          var t = ( new Date() ).getTime();
+          var query = { text: sql, values: [ room ] };
+          conn.query( query, function( err, result ){
+            if( err ){
+              console.log( err );
+              resolve( { status: false, error: err } );
+            }else{
+              resolve( { status: true, result: result } );
+            }
+          });
+        }catch( e ){
+          console.log( e );
+          resolve( { status: false, error: e } );
+        }finally{
+          if( conn ){
+            conn.release();
+          }
+        }
+      }else{
+        resolve( { status: false, error: 'no connection.' } );
+      }
+    }else{
+      resolve( { status: false, error: 'db not ready.' } );
+    }
+  });
+};
 
 //. createTransaction
 api.createTransaction = async function( transaction_id, user_id, order_id, amount, currency ){

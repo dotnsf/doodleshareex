@@ -332,6 +332,39 @@ app.get( '/webadmin', async function( req, res ){
   res.render( 'webadmin', { transactions: transactions } );
 });
 
+//. #62
+app.post( '/extendroom/:id', async function( req, res ){
+  res.contentType( 'application/json; charset=utf-8' );
+
+  if( req.user ){ 
+    var user = req.user;
+    var user_id = user.displayName;
+    
+    var room = req.params.id;
+    if( user_id && room ){
+      var result = await api.extendRoom( room );
+      if( result && result.status ){
+        await api.deleteUserType( user_id );
+
+        res.write( JSON.stringify( { status: true }, null, 2 ) );
+        res.end();
+      }else{
+        res.status( 400 );
+        res.write( JSON.stringify( result, null, 2 ) );
+        res.end();
+      }
+    }else{
+      res.status( 400 );
+      res.write( JSON.stringify( { status: false, error: 'No user_id and/or room specified.' }, null, 2 ) );
+      res.end();
+    }
+  }else{
+    res.status( 400 );
+    res.write( JSON.stringify( { status: false, error: 'No user found.' }, null, 2 ) );
+    res.end();
+  }
+});
+
 //. Service top page(#58)
 app.get( '/', function( req, res ){
   res.render( 'top', {} );
