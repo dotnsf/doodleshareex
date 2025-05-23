@@ -14,6 +14,7 @@
 	"index.placeholder.room": "Room",
 	"index.placeholder.yourname": "Your name ..",
 	"index.button.start": "Start",
+	"server.button.reset": "リセット",
 	"client.color.transparent": "透明",
 	"client.color.black": "黒",
 	"client.color.white": "白",

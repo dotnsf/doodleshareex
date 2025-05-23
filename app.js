@@ -426,10 +426,18 @@ app.get( '/view', function( req, res ){
   }else{
     columns = 0;
   }
+  
+  //. #63
+  var quiz = req.query.quiz;
+  if( quiz ){
+    quiz = 1;
+  }else{
+    quiz = 0;
+  }
 
   subscribeMessage( room );
 
-  res.render( 'server', { room: room, client: client, columns: columns } );
+  res.render( 'server', { room: room, client: client, columns: columns, quiz: quiz } );
 });
 
 //. 

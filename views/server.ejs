@@ -88,6 +88,12 @@ html, body{
   </div>
 </nav>
 
+<% if( quiz ){ %>
+<div align="right">
+  <button class="btn btn-success" onClick="resetCards();"><%= __('server.button.reset') %></button>
+</div>
+<% } %>
+
 <a target="new_" href="/savedimages?room=<%= room %>">
 <canvas id="qrcode"></canvas>
 </a>
@@ -119,6 +125,12 @@ var imgs = {};     //. 画像データ
 
 var room = '<%= room %>';
 var client = '<%= client %>';
+var quiz = <%= quiz %>;  //. #63
+
+//. #63
+if( quiz ){
+  //. 各描画ボックス内に点数を表示する
+}
 
 $(function(){
   init();
@@ -149,13 +161,61 @@ $(function(){
         if( cols > 0 ){
           var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
             + '<div class="card-body text-' + color + '">'
-            + '<h4 class="card-title">' + msg.name + '</h4>'
+            + '<h4 id="card_title_' + socket_id + '" title="0" point="0" class="card-title">'
+            + msg.name + '</h4>'
             + '</div>'
             + '<a href="#box_content" id="box_content_' + socket_id + '" title="' + msg.name + '">'
             + '<img class="card-img-bottom" id="image_' + socket_id + '" alt="(image of ' + msg.name + ')" ts="' + msg.timestamp + '"/>'
             + '</a>'
             + '</div>';
           $('#cards-0').append( card );
+
+          //. #64
+          if( quiz ){
+            $('#card_title_'+socket_id).click( function(){
+              var marked = $(this).attr( 'title' );
+              var point = $(this).attr( 'point' );
+              if( typeof marked == 'string' ){ marked = parseInt( marked ); }
+              if( typeof point == 'string' ){ point = parseInt( point ); }
+
+              var id = $(this).prop( 'id' );
+              var tmp = id.split( '_' );
+              var s_id = tmp[2];
+
+              var b = $('#card_'+s_id).css( 'border' );
+              tmp = b.split( ' ' );
+              var idx = -1;
+              for( var i = 0; i < tmp.length && idx == -1; i ++ ){
+                if( tmp[i].indexOf( 'px' ) > -1 ){
+                  idx = i;
+                }
+              }
+
+              if( idx > -1 ){
+                if( tmp[idx].endsWith( 'px' ) ){
+                  var n = tmp[idx].indexOf( 'px' );
+                  var t = parseFloat( tmp[idx].substr( 0, n ) );
+                  if( t < 1 ){
+                    tmp[idx] = "10px";
+                    point ++;
+                    marked = 1;
+                  }else{
+                    tmp[idx] = "1px";
+                    point --
+                    marked = 0;
+                  }
+                  b = tmp.join( ' ' );
+                }
+                $('#card_'+s_id).css( 'border', b );
+              }
+
+              marked = '' + marked;
+              point = '' + point;
+
+              $(this).attr( 'title', marked );
+              $(this).attr( 'point', point );
+            });
+          }
 
           //. カラム数を指定(#9)
           $('.card').removeClass( 'col-1' );
@@ -165,7 +225,7 @@ $(function(){
           $('.card').addClass( 'col-' + cols );
 
           //. クラスでまとめて ColorBox の指定
-          $('.card').colorbox({ href: '#box_content', inline: true, transition: 'none', width: '90%', onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 5 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html( '' ); } });
+          $('.card-img-bottom').colorbox({ href: '#box_content', inline: true, transition: 'none', width: '90%', onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 6 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html( '' ); } });
         }
       }
 
@@ -311,7 +371,7 @@ function appendCardGroups( cardgroups_selector, num ){
   }
 
   //. クラスでまとめて ColorBox の指定
-  $('.card').colorbox({ href: '#box_content', inline: true, transition: 'none', width: "90%", innerHeight: "90%", onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 5 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html(''); } });
+  $('.card-img-bottom').colorbox({ href: '#box_content', inline: true, transition: 'none', width: "90%", innerHeight: "90%", onOpen: function(){ var socket_id = $(this).prop( 'id' ).substr( 6 ); zoomImage( socket_id ); }, onClosed: function(){ $('#box_content').html(''); } });
 
   if( num % m ){
     var row = Math.floor( num / m );
@@ -330,6 +390,10 @@ function appendCardGroups( cardgroups_selector, num ){
     $('#image_'+socket_id).prop( 'title', img.title );
     $('#image_'+socket_id).prop( 'ts', img.ts );
   });
+}
+
+function resetCards(){
+  $('div.card').css( 'border-width', '1px' );
 }
 </script>
 </body>

@@ -14,6 +14,7 @@
   "index.placeholder.room": "Room",
   "index.placeholder.yourname": "Your name ..",
   "index.button.start": "Start",
+  "server.button.reset": "Reset",
   "client.color.transparent": "Transparent",
   "client.color.black": "Black",
   "client.color.white": "White",
