@@ -90,6 +90,7 @@ html, body{
 
 <% if( quiz ){ %>
 <div align="right">
+  <select id="point_ranking"></select>
   <a class="btn btn-success" id="reset_button" href="#" title="" onClick="resetCards();"><%= __('server.button.reset') %></a>
 </div>
 <% } %>
@@ -174,7 +175,7 @@ $(function(){
             + '</div>';
           $('#cards-0').append( card );
 
-          //. #64
+          //. #63
           if( quiz ){
             $('#card_title_'+socket_id).click( function(){
               var marked = $(this).attr( 'title' );
@@ -224,20 +225,27 @@ $(function(){
               }
 
               ranks.sort( sortByPointRev );
+
+              //. #63 集計結果をどこに表示するべきか・・
+              var point_ranking = '<option selected><%= __("server.select.point_ranking") %></option>';
               var lines = '';
               for( var i = 0; i < ranks.length; i ++ ){
                 var rank = ( i + 1 );
+
                 if( i > 0 && ranks[i].point == ranks[i-1].point ){
                   rank = ranks[i-1].rank;
                 }
                 ranks[i].rank = rank;
                 var line = '(' + rank + ') ' + ranks[i].name + ' : ' + ranks[i].point;
+
                 if( i > 0 ){ lines += '\n'; }
                 lines += line;
+
+                point_ranking += '<option>' + line + '</option>';
               }
               
-              //. 集計結果をどこに表示するべきか・・
               $('#reset_button').prop( 'title', lines );
+              $('#point_ranking').html( point_ranking );
             });
           }
 

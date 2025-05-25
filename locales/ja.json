@@ -14,6 +14,7 @@
 	"index.placeholder.room": "Room",
 	"index.placeholder.yourname": "Your name ..",
 	"index.button.start": "Start",
+    "server.select.point_ranking": "ランキング",
 	"server.button.reset": "リセット",
 	"client.color.transparent": "透明",
 	"client.color.black": "黒",
