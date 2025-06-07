@@ -84,6 +84,7 @@ function getTransaction( transaction_id ){
     success: function( result ){
       if( typeof result == 'string' ){ result = JSON.parse( result ); }
       $('#transaction_detail').html( JSON.stringify( result, null, 2 ) );
+      $('#transactionModalLabel').html( result.body.data.status );
 
       if( result.body.data.status == 'REFUNDED' ){
         $('#' + transaction_id + '-refund' ).prop( 'disabled', true );
@@ -110,6 +111,7 @@ function cancelTransaction( transaction_id ){
       success: function( result ){
         if( typeof result == 'string' ){ result = JSON.parse( result ); }
         $('#transaction_detail').html( JSON.stringify( result, null, 2 ) );
+        $('#transactionModalLabel').html( result.body.data.status );
 
         if( result.body.data.status == 'REFUNDED' ){
           $('#' + transaction_id + '-refund' ).prop( 'disabled', true );
@@ -140,6 +142,7 @@ function refundTransaction( transaction_id ){
           success: function( result ){
             if( typeof result == 'string' ){ result = JSON.parse( result ); }
             $('#transaction_detail').html( JSON.stringify( result, null, 2 ) );
+            $('#transactionModalLabel').html( result.body.data.status );
 
             if( result.body.data.status == 'REFUNDED' ){
               $('#' + transaction_id + '-refund' ).prop( 'disabled', true );
@@ -219,7 +222,7 @@ html, body{
     <table id="transactions_table" class="table table-bordered">
       <thead>
         <tr>
-          <th>#</th><th>user_id</th><th>amount</th><th>created</th><th>actions</th>
+          <th>#</th><th>user_id</th><th>order_id</th><th>amount</th><th>created</th><th>actions</th>
         </tr>
       </thead>
       <tbody>
@@ -227,6 +230,7 @@ html, body{
         <tr>
           <td><%= transactions[i].id %></td>
           <td><%= transactions[i].user_id %></td>
+          <td><%= transactions[i].order_id %></td>
           <td><%= transactions[i].amount %> <%= transactions[i].currency %></td>
           <td><%= timestamp2datetime( transactions[i].created ) %></td>
           <td>

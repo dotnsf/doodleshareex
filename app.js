@@ -836,7 +836,19 @@ app.get( '/paypay/redirect', async function( req, res ){
   var user_id = user.displayName;
   if( user_id && req.user.displayName == user_id ){
     await dbapi.addUserType( user_id );
-    await dbapi.createTransaction( qr_data.merchantPaymentId, user_id, qr_data.codeId, qr_data.amount.amount, qr_data.amount.currency );
+
+    //. order_id 取得
+    var order_id = '';
+    var response = await PAYPAY.GetCodePaymentDetails( Array( qr_data.merchantPaymentId ) );
+    //console.log( {response} );
+    if( response.STATUS && response.STATUS >= 200 && response.STATUS < 300 ){   //. 実際は 201
+      var body = JSON.parse( response.BODY );
+      if( body && body.data && body.data.paymentId ){
+        order_id = body.data.paymentId;
+      }
+    }
+
+    await dbapi.createTransaction( qr_data.merchantPaymentId, user_id, order_id, qr_data.amount.amount, qr_data.amount.currency );
       /*
       response.BODY = {
         resultInfo: {
