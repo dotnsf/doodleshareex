@@ -626,6 +626,7 @@ var PAYPAY_API_KEY = ( 'PAYPAY_API_KEY' in process.env && process.env.PAYPAY_API
 var PAYPAY_API_SECRET = ( 'PAYPAY_API_SECRET' in process.env && process.env.PAYPAY_API_SECRET ? process.env.PAYPAY_API_SECRET : '' );
 var PAYPAY_MERCHANT_ID = ( 'PAYPAY_MERCHANT_ID' in process.env && process.env.PAYPAY_MERCHANT_ID ? process.env.PAYPAY_MERCHANT_ID : '' );
 var PAYPAY_REDIRECT_URL = ( 'PAYPAY_REDIRECT_URL' in process.env && process.env.PAYPAY_REDIRECT_URL ? process.env.PAYPAY_REDIRECT_URL : '' );
+var PAYPAY_PRODUCTION_MODE = ( 'PRODUCTION_MODE' in process.env ? true : false );
 
 PAYPAY.Configure({
   clientId: PAYPAY_API_KEY,
