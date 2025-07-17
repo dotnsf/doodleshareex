@@ -182,7 +182,8 @@ function saveImage(){
       //. #56
 
       /* その画像をダウンロードさせる */
-      var filename = ( $('#name').text() ) + '.png';
+      var tm = ( new Date() ).getTime();
+      var filename = ( $('#name').text() ) + '-' + tm + '.png';
       if( window.navigator.msSaveBlob ){
         window.navigator.msSaveBlob( blob, filename );
         window.navigator.msSaveOrOpenBlob( blob, filename );
