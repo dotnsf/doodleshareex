@@ -435,9 +435,13 @@ app.get( '/view', function( req, res ){
     quiz = 0;
   }
 
+  //. #64
+  var sort = req.query.sort;
+  if( !sort ){ sort = ''; }
+
   subscribeMessage( room );
 
-  res.render( 'server', { room: room, client: client, columns: columns, quiz: quiz } );
+  res.render( 'server', { room: room, client: client, columns: columns, quiz: quiz, sort: sort } );
 });
 
 //. 
