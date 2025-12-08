@@ -16,6 +16,7 @@
 	"index.button.start": "Start",
 	"server.select.point_ranking": "Ranking",
 	"server.button.reset": "Reset",
+	"server.checkbox.quiz.allopen": "All Open",
 	"client.color.transparent": "Transparent",
 	"client.color.black": "Black",
 	"client.color.white": "White",

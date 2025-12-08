@@ -16,6 +16,7 @@
 	"index.button.start": "Start",
     "server.select.point_ranking": "ランキング",
 	"server.button.reset": "リセット",
+	"server.checkbox.quiz.allopen": "全て表示",
 	"client.color.transparent": "透明",
 	"client.color.black": "黒",
 	"client.color.white": "白",

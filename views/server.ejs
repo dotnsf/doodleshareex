@@ -92,6 +92,7 @@ html, body{
 <div align="right">
   <select id="point_ranking"></select>
   <a class="btn btn-success" id="reset_button" href="#" title="" onClick="resetCards();"><%= __('server.button.reset') %></a>
+  <input type="checkbox" id="allopen"/><%= __('server.checkbox.quiz.allopen') %>
 </div>
 <% } %>
 
@@ -129,13 +130,29 @@ var client = '<%= client %>';
 var quiz = <%= quiz %>;  //. #63
 var sort = '<%= sort %>';  //. #64
 
-//. #63
-var quiz_points = {};
+var quiz_points = {}; //. #63
+var board_visible = {}; //. #65
 if( quiz ){
   //. 各描画ボックス内に点数を表示する
 }
 
 $(function(){
+  //. #65
+  $('#allopen').change( function(){
+    var c = $('#allopen').prop( 'checked' );
+    if( c ){
+      //. 全てオープン
+      $('.image-item').each( function( idx ){
+        $(this).css( 'display', 'block' );
+      });
+    }else{
+      //. 全てクローズ
+      $('.image-item').each( function( idx ){
+        $(this).css( 'display', 'none' );
+      });
+    }
+  });
+
   init();
 
   QRCode.toCanvas( document.getElementById( 'qrcode' ), base_url + 'index?room=' + room + '&client=' + client, function( err ){
@@ -158,8 +175,8 @@ $(function(){
         //. 一覧に追加
         socket_ids.push( socket_id );
 
-        //. #63
-        quiz_points[socket_id] = 0;
+        quiz_points[socket_id] = 0; //. #63
+        board_visible[socket_id] = false; //. #65
 
         var color = generateColor( msg.uuid /* msg.name */ );
         //var row = addCardGroups( socket_ids.length );
@@ -167,25 +184,39 @@ $(function(){
         if( cols > 0 ){
           var card = '<div id="card_' + socket_id + '" class="card border-' + color + '" style="cursor: pointer;">'
             + '<div class="card-body text-' + color + '">'
-            + '<h4 id="card_title_' + socket_id + '" title="0" class="card-title">'
+            + '<h4 id="card_title_' + socket_id + '" title="0" class="card-title" quiz_view="0">'
             + msg.name + '</h4>'
             + '</div>'
             + '<a href="#box_content" id="box_content_' + socket_id + '" title="' + msg.name + '">'
-            + '<img class="card-img-bottom" id="image_' + socket_id + '" alt="(image of ' + msg.name + ')" ts="' + msg.timestamp + '"/>'
+            + '<img class="image-item card-img-bottom" id="image_' + socket_id + '" alt="(image of ' + msg.name + ')" ts="' + msg.timestamp + '"/>'
             + '</a>'
             + '</div>';
           $('#cards-0').append( card );
 
           //. #63
           if( quiz ){
+            $('.image-item').css( 'display', 'none' );
             $('#card_title_'+socket_id).click( function(){
-              var marked = $(this).attr( 'title' );
-              if( typeof marked == 'string' ){ marked = parseInt( marked ); }
-              if( typeof point == 'string' ){ point = parseInt( point ); }
-
               var id = $(this).prop( 'id' );
               var tmp = id.split( '_' );
               var s_id = tmp[2];
+
+              //. #65
+              var c = $('#allopen').prop('checked');
+              if( !c ){
+                var v = $('#card_title_'+s_id).attr( 'quiz_view' );
+                if( v == '0' ){
+                  $('#image_'+s_id).css( 'display', 'block' );
+                  $('#card_title_'+s_id).attr( 'quiz_view', '1' );
+                }else{
+                  $('#image_'+s_id).css( 'display', 'none' );
+                  $('#card_title_'+s_id).attr( 'quiz_view', '0' );
+                }
+              }
+
+              var marked = $(this).attr( 'title' );
+              if( typeof marked == 'string' ){ marked = parseInt( marked ); }
+              if( typeof point == 'string' ){ point = parseInt( point ); }
 
               var b = $('#card_'+s_id).css( 'border' );
               tmp = b.split( ' ' );
@@ -285,6 +316,16 @@ $(function(){
   };
   ws.onerror = function( event ){
   };
+
+  //. #65
+  $('#allopen').change( function(){
+    var c = $('#allopen').prop( 'checked' );
+    if( c ){
+      //. 全てオープン
+    }else{
+      //. 全てクローズ
+    }
+  });
 });
 
 function init(){
